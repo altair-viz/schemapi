@@ -28,13 +28,15 @@ def test_testcases_jsonschema(testcase):
 @pytest.mark.parametrize('testcase', ALL_TESTCASES.keys())
 def test_testcases_traitlets(testcase):
     testcase = ALL_TESTCASES[testcase]
-    
+
     schema = testcase['schema']
     valid = testcase['valid']
     invalid = testcase.get('invalid', [])
 
     traitlets_obj = JSONSchema(schema)
-    exec(traitlets_obj.object_code(), globals())
+    locals = {}
+    exec(traitlets_obj.object_code(), locals)
+    RootInstance = locals['RootInstance']
 
     for instance in valid:
         RootInstance(**instance)
