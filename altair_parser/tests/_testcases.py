@@ -1,7 +1,3 @@
-def all():
-    return {name: obj for name, obj in globals().items()
-            if name != 'all' and not name.startswith('__')}
-
 simple_object = {
     'schema': {
         "type": "object",

@@ -4,15 +4,16 @@ import jsonschema
 import pytest
 
 from .. import JSONSchema
-from .. import testcases
+from . import _testcases
+
+testcases = {key: getattr(_testcases, key)
+             for key in dir(_testcases)
+             if not key.startswith('__')}
 
 
-ALL_TESTCASES = testcases.all()
-
-
-@pytest.mark.parametrize('testcase', ALL_TESTCASES.keys())
+@pytest.mark.parametrize('testcase', testcases.keys())
 def test_testcases_jsonschema(testcase):
-    testcase = ALL_TESTCASES[testcase]
+    testcase = testcases[testcase]
 
     schema = testcase['schema']
     valid = testcase['valid']
@@ -25,9 +26,9 @@ def test_testcases_jsonschema(testcase):
             jsonschema.validate(instance, schema)
 
 
-@pytest.mark.parametrize('testcase', ALL_TESTCASES.keys())
+@pytest.mark.parametrize('testcase', testcases.keys())
 def test_testcases_traitlets(testcase):
-    testcase = ALL_TESTCASES[testcase]
+    testcase = testcases[testcase]
 
     schema = testcase['schema']
     valid = testcase['valid']
