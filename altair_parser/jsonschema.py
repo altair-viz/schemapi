@@ -1,186 +1,68 @@
-import warnings
-import json
+import jinja2
 
 
-class Schema(object):
-    required_keys = set()
-    optional_keys = {'description'}
+OBJECT_TEMPLATE = """
+{%- for import in cls.imports %}
+{{ import }}
+{%- endfor %}
 
-    _constructed_objects = {}
+class {{ cls.classname }}({{ cls.baseclass }}):
+    {%- for (name, prop) in cls.properties.items() %}
+    {{ name }} = {{ prop.trait_code }}
+    {%- endfor %}
+"""
 
-    def __init__(self, schema, name='', context=None):
+class JSONSchema(object):
+    """A class to wrap JSON Schema objects and reason about their contents"""
+    object_template = OBJECT_TEMPLATE
+
+    def __init__(self, schema, context=None, parent=None, name=None):
         self.schema = schema
+        self.context = context or schema
+        self.parent = parent
         self.name = name
-        self.context = context
-        for key in self.required_keys:
-            if key not in self.required_keys:
-                raise ValueError(f"key '{key}' required for {self.__class__.__name__}")
-        for key in schema:
-            if key not in self.required_keys and key not in self.optional_keys:
-                warnings.warn(f"key '{key}' not recognized in {self.__class__.__name__}."
-                              f"\nFull Schema:\n{schema}\n")
 
-    @classmethod
-    def load_file(cls, filename):
-        with open(filename) as f:
-            schema = json.load(f)
-        return cls.new(schema, name='top', context=schema)
+    def make_child(self, schema, name=None):
+        return self.__class__(schema, context=self.context, parent=self, name=name)
 
-    @classmethod
-    def infer_subclass(cls, schema):
-        keys = [('$schema', RootSchema),
-                ('$ref', RefSchema),
-                ('allOf', AllOfSchema),
-                ('anyOf', AnyOfSchema),
-                ('not', NotSchema),
-                ('oneOf', OneOfSchema),
-                ('enum', EnumSchema)]
-        types = {'object': ObjectSchema,
-                 'array': ArraySchema,
-                 'number': SimpleSchema,
-                 'string': SimpleSchema,
-                 'boolean': SimpleSchema}
-        if len(schema) == 0:
-            return EmptySchema
+    @property
+    def type(self):
+        # TODO: should the default type be considered object?
+        return self.schema.get('type', 'object')
 
-        for key, cls in keys:
-            if key in schema:
-                return cls
+    @property
+    def trait_code(self):
+        type_dict = {'string': 'T.Unicode()',
+                     'number': 'T.Float()',
+                     'integer': 'T.Integer()',
+                     'boolean': 'T.Bool()'}
+        if self.type not in type_dict:
+            raise NotImplementedError()
+        return type_dict[self.type]
 
-        if 'type' not in schema:
-            return UnknownSchema
-
-        typ = schema['type']
-
-        if isinstance(typ, list):
-            return CompoundSimpleSchema
+    @property
+    def classname(self):
+        if self.name:
+            return self.name
+        elif self.context is self.schema:
+            return "RootInstance"
         else:
-            return types.get(typ, UnknownSchema)
+            raise NotImplementedError("Anonymous class name")
 
-    @classmethod
-    def new(cls, schema, name='', context=None):
-        if name in cls._constructed_objects:
-            return cls._constructed_objects[name]
+    @property
+    def baseclass(self):
+        return "T.HasTraits"
 
-        schema_class = cls.infer_subclass(schema)
-        obj = schema_class(schema, name=name, context=context)
-        cls._constructed_objects[name] = obj
-        return obj
+    @property
+    def imports(self):
+        return ["import traitlets as T"]
 
-    def children(self, depth=1):
-        yield from []
+    @property
+    def properties(self):
+        """Return property dictionary wrapped as JSONSchema objects"""
+        properties = self.schema.get('properties', {})
+        return {key: self.make_child(val)
+                for key, val in properties.items()}
 
-
-class EmptySchema(Schema):
-    pass
-
-
-class UnknownSchema(Schema):
-    pass
-
-
-class EnumSchema(Schema):
-    required_keys = {'enum', 'type'}
-
-
-class RefSchema(Schema):
-    required_keys = {'$ref'}
-
-    def children(self, depth=1):
-        ref = self.schema['$ref']
-        path = ref.split('/')
-        assert path[0] == '#'
-        defn = self.context
-        for key in path[1:]:
-            defn = defn[key]
-        child = Schema.new(defn, name=ref, context=self.context)
-        yield child
-        if depth > 0:
-            yield from child.children(depth - 1)
-
-
-class RootSchema(RefSchema):
-    required_keys = {'$schema', '$ref'}
-    optional_keys = {'definitions', 'defs', 'refs', 'description'}
-
-
-class OneOfSchema(Schema):
-    required_keys = {'oneOf'}
-    optional_keys = {'description', 'minimum', 'maximum'}
-
-    def children(self, depth=1):
-        children = [Schema.new(child, context=self.context)
-                    for child in self.schema['oneOf']]
-        yield from children
-        if depth > 0:
-            for child in children:
-                yield from child.children(depth - 1)
-
-
-class AnyOfSchema(Schema):
-    required_keys = {'anyOf'}
-    optional_keys = {'description', 'minimum', 'maximum'}
-
-    def children(self, depth=1):
-        children = [Schema.new(child, context=self.context)
-                    for child in self.schema['anyOf']]
-        yield from children
-        if depth > 0:
-            for child in children:
-                yield from child.children(depth - 1)
-
-
-class AllOfSchema(Schema):
-    required_keys = {'allOf'}
-
-    def children(self, depth=1):
-        children = [Schema.new(child, context=self.context)
-                    for child in self.schema['allOf']]
-        yield from children
-        if depth > 0:
-            for child in children:
-                yield from child.children(depth - 1)
-
-
-class NotSchema(Schema):
-    required_keys = {'not'}
-
-    def children(self, depth=1):
-        child = Schema.new(self.schema['not'], context=self.context)
-        yield child
-        if depth > 0:
-            yield from child.children(depth - 1)
-
-
-class ObjectSchema(Schema):
-    required_keys = {'type', 'properties'}
-    optional_keys = {'description', 'additionalProperties', 'required'}
-
-    def children(self, depth=1):
-        children = [Schema.new(prop, name=name, context=self.context)
-                    for name, prop in self.schema.get('properties', {}).items()]
-        yield from children
-        if depth > 0:
-            for child in children:
-                yield from child.children(depth - 1)
-
-
-class ArraySchema(Schema):
-    required_keys = {'type', 'items'}
-    optional_keys = {'description', 'minimum', 'maximum'}
-
-    def children(self, depth=1):
-        child = Schema.new(self.schema['items'], context=self.context)
-        yield child
-        if depth > 0:
-            yield from child.children(depth - 1)
-
-
-class SimpleSchema(Schema):
-    required_keys = {'type'}
-    optional_keys = {'description', 'minimum', 'maximum'}
-
-
-class CompoundSimpleSchema(Schema):
-    required_keys = {'type'}
-    optional_keys = {'description', 'minimum', 'maximum'}
+    def object_code(self):
+        return jinja2.Template(self.object_template).render(cls=self)
