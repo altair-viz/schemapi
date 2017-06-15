@@ -19,6 +19,18 @@ class JSONSchema(object):
     object_template = OBJECT_TEMPLATE
     draft = 4
 
+    simple_types = ["boolean", "null", "number", "string"]
+    valid_types = simple_types + ["array", "object"]
+    traitlet_map = {'array': {'cls': 'T.List'},
+                    'boolean': {'cls': 'T.Bool'},
+                    'null': {'cls': 'T.Integer',
+                             'kwargs': {'allow_none': True,
+                                        'minimum': 1,
+                                        'maximum': 0}},
+                    'number': {'cls': 'T.Float'},
+                    'string': {'cls': 'T.Unicode'},
+                   }
+
     def __init__(self, schema, context=None, parent=None, name=None):
         self.schema = schema
         self.parent = parent
@@ -27,6 +39,25 @@ class JSONSchema(object):
         # if context is not given, then assume this is a root instance that
         # defines its context
         self.context = context or schema
+
+    @classmethod
+    def _get_trait_code(cls, typecode):
+        if typecode in cls.simple_types:
+            info = cls.traitlet_map[typecode]
+            return construct_function_call(info['cls'],
+                                           *info.get('args', []),
+                                           **info.get('kwargs', {}))
+        elif typecode == 'array':
+            raise NotImplementedError('type = "array"')
+        elif typecode == 'object':
+            raise NotImplementedError('trait code for type = "object"')
+        elif isinstance(typecode, list):
+            # TODO: if Null is in the list, then add keyword allow_none=True
+            arg = "[{0}]".format(', '.join(cls._get_trait_code(typ)
+                                           for typ in typecode))
+            return construct_function_call('T.Union', Variable(arg))
+        else:
+            raise ValueError(f"unrecognized type identifier: {typecode}")
 
     def make_child(self, schema, name=None):
         """
@@ -42,7 +73,7 @@ class JSONSchema(object):
 
     @property
     def trait_code(self):
-        return SchemaType(self.type).get_trait_code()
+        return self._get_trait_code(self.type)
 
     @property
     def classname(self):
@@ -70,39 +101,3 @@ class JSONSchema(object):
 
     def object_code(self):
         return jinja2.Template(self.object_template).render(cls=self)
-
-
-class SchemaType(object):
-    """Tools for interpreting schema types"""
-    simple_types = ["boolean", "null", "number", "string"]
-    valid_types = simple_types + ["array", "object"]
-    traitlet_map = {'array': {'cls': 'T.List'},
-                    'boolean': {'cls': 'T.Bool'},
-                    'null': {'cls': 'T.Integer',
-                             'kwargs': {'allow_none': True,
-                                        'minimum': 1,
-                                        'maximum': 0}},
-                    'number': {'cls': 'T.Float'},
-                    'string': {'cls': 'T.Unicode'},
-                   }
-
-    def __init__(self, typecode):
-        self.typecode = typecode
-
-    def get_trait_code(self):
-        if self.typecode in self.simple_types:
-            info = self.traitlet_map[self.typecode]
-            return construct_function_call(info['cls'],
-                                           *info.get('args', []),
-                                           **info.get('kwargs', {}))
-        elif self.typecode == 'array':
-            raise NotImplementedError('type = "array"')
-        elif self.typecode == 'object':
-            raise NotImplementedError('trait code for type = "object"')
-        elif isinstance(self.typecode, list):
-            # TODO: if Null is in the list, then add keyword allow_none=True
-            arg = "[{0}]".format(','.join(SchemaType(typ).get_trait_code()
-                                          for typ in self.typecode))
-            return construct_function_call('T.Union', Variable(arg))
-        else:
-            raise ValueError(f"unrecognized type identifier: {typecode}")
