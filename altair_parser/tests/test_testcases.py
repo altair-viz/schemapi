@@ -39,10 +39,10 @@ def test_testcases_traitlets(testcase):
     invalid = testcase.get('invalid', [])
 
     traitlets_obj = JSONSchema(schema)
+    print(traitlets_obj.object_code())
     locals = {}
     exec(traitlets_obj.object_code(), locals)
     RootInstance = locals['RootInstance']
-    print(traitlets_obj.object_code())
 
     for instance in valid:
         RootInstance(**instance)

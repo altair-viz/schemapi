@@ -1,5 +1,7 @@
 import jinja2
 
+from .utils import construct_function_call, Variable
+
 
 OBJECT_TEMPLATE = """
 {%- for import in cls.imports %}
@@ -40,26 +42,7 @@ class JSONSchema(object):
 
     @property
     def trait_code(self):
-        type_dict = {'string': 'T.Unicode()',
-                     'number': 'T.Float()',
-                     # TODO: remove this hack & create a Null traitlet type.
-                     'null': 'T.Integer(allow_none=True, minimum=1, maximum=0)',
-                     'boolean': 'T.Bool()'}
-
-        # type can be a list of strings; translate this to a Union
-        if isinstance(self.type, list):
-            # TODO: if null is in the list, remove it and add "allow_none" to
-            # any of the traits.
-            if any(typ not in type_dict for typ in self.type):
-                raise NotImplementedError(self.type)
-            return "T.Union([{0}])".format(','.join(type_dict[typ] for typ in self.type))
-
-        # otherwise type should be a string in type_dict
-        if self.type in type_dict:
-            return type_dict[self.type]
-
-        # otherwise
-        raise ValueError(f"type={self.type} is not a recognized type code")
+        return SchemaType(self.type).get_trait_code()
 
     @property
     def classname(self):
@@ -87,3 +70,39 @@ class JSONSchema(object):
 
     def object_code(self):
         return jinja2.Template(self.object_template).render(cls=self)
+
+
+class SchemaType(object):
+    """Tools for interpreting schema types"""
+    simple_types = ["boolean", "null", "number", "string"]
+    valid_types = simple_types + ["array", "object"]
+    traitlet_map = {'array': {'cls': 'T.List'},
+                    'boolean': {'cls': 'T.Bool'},
+                    'null': {'cls': 'T.Integer',
+                             'kwargs': {'allow_none': True,
+                                        'minimum': 1,
+                                        'maximum': 0}},
+                    'number': {'cls': 'T.Float'},
+                    'string': {'cls': 'T.Unicode'},
+                   }
+
+    def __init__(self, typecode):
+        self.typecode = typecode
+
+    def get_trait_code(self):
+        if self.typecode in self.simple_types:
+            info = self.traitlet_map[self.typecode]
+            return construct_function_call(info['cls'],
+                                           *info.get('args', []),
+                                           **info.get('kwargs', {}))
+        elif self.typecode == 'array':
+            raise NotImplementedError('type = "array"')
+        elif self.typecode == 'object':
+            raise NotImplementedError('trait code for type = "object"')
+        elif isinstance(self.typecode, list):
+            # TODO: if Null is in the list, then add keyword allow_none=True
+            arg = "[{0}]".format(','.join(SchemaType(typ).get_trait_code()
+                                          for typ in self.typecode))
+            return construct_function_call('T.Union', Variable(arg))
+        else:
+            raise ValueError(f"unrecognized type identifier: {typecode}")
