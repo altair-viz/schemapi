@@ -1,3 +1,7 @@
+"""
+These tests iterate through the examples defined in _testcases.py and make
+sure each passes with both altair_parser and jsonschema
+"""
 
 import traitlets as T
 import jsonschema
@@ -8,7 +12,7 @@ from . import _testcases
 
 testcases = {key: getattr(_testcases, key)
              for key in dir(_testcases)
-             if not key.startswith('__')}
+             if not key.startswith('_')}
 
 
 @pytest.mark.parametrize('testcase', testcases.keys())
