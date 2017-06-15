@@ -15,6 +15,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
 class JSONSchema(object):
     """A class to wrap JSON Schema objects and reason about their contents"""
     object_template = OBJECT_TEMPLATE
+    draft = 4
 
     def __init__(self, schema, context=None, parent=None, name=None):
         self.schema = schema
@@ -42,7 +43,7 @@ class JSONSchema(object):
         type_dict = {'string': 'T.Unicode()',
                      'number': 'T.Float()',
                      # TODO: remove this hack & create a Null traitlet type.
-                     'null': 'T.Float(allow_none=True, minimum=100, maximum=0)',
+                     'null': 'T.Integer(allow_none=True, minimum=1, maximum=0)',
                      'boolean': 'T.Bool()'}
 
         # type can be a list of strings; translate this to a Union

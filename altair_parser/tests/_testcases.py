@@ -62,15 +62,32 @@ compound_types = {
     'schema': {
         "type": "object",
         "properties": {
-            "str_or_num": {"type": ["string", "number"]}
+            "str_or_num": {"type": ["string", "number"]},
+            "num_or_null": {"type": ["number", "null"]}
         }
     },
     'valid': [
-        {"str_or_num": 42},
-        {"str_or_num": "42"}
+        {
+            "str_or_num": 42,
+            "num_or_null": None
+        },
+        {
+            "str_or_num": "42",
+            "num_or_null": 42
+        }
     ],
     'invalid': [
-        {"str_or_num": [1, 2, 3]}, 
-        {"str_or_num": None}
+        {
+            "str_or_num": [1, 2, 3],
+            "num_or_null": None
+        },
+        {
+            "str_or_num": None,
+            "num_or_null": 42
+        },
+        {
+            "str_or_num": 50,
+            "num_or_null": "hello"
+        }
     ]
 }
