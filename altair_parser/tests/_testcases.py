@@ -12,42 +12,65 @@ Each object defined in this file should be a dictionary with three keys:
 These test cases are used by test_testcases.py
 """
 
-simple_object = {
+simple_types = {
     'schema': {
         "type": "object",
         "properties": {
-            "foo": {"type": "string"},
-            "bar": {"type": "number"},
-            "baz": {"type": "boolean"}
+            "str": {"type": "string"},
+            "num": {"type": "number"},
+            "int": {"type": "integer"},
+            "bool": {"type": "boolean"}
         }
     },
     'valid': [
         {
-            "foo": "hello world",
-            "bar": 3.141592653,
-            "baz": True
-        },
-        {
-            "foo": "a string",
-            "bar": 42,
-            "baz": False
-        },
+            "str": "hello world",
+            "num": 3.141592653,
+            "int": 42,
+            "bool": True
+        }
     ],
     'invalid': [
         {
-            "foo": "hello",
-            "bar": "world",
-            "baz": True
+            "str": 100,
+            "num": 3.141592653,
+            "int": 42,
+            "bool": True
         },
         {
-            "foo": 42,
-            "bar": 43,
-            "baz": False
+            "str": "hello world",
+            "num": "3.14",
+            "int": 42,
+            "bool": True
         },
         {
-            "foo": "a string",
-            "bar": 42,
-            "baz": "True"
+            "str": "hello world",
+            "num": 3.141592653,
+            "int": 42.57,
+            "bool": True
+        },
+        {
+            "str": "hello world",
+            "num": 3.141592653,
+            "int": 42,
+            "bool": "True"
+        },
+    ]
+}
+
+compound_types = {
+    'schema': {
+        "type": "object",
+        "properties": {
+            "str_or_num": {"type": ["string", "number"]}
         }
+    },
+    'valid': [
+        {"str_or_num": 42},
+        {"str_or_num": "42"}
+    ],
+    'invalid': [
+        {"str_or_num": [1, 2, 3]}, 
+        {"str_or_num": None}
     ]
 }

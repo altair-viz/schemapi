@@ -42,6 +42,7 @@ def test_testcases_traitlets(testcase):
     locals = {}
     exec(traitlets_obj.object_code(), locals)
     RootInstance = locals['RootInstance']
+    print(traitlets_obj.object_code())
 
     for instance in valid:
         RootInstance(**instance)

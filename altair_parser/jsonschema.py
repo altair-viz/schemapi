@@ -18,12 +18,19 @@ class JSONSchema(object):
 
     def __init__(self, schema, context=None, parent=None, name=None):
         self.schema = schema
-        self.context = context or schema
         self.parent = parent
         self.name = name
 
+        # if context is not given, then assume this is a root instance that
+        # defines its context
+        self.context = context or schema
+
     def make_child(self, schema, name=None):
-        return self.__class__(schema, context=self.context, parent=self, name=name)
+        """
+        Make a child instance, appropriately defining the parent and context
+        """
+        return self.__class__(schema, context=self.context,
+                              parent=self, name=name)
 
     @property
     def type(self):
@@ -36,8 +43,12 @@ class JSONSchema(object):
                      'number': 'T.Float()',
                      'integer': 'T.Integer()',
                      'boolean': 'T.Bool()'}
+        if isinstance(self.type, list):
+            if any(typ not in type_dict for typ in self.type):
+                raise NotImplementedError(self.type)
+            return "T.Union([{0}])".format(','.join(type_dict[typ] for typ in self.type))
         if self.type not in type_dict:
-            raise NotImplementedError()
+            raise NotImplementedError(self.type)
         return type_dict[self.type]
 
     @property
