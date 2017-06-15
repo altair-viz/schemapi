@@ -41,15 +41,24 @@ class JSONSchema(object):
     def trait_code(self):
         type_dict = {'string': 'T.Unicode()',
                      'number': 'T.Float()',
-                     'integer': 'T.Integer()',
+                     # TODO: remove this hack & create a Null traitlet type.
+                     'null': 'T.Float(allow_none=True, minimum=100, maximum=0)',
                      'boolean': 'T.Bool()'}
+
+        # type can be a list of strings; translate this to a Union
         if isinstance(self.type, list):
+            # TODO: if null is in the list, remove it and add "allow_none" to
+            # any of the traits.
             if any(typ not in type_dict for typ in self.type):
                 raise NotImplementedError(self.type)
             return "T.Union([{0}])".format(','.join(type_dict[typ] for typ in self.type))
-        if self.type not in type_dict:
-            raise NotImplementedError(self.type)
-        return type_dict[self.type]
+
+        # otherwise type should be a string in type_dict
+        if self.type in type_dict:
+            return type_dict[self.type]
+
+        # otherwise
+        raise ValueError(f"type={self.type} is not a recognized type code")
 
     @property
     def classname(self):

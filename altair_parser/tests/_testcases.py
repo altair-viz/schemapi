@@ -18,42 +18,42 @@ simple_types = {
         "properties": {
             "str": {"type": "string"},
             "num": {"type": "number"},
-            "int": {"type": "integer"},
-            "bool": {"type": "boolean"}
+            "bool": {"type": "boolean"},
+            "null": {"type": "null"}
         }
     },
     'valid': [
         {
             "str": "hello world",
             "num": 3.141592653,
-            "int": 42,
-            "bool": True
+            "bool": True,
+            "null": None
         }
     ],
     'invalid': [
         {
             "str": 100,
             "num": 3.141592653,
-            "int": 42,
-            "bool": True
+            "bool": True,
+            "null": None
         },
         {
             "str": "hello world",
             "num": "3.14",
-            "int": 42,
-            "bool": True
+            "bool": True,
+            "null": None
         },
         {
             "str": "hello world",
             "num": 3.141592653,
-            "int": 42.57,
-            "bool": True
+            "bool": "True",
+            "null": None
         },
         {
             "str": "hello world",
             "num": 3.141592653,
-            "int": 42,
-            "bool": "True"
+            "bool": "True",
+            "null": 123
         },
     ]
 }
