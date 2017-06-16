@@ -6,35 +6,6 @@ import sys
 import os
 from types import ModuleType
 
-spec = {
-    'package': 'dynmod',
-    'contents': {
-        '__init__.py': {
-            'code': ('from .foo import x\n'
-                     'from .bar import y\n'),
-            'dependencies': ['foo', 'bar']
-        },
-        'foo.py': {
-            'code': 'x = 10',
-        },
-        'bar.py': {
-            'code': ('from .foo import x\n'
-                     'y = 4 * x'),
-            'dependencies': ['foo']
-        },
-    },
-    'subpackages': [
-        {
-            'package': 'utils',
-            'contents': {
-                '__init__.py': {
-                    'code': 'pi = 3.1415'
-                }
-            }
-        }
-    ],
-}
-
 
 def load_dynamic_module(spec, parent=''):
     """Load a dynamically imported module
