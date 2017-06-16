@@ -37,6 +37,43 @@ spec = {
 
 
 def load_dynamic_module(spec, parent=''):
+    """Load a dynamically imported module
+
+    Parameters
+    ----------
+    spec : dict
+        A dictionary specifying the module to load
+    parent : string (optional)
+        The name of the parent module, if any
+
+    Returns
+    -------
+    mod : ModuleType
+        The dynamically loaded module
+
+    Notes
+    -----
+    spec should be a dict with up to three keys:
+    - 'package' (required): a string giving the name of the package
+    - 'contents' (optional): a dict mapping filenames to filespecs (see below)
+    - 'subpackages' (optional): a list of module specs
+
+    filespecs should be a dict with up to two keys:
+    - 'code': a string giving the content of the file
+    - 'dependencies': a list of modules the code imports
+
+    Examples
+    --------
+    >>> spec = {'package': 'mymod',
+    ...         'contents': {'__init__.py': {'code': 'x = 4'},
+    ...                      'foo.py': {'code': 'message="hello world"'}}}
+    >>> mymod = load_dynamic_module(spec)
+    >>> mymod.x
+    4
+    >>> from mymod.foo import message
+    >>> print(message)
+    hello world
+    """
     # TODO: actually build a dependency graph
     # TODO: handle dependencies between packages?
 
