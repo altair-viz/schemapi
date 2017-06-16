@@ -8,6 +8,6 @@ from .. import JSONSchema
                           ('number', 'jst.JSONNumber()'),
                           ('null', 'jst.JSONNull()'),
                           (['string', 'number'],
-                           'T.Union([jst.JSONString(), jst.JSONNumber()])')])
+                           'jst.JSONUnion([jst.JSONString(), jst.JSONNumber()])')])
 def test_trait_code(typecode, output):
     assert JSONSchema._get_trait_code(typecode) == output

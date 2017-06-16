@@ -83,9 +83,9 @@ class JSONUnion(T.Union):
     default_value = undefined
     info_text = "a Union of types"
 
-    def __init__(self, allow_undefined=True, **kwargs):
+    def __init__(self, trait_types, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
-        super(JSONUnion, self).__init__(**kwargs)
+        super(JSONUnion, self).__init__(trait_types, **kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
@@ -121,3 +121,18 @@ class JSONEnum(T.Enum):
         if self.allow_undefined and value is undefined:
             return value
         return super(JSONEnum, self).validate(obj, value)
+
+
+class JSONInstance(T.Instance):
+    allow_undefined = True
+    default_value = undefined
+    info_text = "an instance of an object"
+
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONInstance, self).__init__(**kwargs)
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+        return super(JSONInstance, self).validate(obj, value)

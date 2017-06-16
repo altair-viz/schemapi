@@ -22,7 +22,7 @@ class JSONSchema(object):
 
     simple_types = ["boolean", "null", "number", "string"]
     valid_types = simple_types + ["array", "object"]
-    traitlet_map = {'array': {'cls': 'T.List'},
+    traitlet_map = {'array': {'cls': 'jst.JSONArray'},
                     'boolean': {'cls': 'jst.JSONBoolean'},
                     'null': {'cls': 'jst.JSONNull'},
                     'number': {'cls': 'jst.JSONNumber'},
@@ -54,7 +54,7 @@ class JSONSchema(object):
             # TODO: if Null is in the list, then add keyword allow_none=True
             arg = "[{0}]".format(', '.join(cls._get_trait_code(typ)
                                            for typ in typecode))
-            return construct_function_call('T.Union', Variable(arg))
+            return construct_function_call('jst.JSONUnion', Variable(arg))
         else:
             raise ValueError(f"unrecognized type identifier: {typecode}")
 
