@@ -1,5 +1,7 @@
 """Tools for dynamically importing generated modules from memory"""
 
+# TODO: this works in Python 3.6... need to test in older Python versions
+
 import sys
 import os
 from types import ModuleType
@@ -35,6 +37,9 @@ spec = {
 
 
 def load_dynamic_module(spec, parent=''):
+    # TODO: actually build a dependency graph
+    # TODO: handle dependencies between packages?
+
     expected_keys = {'package', 'subpackages', 'contents'}
     unrecognized_keys = set(spec.keys()) - expected_keys
     if unrecognized_keys:
@@ -44,16 +49,19 @@ def load_dynamic_module(spec, parent=''):
     else:
         packagename = spec['package']
     sys.modules[packagename] = ModuleType(packagename)
-    
+
     for subpackage in spec.get('subpackages', []):
         load_dynamic_module(subpackage, parent=packagename)
-    
+
     # Maintain a queue to make sure dependencies are loaded in the correct order
     # TODO: correctly handle circular imports?
     queue = list(spec.get('contents', {}).keys())
     loaded = set()
+
+    # seeking_dep is what we use to make sure circular imports don't result in
+    # infinite loops. Building a dependency graph would be a better approach
     seeking_dep = None
-    
+
     while queue:
         filename = queue.pop(0)
         contents = spec['contents'][filename]
@@ -61,15 +69,16 @@ def load_dynamic_module(spec, parent=''):
         deps = set(contents.get('dependencies', []))
         root, ext = os.path.splitext(filename)
         assert ext == '.py'
-        
+
         # if dependencies are not loaded, then don't execute this now
         if loaded.intersection(deps) < deps:
             queue.append(filename)
             if seeking_dep == filename:
                 raise ValueError("circular import detected")
-            seeking_dep = seeking_dep or filename
+            if seeking_dep is None:
+                seeking_dep = filename
             continue
-            
+
         if code:
             if filename == '__init__.py':
                 exec(code, sys.modules[packagename].__dict__)
@@ -77,12 +86,10 @@ def load_dynamic_module(spec, parent=''):
                 modulename = packagename + '.' + root
                 sys.modules[modulename] = ModuleType(modulename)
                 exec(code, sys.modules[modulename].__dict__)
+
         loaded.add(root)
+
+        # No longer seeking a dependency
         seeking_dep = None
-        
+
     return sys.modules[packagename]
-        
-dynmod = load_dynamic_module(spec)
-print(dynmod.x, dynmod.y)
-from dynmod import utils
-utils.pi
