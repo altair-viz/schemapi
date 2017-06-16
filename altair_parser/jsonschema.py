@@ -44,14 +44,16 @@ class JSONSchema(object):
         """Create the trait code for the given typecode"""
         typecode = self.type
 
-        if typecode in self.simple_types:
+        if "enum" in self.schema:
+            return construct_function_call('jst.JSONEnum', self.schema["enum"])
+        elif typecode in self.simple_types:
             info = self.traitlet_map[typecode]
             return construct_function_call(info['cls'],
                                            *info.get('args', []),
                                            **info.get('kwargs', {}))
         elif typecode == 'array':
             itemtype = self.make_child(self.schema['items']).trait_code
-            return 'jst.JSONArray({0})'.format(itemtype)
+            return construct_function_call('jst.JSONArray', Variable(itemtype))
         elif typecode == 'object':
             raise NotImplementedError('trait code for type = "object"')
         elif isinstance(typecode, list):
