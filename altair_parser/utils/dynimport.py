@@ -7,12 +7,12 @@ import os
 from types import ModuleType
 
 
-def load_dynamic_module(spec, parent=''):
-    """Load a dynamically imported module
+def load_dynamic_module(specification, parent=''):
+    """Dynamically import and load a module defined via a dict specification.
 
     Parameters
     ----------
-    spec : dict
+    specification : dict
         A dictionary specifying the module to load
     parent : string (optional)
         The name of the parent module, if any
@@ -24,10 +24,10 @@ def load_dynamic_module(spec, parent=''):
 
     Notes
     -----
-    spec should be a dict with up to three keys:
+    specifications should be a dict with up to three keys:
     - 'package' (required): a string giving the name of the package
     - 'contents' (optional): a dict mapping filenames to filespecs (see below)
-    - 'subpackages' (optional): a list of module specs
+    - 'subpackages' (optional): a list of specifications of submodules
 
     filespecs should be a dict with up to two keys:
     - 'code': a string giving the content of the file
@@ -49,21 +49,21 @@ def load_dynamic_module(spec, parent=''):
     # TODO: handle dependencies between packages?
 
     expected_keys = {'package', 'subpackages', 'contents'}
-    unrecognized_keys = set(spec.keys()) - expected_keys
+    unrecognized_keys = set(specification.keys()) - expected_keys
     if unrecognized_keys:
         raise ValueError("unrecognized keys: " + str(unrecognized_keys))
     if parent:
-        packagename = parent + '.' + spec['package']
+        packagename = parent + '.' + specification['package']
     else:
-        packagename = spec['package']
+        packagename = specification['package']
     sys.modules[packagename] = ModuleType(packagename)
 
-    for subpackage in spec.get('subpackages', []):
+    for subpackage in specification.get('subpackages', []):
         load_dynamic_module(subpackage, parent=packagename)
 
     # Maintain a queue to make sure dependencies are loaded in the correct order
     # TODO: correctly handle circular imports?
-    queue = list(spec.get('contents', {}).keys())
+    queue = list(specification.get('contents', {}).keys())
     loaded = set()
 
     # seeking_dep is what we use to make sure circular imports don't result in
@@ -72,7 +72,7 @@ def load_dynamic_module(spec, parent=''):
 
     while queue:
         filename = queue.pop(0)
-        contents = spec['contents'][filename]
+        contents = specification['contents'][filename]
         code = contents.get('code', '')
         deps = set(contents.get('dependencies', []))
         root, ext = os.path.splitext(filename)
