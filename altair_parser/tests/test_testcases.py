@@ -8,6 +8,7 @@ import jsonschema
 import pytest
 
 from .. import JSONSchema
+from ..utils import load_dynamic_module
 from . import _testcases
 
 testcases = {key: getattr(_testcases, key)
@@ -39,13 +40,10 @@ def test_testcases_traitlets(testcase):
     invalid = testcase.get('invalid', [])
 
     traitlets_obj = JSONSchema(schema)
-    print(traitlets_obj.object_code())
-    locals = {}
-    exec(traitlets_obj.object_code(), locals)
-    RootInstance = locals['RootInstance']
+    schema = load_dynamic_module(traitlets_obj.module_spec())
 
     for instance in valid:
-        RootInstance(**instance)
+        schema.RootInstance(**instance)
     for instance in invalid:
         with pytest.raises(T.TraitError):
-            RootInstance(**instance)
+            schema.RootInstance(**instance)

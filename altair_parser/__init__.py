@@ -1,1 +1,1 @@
-from .draft04 import JSONSchema
+from .jsonschema import JSONSchema

@@ -1,4 +1,5 @@
 import jinja2
+import os
 
 from .utils import construct_function_call, Variable
 
@@ -17,7 +18,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
 class JSONSchema(object):
     """A class to wrap JSON Schema objects and reason about their contents"""
     object_template = OBJECT_TEMPLATE
-    draft = 4
+    __draft__ = 4
 
     simple_types = ["boolean", "null", "number", "string"]
     valid_types = simple_types + ["array", "object"]
@@ -42,6 +43,7 @@ class JSONSchema(object):
 
     @classmethod
     def _get_trait_code(cls, typecode):
+        """Create the trait code for the given typecode"""
         if typecode in cls.simple_types:
             info = cls.traitlet_map[typecode]
             return construct_function_call(info['cls'],
@@ -76,10 +78,14 @@ class JSONSchema(object):
         return self._get_trait_code(self.type)
 
     @property
+    def is_root(self):
+        return self.context is self.schema
+
+    @property
     def classname(self):
         if self.name:
             return self.name
-        elif self.context is self.schema:
+        elif self.is_root:
             return "RootInstance"
         else:
             raise NotImplementedError("Anonymous class name")
@@ -90,7 +96,8 @@ class JSONSchema(object):
 
     @property
     def imports(self):
-        return ["import traitlets as T"]
+        return ["import traitlets as T",
+                "from . import jstraitlets as JST"]
 
     @property
     def properties(self):
@@ -101,3 +108,35 @@ class JSONSchema(object):
 
     def object_code(self):
         return jinja2.Template(self.object_template).render(cls=self)
+
+    def submodule_spec(self):
+        return {
+            'code': jinja2.Template(self.object_template).render(cls=self),
+            'dependencies': ['jstraitlets']
+        }
+
+    def module_spec(self, packagename='_schema'):
+        assert self.is_root
+
+        submodroot = self.classname.lower()
+
+        init_spec = {
+            'code': ('from .jstraitlets import *\n'
+                     f'from .{submodroot} import *\n'),
+            'dependencies': ['jstraitlets', submodroot]
+        }
+
+        jstraitlets_spec = {
+            'code': open(os.path.join(os.path.dirname(__file__),
+                                      'json_traitlets.py')).read()
+        }
+
+        modspec = {
+            'package': packagename,
+            'contents': {
+                '__init__.py': init_spec,
+                'jstraitlets.py': jstraitlets_spec,
+                f'{submodroot}.py': self.submodule_spec()
+            }
+        }
+        return modspec
