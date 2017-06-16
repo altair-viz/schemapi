@@ -26,7 +26,7 @@ class JSONNull(T.TraitType):
         self.error(obj, value)
 
 
-class JSONNumber(T.CFloat):
+class JSONNumber(T.Float):
     default_value = undefined
     info_text = "a JSON number"
 

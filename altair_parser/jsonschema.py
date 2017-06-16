@@ -23,13 +23,10 @@ class JSONSchema(object):
     simple_types = ["boolean", "null", "number", "string"]
     valid_types = simple_types + ["array", "object"]
     traitlet_map = {'array': {'cls': 'T.List'},
-                    'boolean': {'cls': 'T.Bool'},
-                    'null': {'cls': 'T.Integer',
-                             'kwargs': {'allow_none': True,
-                                        'minimum': 1,
-                                        'maximum': 0}},
-                    'number': {'cls': 'T.Float'},
-                    'string': {'cls': 'T.Unicode'},
+                    'boolean': {'cls': 'jst.JSONBoolean'},
+                    'null': {'cls': 'jst.JSONNull'},
+                    'number': {'cls': 'jst.JSONNumber'},
+                    'string': {'cls': 'jst.JSONString'},
                    }
 
     def __init__(self, schema, context=None, parent=None, name=None):
@@ -97,7 +94,7 @@ class JSONSchema(object):
     @property
     def imports(self):
         return ["import traitlets as T",
-                "from . import jstraitlets as JST"]
+                "from . import jstraitlets as jst"]
 
     @property
     def properties(self):

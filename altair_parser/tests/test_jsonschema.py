@@ -3,13 +3,11 @@ from .. import JSONSchema
 
 
 @pytest.mark.parametrize('typecode,output',
-                         [('string', 'T.Unicode()'),
-                          ('boolean', 'T.Bool()'),
-                          ('number', 'T.Float()'),
-                          ('null',
-                           'T.Integer(allow_none=True, minimum=1, maximum=0)'),
+                         [('string', 'jst.JSONString()'),
+                          ('boolean', 'jst.JSONBoolean()'),
+                          ('number', 'jst.JSONNumber()'),
+                          ('null', 'jst.JSONNull()'),
                           (['string', 'number'],
-                           'T.Union([T.Unicode(), T.Float()])')])
+                           'T.Union([jst.JSONString(), jst.JSONNumber()])')])
 def test_trait_code(typecode, output):
     assert JSONSchema._get_trait_code(typecode) == output
-    

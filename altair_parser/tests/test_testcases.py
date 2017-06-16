@@ -45,5 +45,6 @@ def test_testcases_traitlets(testcase):
     for instance in valid:
         schema.RootInstance(**instance)
     for instance in invalid:
+        print(instance)
         with pytest.raises(T.TraitError):
             schema.RootInstance(**instance)
