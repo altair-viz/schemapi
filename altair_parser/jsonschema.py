@@ -20,12 +20,13 @@ class JSONSchema(object):
     object_template = OBJECT_TEMPLATE
     __draft__ = 4
 
-    simple_types = ["boolean", "null", "number", "string"]
+    simple_types = ["boolean", "null", "number", "integer", "string"]
     valid_types = simple_types + ["array", "object"]
     traitlet_map = {'array': {'cls': 'jst.JSONArray'},
                     'boolean': {'cls': 'jst.JSONBoolean'},
                     'null': {'cls': 'jst.JSONNull'},
                     'number': {'cls': 'jst.JSONNumber'},
+                    'integer': {'cls': 'jst.JSONInteger'},
                     'string': {'cls': 'jst.JSONString'},
                    }
 

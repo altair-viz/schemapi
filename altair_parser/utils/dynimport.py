@@ -102,7 +102,7 @@ def load_dynamic_module(name, specification, reload_module=False):
     if isinstance(sys.meta_path[0], DynamicImporter):
         sys.meta_path[0].update(**dct)
     else:
-        importer = DynamicImporter(**{name: specification})
+        importer = DynamicImporter(**dct)
         sys.meta_path.insert(0, importer)
     if reload_module and name in sys.modules:
         for pkgname in list(sys.modules.keys()):
