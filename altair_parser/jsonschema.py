@@ -50,7 +50,7 @@ class JSONSchema(object):
                                            *info.get('args', []),
                                            **info.get('kwargs', {}))
         elif typecode == 'array':
-            itemtype = self.make_child(schema['items']).trait_code
+            itemtype = self.make_child(self.schema['items']).trait_code
             return 'jst.JSONArray({0})'.format(itemtype)
         elif typecode == 'object':
             raise NotImplementedError('trait code for type = "object"')

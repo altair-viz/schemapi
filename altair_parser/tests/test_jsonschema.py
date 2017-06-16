@@ -8,6 +8,8 @@ from .. import JSONSchema
                           ({'type': 'number'}, 'jst.JSONNumber()'),
                           ({'type': 'null'}, 'jst.JSONNull()'),
                           ({'type': ['string', 'number']},
-                           'jst.JSONUnion([jst.JSONString(), jst.JSONNumber()])')])
+                           'jst.JSONUnion([jst.JSONString(), jst.JSONNumber()])'),
+                          ({'type': 'array', 'items': {'type': 'string'}},
+                           'jst.JSONArray(jst.JSONString())')])
 def test_trait_code(spec, output):
     assert JSONSchema(spec).trait_code == output
