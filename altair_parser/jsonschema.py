@@ -39,21 +39,24 @@ class JSONSchema(object):
         # defines its context
         self.context = context or schema
 
-    @classmethod
-    def _get_trait_code(cls, typecode):
+    @property
+    def trait_code(self):
         """Create the trait code for the given typecode"""
-        if typecode in cls.simple_types:
-            info = cls.traitlet_map[typecode]
+        typecode = self.type
+
+        if typecode in self.simple_types:
+            info = self.traitlet_map[typecode]
             return construct_function_call(info['cls'],
                                            *info.get('args', []),
                                            **info.get('kwargs', {}))
         elif typecode == 'array':
-            raise NotImplementedError('trait code for type = "array"')
+            itemtype = self.make_child(schema['items']).trait_code
+            return 'jst.JSONArray({0})'.format(itemtype)
         elif typecode == 'object':
             raise NotImplementedError('trait code for type = "object"')
         elif isinstance(typecode, list):
             # TODO: if Null is in the list, then add keyword allow_none=True
-            arg = "[{0}]".format(', '.join(cls._get_trait_code(typ)
+            arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
                                            for typ in typecode))
             return construct_function_call('jst.JSONUnion', Variable(arg))
         else:
@@ -70,10 +73,6 @@ class JSONSchema(object):
     def type(self):
         # TODO: should the default type be considered object?
         return self.schema.get('type', 'object')
-
-    @property
-    def trait_code(self):
-        return self._get_trait_code(self.type)
 
     @property
     def is_root(self):

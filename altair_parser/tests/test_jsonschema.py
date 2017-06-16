@@ -2,12 +2,12 @@ import pytest
 from .. import JSONSchema
 
 
-@pytest.mark.parametrize('typecode,output',
-                         [('string', 'jst.JSONString()'),
-                          ('boolean', 'jst.JSONBoolean()'),
-                          ('number', 'jst.JSONNumber()'),
-                          ('null', 'jst.JSONNull()'),
-                          (['string', 'number'],
+@pytest.mark.parametrize('spec,output',
+                         [({'type': 'string'}, 'jst.JSONString()'),
+                          ({'type': 'boolean'}, 'jst.JSONBoolean()'),
+                          ({'type': 'number'}, 'jst.JSONNumber()'),
+                          ({'type': 'null'}, 'jst.JSONNull()'),
+                          ({'type': ['string', 'number']},
                            'jst.JSONUnion([jst.JSONString(), jst.JSONNumber()])')])
-def test_trait_code(typecode, output):
-    assert JSONSchema._get_trait_code(typecode) == output
+def test_trait_code(spec, output):
+    assert JSONSchema(spec).trait_code == output
