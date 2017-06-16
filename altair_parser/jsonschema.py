@@ -47,7 +47,7 @@ class JSONSchema(object):
                                            *info.get('args', []),
                                            **info.get('kwargs', {}))
         elif typecode == 'array':
-            raise NotImplementedError('type = "array"')
+            raise NotImplementedError('trait code for type = "array"')
         elif typecode == 'object':
             raise NotImplementedError('trait code for type = "object"')
         elif isinstance(typecode, list):

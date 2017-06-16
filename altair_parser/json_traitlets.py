@@ -76,3 +76,48 @@ class JSONBoolean(T.Bool):
         if self.allow_undefined and value is undefined:
             return value
         return super(JSONBoolean, self).validate(obj, value)
+
+
+class JSONUnion(T.Union):
+    allow_undefined = True
+    default_value = undefined
+    info_text = "a Union of types"
+
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONUnion, self).__init__(**kwargs)
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+        return super(JSONUnion, self).validate(obj, value)
+
+
+class JSONArray(T.List):
+    allow_undefined = True
+    default_value = undefined
+    info_text = "an Array of values"
+
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONArray, self).__init__(**kwargs)
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+        return super(JSONArray, self).validate(obj, value)
+
+
+class JSONEnum(T.Enum):
+    allow_undefined = True
+    default_value = undefined
+    info_text = "an enum of values"
+
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONEnum, self).__init__(**kwargs)
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+        return super(JSONEnum, self).validate(obj, value)
