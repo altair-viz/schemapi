@@ -17,40 +17,62 @@ undefined = UndefinedType()
 
 
 class JSONNull(T.TraitType):
+    allow_undefined = True
     default_value = undefined
     info_text = 'a JSON null value'
 
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONNull, self).__init__(**kwargs)
+
     def validate(self, obj, value):
-        if value is undefined or value is None:
+        if self.allow_undefined and value is undefined:
+            return value
+        elif value is None:
             return value
         self.error(obj, value)
 
 
 class JSONNumber(T.Float):
+    allow_undefined = True
     default_value = undefined
     info_text = "a JSON number"
 
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONNumber, self).__init__(**kwargs)
+
     def validate(self, obj, value):
-        if value is undefined:
+        if self.allow_undefined and value is undefined:
             return value
-        return super().validate(obj, value)
+        return super(JSONNumber, self).validate(obj, value)
 
 
 class JSONString(T.Unicode):
+    allow_undefined = True
     default_value = undefined
     info_text = "a JSON string"
 
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONString, self).__init__(**kwargs)
+
     def validate(self, obj, value):
-        if value is undefined:
+        if self.allow_undefined and value is undefined:
             return value
-        return super().validate(obj, value)
+        return super(JSONString, self).validate(obj, value)
 
 
 class JSONBoolean(T.Bool):
+    allow_undefined = True
     default_value = undefined
     info_text = "a JSON boolean"
 
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONBoolean, self).__init__(**kwargs)
+
     def validate(self, obj, value):
-        if value is undefined:
+        if self.allow_undefined and value is undefined:
             return value
-        return super().validate(obj, value)
+        return super(JSONBoolean, self).validate(obj, value)
