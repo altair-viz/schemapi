@@ -40,11 +40,11 @@ def test_testcases_traitlets(testcase):
     invalid = testcase.get('invalid', [])
 
     traitlets_obj = JSONSchema(schema)
-    schema = load_dynamic_module(traitlets_obj.module_spec())
+    schema = load_dynamic_module('_schema', traitlets_obj.module_spec(),
+                                 reload_module=True)
 
     for instance in valid:
         schema.RootInstance(**instance)
     for instance in invalid:
-        print(instance)
         with pytest.raises(T.TraitError):
             schema.RootInstance(**instance)

@@ -48,6 +48,21 @@ class JSONNumber(T.Float):
         return super(JSONNumber, self).validate(obj, value)
 
 
+class JSONInteger(T.Integer):
+    allow_undefined = True
+    default_value = undefined
+    info_text = "a JSON integer"
+
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONInteger, self).__init__(**kwargs)
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+        return super(JSONInteger, self).validate(obj, value)
+
+
 class JSONString(T.Unicode):
     allow_undefined = True
     default_value = undefined

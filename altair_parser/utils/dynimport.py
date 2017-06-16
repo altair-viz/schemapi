@@ -1,103 +1,111 @@
 """Tools for dynamically importing generated modules from memory"""
 
 # TODO: this works in Python 3.6... need to test in older Python versions
+# TODO: define the JSON schema for the specifications below
 
 import sys
-import os
-from types import ModuleType
+import types
+import importlib
 
 
-def load_dynamic_module(specification, parent=''):
-    """Dynamically import and load a module defined via a dict specification.
+class DynamicImporter(object):
+    """An import hook for dynamic imports"""
+    def __init__(self, **pkgspecs):
+        self.pkgspecs = pkgspecs
+
+    def update(self, **pkgspecs):
+        self.pkgspecs.update(pkgspecs)
+
+    def _get_spec(self, fullname):
+        names = fullname.split('.')
+        context = self.pkgspecs
+        for name in names[:-1]:
+            context = context[name]
+        return names[-1], context
+
+    def _in_package(self, fullname):
+        try:
+            name, spec = self._get_spec(fullname)
+        except KeyError:
+            return False
+        else:
+            return (name in spec) or (name + '.py' in spec)
+
+    def _is_package(self, fullname):
+        name, spec = self._get_spec(fullname)
+        if name in spec:
+            return True
+        elif name + '.py' in spec:
+            return False
+
+    def _get_code(self, fullname):
+        name, spec = self._get_spec(fullname)
+        if name in spec:
+            return spec[name].get('__init__.py', '')
+        elif name + '.py' in spec:
+            return spec[name + '.py']
+        else:
+            raise KeyError()
+
+    def find_module(self, fullname, path=None):
+        if self._in_package(fullname):
+            return self
+        else:
+            return None
+
+    def load_module(self, fullname):
+        if fullname in sys.modules:
+            return sys.modules[fullname]
+
+        module = types.ModuleType(fullname)
+        module.__file__ = "<string>"
+        if self._is_package(fullname):
+            # Presence of __path__ makes it a package
+            module.__path__ = '<dynamic import>'
+        sys.modules[fullname] = module
+        code = self._get_code(fullname)
+        if code:
+            exec(code, module.__dict__)
+        return module
+
+
+def load_dynamic_module(name, specification, reload_module=False):
+    """Dynamically import and load a module defined via a dict specification
 
     Parameters
     ----------
+    name : string
+        The name of the module to create and load
     specification : dict
-        A dictionary specifying the module to load
-    parent : string (optional)
-        The name of the parent module, if any
+        A dictionary specifying the content of the module (see below)
+    reload_module : boolean
+        If True, then remove any previous version of the package
 
     Returns
     -------
     mod : ModuleType
         The dynamically loaded module
 
-    Notes
-    -----
-    specifications should be a dict with up to three keys:
-    - 'package' (required): a string giving the name of the package
-    - 'contents' (optional): a dict mapping filenames to filespecs (see below)
-    - 'subpackages' (optional): a list of specifications of submodules
-
-    filespecs should be a dict with up to two keys:
-    - 'code': a string giving the content of the file
-    - 'dependencies': a list of modules the code imports
-
     Examples
     --------
-    >>> spec = {'package': 'mymod',
-    ...         'contents': {'__init__.py': {'code': 'x = 4'},
-    ...                      'foo.py': {'code': 'message="hello world"'}}}
-    >>> mymod = load_dynamic_module(spec)
-    >>> mymod.x
-    4
-    >>> from mymod.foo import message
-    >>> print(message)
+    >>> spec = {'__init__.py': 'from .foo import message',
+    ...         'foo.py': 'message="hello world"',
+    ...         'utils': {'__init__.py': 'f = lambda x: 2 * x'}}
+    >>> mymod = load_dynamic_module('mymod', spec)
+    >>> print(mymod.message)
     hello world
+    >>> from mymod.utils import f
+    >>> f(10)
+    20
     """
-    # TODO: actually build a dependency graph
-    # TODO: handle dependencies between packages?
-
-    expected_keys = {'package', 'subpackages', 'contents'}
-    unrecognized_keys = set(specification.keys()) - expected_keys
-    if unrecognized_keys:
-        raise ValueError("unrecognized keys: " + str(unrecognized_keys))
-    if parent:
-        packagename = parent + '.' + specification['package']
+    dct = {name: specification}
+    if isinstance(sys.meta_path[0], DynamicImporter):
+        sys.meta_path[0].update(**dct)
     else:
-        packagename = specification['package']
-    sys.modules[packagename] = ModuleType(packagename)
-
-    for subpackage in specification.get('subpackages', []):
-        load_dynamic_module(subpackage, parent=packagename)
-
-    # Maintain a queue to make sure dependencies are loaded in the correct order
-    # TODO: correctly handle circular imports?
-    queue = list(specification.get('contents', {}).keys())
-    loaded = set()
-
-    # seeking_dep is what we use to make sure circular imports don't result in
-    # infinite loops. Building a dependency graph would be a better approach
-    seeking_dep = None
-
-    while queue:
-        filename = queue.pop(0)
-        contents = specification['contents'][filename]
-        code = contents.get('code', '')
-        deps = set(contents.get('dependencies', []))
-        root, ext = os.path.splitext(filename)
-        assert ext == '.py'
-
-        # if dependencies are not loaded, then don't execute this now
-        if loaded.intersection(deps) < deps:
-            queue.append(filename)
-            if seeking_dep == filename:
-                raise ValueError("circular import detected")
-            if seeking_dep is None:
-                seeking_dep = filename
-            continue
-
-        if code:
-            if filename == '__init__.py':
-                exec(code, sys.modules[packagename].__dict__)
-            else:
-                modulename = packagename + '.' + root
-                sys.modules[modulename] = ModuleType(modulename)
-                exec(code, sys.modules[modulename].__dict__)
-
-        loaded.add(root)
-
-        # No longer seeking a dependency
-        seeking_dep = None
-
-    return sys.modules[packagename]
+        importer = DynamicImporter(**{name: specification})
+        sys.meta_path.insert(0, importer)
+    if reload_module and name in sys.modules:
+        for pkgname in list(sys.modules.keys()):
+            if pkgname.split('.')[0] == name:
+                del sys.modules[pkgname]
+    return importlib.import_module(name)

@@ -103,37 +103,15 @@ class JSONSchema(object):
         return {key: self.make_child(val)
                 for key, val in properties.items()}
 
-    def object_code(self):
-        return jinja2.Template(self.object_template).render(cls=self)
-
-    def submodule_spec(self):
-        return {
-            'code': jinja2.Template(self.object_template).render(cls=self),
-            'dependencies': ['jstraitlets']
-        }
-
-    def module_spec(self, packagename='_schema'):
+    def module_spec(self):
         assert self.is_root
-
         submodroot = self.classname.lower()
 
-        init_spec = {
-            'code': ('from .jstraitlets import *\n'
-                     f'from .{submodroot} import *\n'),
-            'dependencies': ['jstraitlets', submodroot]
-        }
-
-        jstraitlets_spec = {
-            'code': open(os.path.join(os.path.dirname(__file__),
-                                      'json_traitlets.py')).read()
-        }
-
         modspec = {
-            'package': packagename,
-            'contents': {
-                '__init__.py': init_spec,
-                'jstraitlets.py': jstraitlets_spec,
-                f'{submodroot}.py': self.submodule_spec()
-            }
+            '__init__.py': ('from .jstraitlets import *\n'
+                            f'from .{submodroot} import *\n'),
+            'jstraitlets.py': open(os.path.join(os.path.dirname(__file__),
+                                   'json_traitlets.py')).read(),
+            f'{submodroot}.py': jinja2.Template(self.object_template).render(cls=self)
         }
         return modspec
