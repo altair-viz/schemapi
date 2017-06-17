@@ -125,10 +125,10 @@ array_types = {
         }
     ],
     'invalid': [
-        # {
-        #     'intarray': [1, 2, 3.14],
-        #     'strnullarray': ["hello", "there", None]
-        # },
+        {
+            'intarray': [1, 2, 3.14],
+            'strnullarray': ["hello", "there", None]
+        },
         {
             'intarray': [1, 2, 3],
             'strnullarray': [42, "str", None]
