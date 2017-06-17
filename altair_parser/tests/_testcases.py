@@ -104,3 +104,35 @@ compound_types = {
         }
     ]
 }
+
+array_types = {
+    'schema': {
+        'properties': {
+            'intarray': {
+                'type': 'array',
+                'items': {'type': 'integer'}
+            },
+            'strnullarray': {
+                'type': 'array',
+                'items': {'type': ['string', 'null']}
+            }
+        }
+    },
+    'valid': [
+        {
+            'intarray': [1, 2, 3],
+            'strnullarray': ["hello", "there", None]
+        }
+    ],
+    'invalid': [
+        # {
+        #     'intarray': [1, 2, 3.14],
+        #     'strnullarray': ["hello", "there", None]
+        # },
+        {
+            'intarray': [1, 2, 3],
+            'strnullarray': [42, "str", None]
+        }
+    ],
+
+}

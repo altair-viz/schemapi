@@ -113,9 +113,9 @@ class JSONArray(T.List):
     default_value = undefined
     info_text = "an Array of values"
 
-    def __init__(self, allow_undefined=True, **kwargs):
+    def __init__(self, trait, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
-        super(JSONArray, self).__init__(**kwargs)
+        super(JSONArray, self).__init__(trait, **kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
@@ -128,9 +128,9 @@ class JSONEnum(T.Enum):
     default_value = undefined
     info_text = "an enum of values"
 
-    def __init__(self, allow_undefined=True, **kwargs):
+    def __init__(self, values, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
-        super(JSONEnum, self).__init__(**kwargs)
+        super(JSONEnum, self).__init__(values, **kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
@@ -143,9 +143,9 @@ class JSONInstance(T.Instance):
     default_value = undefined
     info_text = "an instance of an object"
 
-    def __init__(self, allow_undefined=True, **kwargs):
+    def __init__(self, instance, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
-        super(JSONInstance, self).__init__(**kwargs)
+        super(JSONInstance, self).__init__(instance, **kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:

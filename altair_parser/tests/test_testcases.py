@@ -42,6 +42,7 @@ def test_testcases_traitlets(testcase):
     traitlets_obj = JSONSchema(schema)
     schema = load_dynamic_module('_schema', traitlets_obj.module_spec(),
                                  reload_module=True)
+    print(traitlets_obj.module_spec()['rootinstance.py'])
 
     for instance in valid:
         schema.RootInstance(**instance)
