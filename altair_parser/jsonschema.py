@@ -44,15 +44,38 @@ class JSONSchema(object):
         """Create the trait code for the given typecode"""
         typecode = self.type
 
-        if "enum" in self.schema:
+        # TODO: check how jsonschema handles multiple entries...
+        #       e.g. anyOf + enum or $ref + oneOf
+
+        if "not" in self.schema:
+            raise NotImplementedError("not")
+        elif "$ref" in self.schema:
+            raise NotImplementedError("$ref")
+        elif "$id" in self.schema:
+            raise NotImplementedError("$id")
+        elif "anyOf" in self.schema:
+            raise NotImplementedError("anyOf")
+        elif "allOf" in self.schema:
+            raise NotImplementedError("allOf")
+        elif "oneOf" in self.schema:
+            raise NotImplementedError("oneOf")
+        elif "enum" in self.schema:
             return construct_function_call('jst.JSONEnum', self.schema["enum"])
         elif typecode in self.simple_types:
+            # TODO: implement checks like maximum, minimum, format, etc.
             info = self.traitlet_map[typecode]
             return construct_function_call(info['cls'],
                                            *info.get('args', []),
                                            **info.get('kwargs', {}))
         elif typecode == 'array':
-            itemtype = self.make_child(self.schema['items']).trait_code
+            # TODO: implement checks like maxLength, minLength, etc.
+            items = self.schema['items']
+            if isinstance(items, list):
+                # TODO: need to implement this in the JSONArray traitlet
+                # Also need to check value of "additionalItems"
+                raise NotImplementedError("items as list")
+            else:
+                itemtype = self.make_child(items).trait_code
             return construct_function_call('jst.JSONArray', Variable(itemtype))
         elif typecode == 'object':
             raise NotImplementedError('trait code for type = "object"')
@@ -70,6 +93,26 @@ class JSONSchema(object):
         """
         return self.__class__(schema, context=self.context,
                               parent=self, name=name)
+
+    @property
+    def title(self):
+        return self.schema.get('title', '')
+
+    @property
+    def description(self):
+        return self.schema.get('description', '')
+
+    @property
+    def default(self):
+        return self.schema.get('default', None)
+
+    @property
+    def definitions(self):
+        return self.schema.get('definitions', {})
+
+    @property
+    def examples(self):
+        return self.schema.get('examples', [])
 
     @property
     def type(self):
