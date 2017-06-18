@@ -8,8 +8,11 @@ import types
 import importlib
 
 
-class DynamicImporter(object):
-    """An import hook for dynamic imports"""
+class DynamicImporter(importlib.abc.MetaPathFinder):
+    """An import hook for dynamic imports
+
+    This class is a finder and loader in one.
+    """
     def __init__(self, **pkgspecs):
         self.pkgspecs = pkgspecs
 
@@ -54,16 +57,19 @@ class DynamicImporter(object):
             return None
 
     def load_module(self, fullname):
-        if fullname in sys.modules:
-            return sys.modules[fullname]
-
-        module = types.ModuleType(fullname)
-        module.__file__ = "<string>"
-        if self._is_package(fullname):
-            # Presence of __path__ makes it a package
-            module.__path__ = '<dynamic import>'
-        sys.modules[fullname] = module
+        # Following PEP 302
         code = self._get_code(fullname)
+        ispkg = self._is_package(fullname)
+
+        module = sys.modules.setdefault(fullname, types.ModuleType(fullname))
+        module.__name__ = fullname
+        module.__file__ = "<{0}>".format(self.__class__.__name__)
+        module.__loader__ = self
+        if ispkg:
+            module.__path__ = []
+            module.__package__ = fullname
+        else:
+            module.__package__ = fullname.rpartition('.')[0]
         if code:
             exec(code, module.__dict__)
         return module

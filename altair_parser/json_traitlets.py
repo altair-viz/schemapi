@@ -151,3 +151,7 @@ class JSONInstance(T.Instance):
         if self.allow_undefined and value is undefined:
             return value
         return super(JSONInstance, self).validate(obj, value)
+
+
+# TODO: - create traits for AnyOf(), OneOf(), Not()
+#       - create meta-trait for multiple checks in one? Use Allof?

@@ -39,54 +39,6 @@ class JSONSchema(object):
         # defines its context
         self.context = context or schema
 
-    @property
-    def trait_code(self):
-        """Create the trait code for the given typecode"""
-        typecode = self.type
-
-        # TODO: check how jsonschema handles multiple entries...
-        #       e.g. anyOf + enum or $ref + oneOf
-
-        if "not" in self.schema:
-            raise NotImplementedError("not")
-        elif "$ref" in self.schema:
-            raise NotImplementedError("$ref")
-        elif "$id" in self.schema:
-            raise NotImplementedError("$id")
-        elif "anyOf" in self.schema:
-            raise NotImplementedError("anyOf")
-        elif "allOf" in self.schema:
-            raise NotImplementedError("allOf")
-        elif "oneOf" in self.schema:
-            raise NotImplementedError("oneOf")
-        elif "enum" in self.schema:
-            return construct_function_call('jst.JSONEnum', self.schema["enum"])
-        elif typecode in self.simple_types:
-            # TODO: implement checks like maximum, minimum, format, etc.
-            info = self.traitlet_map[typecode]
-            return construct_function_call(info['cls'],
-                                           *info.get('args', []),
-                                           **info.get('kwargs', {}))
-        elif typecode == 'array':
-            # TODO: implement checks like maxLength, minLength, etc.
-            items = self.schema['items']
-            if isinstance(items, list):
-                # TODO: need to implement this in the JSONArray traitlet
-                # Also need to check value of "additionalItems"
-                raise NotImplementedError("items as list")
-            else:
-                itemtype = self.make_child(items).trait_code
-            return construct_function_call('jst.JSONArray', Variable(itemtype))
-        elif typecode == 'object':
-            raise NotImplementedError('trait code for type = "object"')
-        elif isinstance(typecode, list):
-            # TODO: if Null is in the list, then add keyword allow_none=True
-            arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
-                                           for typ in typecode))
-            return construct_function_call('jst.JSONUnion', Variable(arg))
-        else:
-            raise ValueError(f"unrecognized type identifier: {typecode}")
-
     def make_child(self, schema, name=None):
         """
         Make a child instance, appropriately defining the parent and context
@@ -103,12 +55,12 @@ class JSONSchema(object):
         return self.schema.get('description', '')
 
     @property
-    def default(self):
-        return self.schema.get('default', None)
-
-    @property
     def definitions(self):
         return self.schema.get('definitions', {})
+
+    @property
+    def default(self):
+        return self.schema.get('default', None)
 
     @property
     def examples(self):
@@ -118,6 +70,13 @@ class JSONSchema(object):
     def type(self):
         # TODO: should the default type be considered object?
         return self.schema.get('type', 'object')
+
+    @property
+    def properties(self):
+        """Return property dictionary wrapped as JSONSchema objects"""
+        properties = self.schema.get('properties', {})
+        return {key: self.make_child(val)
+                for key, val in properties.items()}
 
     @property
     def is_root(self):
@@ -142,11 +101,50 @@ class JSONSchema(object):
                 "from . import jstraitlets as jst"]
 
     @property
-    def properties(self):
-        """Return property dictionary wrapped as JSONSchema objects"""
-        properties = self.schema.get('properties', {})
-        return {key: self.make_child(val)
-                for key, val in properties.items()}
+    def trait_code(self):
+        """Create the trait code for the given typecode"""
+        typecode = self.type
+
+        # TODO: check how jsonschema handles multiple entries...
+        #       e.g. anyOf + enum or $ref + oneOf
+
+        if "not" in self.schema:
+            raise NotImplementedError("'not' keyword")
+        elif "$ref" in self.schema:
+            raise NotImplementedError("'$ref' keyword")
+        elif "anyOf" in self.schema:
+            raise NotImplementedError("'anyOf' keyword")
+        elif "allOf" in self.schema:
+            raise NotImplementedError("'allOf' keyword")
+        elif "oneOf" in self.schema:
+            raise NotImplementedError("'oneOf' keyword")
+        elif "enum" in self.schema:
+            return construct_function_call('jst.JSONEnum', self.schema["enum"])
+        elif typecode in self.simple_types:
+            # TODO: implement checks like maximum, minimum, format, etc.
+            info = self.traitlet_map[typecode]
+            return construct_function_call(info['cls'],
+                                           *info.get('args', []),
+                                           **info.get('kwargs', {}))
+        elif typecode == 'array':
+            # TODO: implement checks like maxLength, minLength, etc.
+            items = self.schema['items']
+            if isinstance(items, list):
+                # TODO: need to implement this in the JSONArray traitlet
+                # Also need to check value of "additionalItems"
+                raise NotImplementedError("'items' keyword as list")
+            else:
+                itemtype = self.make_child(items).trait_code
+            return construct_function_call('jst.JSONArray', Variable(itemtype))
+        elif typecode == 'object':
+            raise NotImplementedError('trait code for type = "object"')
+        elif isinstance(typecode, list):
+            # TODO: if Null is in the list, then add keyword allow_none=True
+            arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
+                                           for typ in typecode))
+            return construct_function_call('jst.JSONUnion', Variable(arg))
+        else:
+            raise ValueError(f"unrecognized type identifier: {typecode}")
 
     def module_spec(self):
         assert self.is_root
