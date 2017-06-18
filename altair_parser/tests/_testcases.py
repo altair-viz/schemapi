@@ -134,5 +134,54 @@ array_types = {
             'strnullarray': [42, "str", None]
         }
     ],
+}
 
+enum_types = {
+    'schema': {
+        'properties': {
+            'intenum': {
+                'enum': [1, 2, 3]
+            },
+            'strenum': {
+                'enum': ['a', 'b', 'c']
+            },
+            'mixedenum': {
+                'enum': [1, 'A', False, None],
+            }
+        }
+    },
+    'valid': [
+        {
+            'intenum': 3,
+            'strenum': 'b',
+            'mixedenum': 'A'
+        },
+        {
+            'intenum': 2,
+            'strenum': 'a',
+            'mixedenum': False
+        },
+        {
+            'intenum': 1,
+            'strenum': 'c',
+            'mixedenum': None
+        }
+    ],
+    'invalid': [
+        {
+            'intenum': '3',
+            'strenum': 'b',
+            'mixedenum': 'A'
+        },
+        {
+            'intenum': 2,
+            'strenum': 'a',
+            'mixedenum': 'False'
+        },
+        {
+            'intenum': 1,
+            'strenum': 3.14,
+            'mixedenum': None
+        }
+    ]
 }
