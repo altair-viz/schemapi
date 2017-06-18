@@ -3,7 +3,7 @@ JSONSchema test cases.
 
 Each object defined in this file should be a dictionary with three keys:
 
-- 'schema' should be to a dictionary defining a valid JSON schema.
+- 'schema' should be a dictionary defining a valid JSON schema.
 - 'valid' should be a list of dictionaries, each of which is a valid
   instance under the specified schema.
 - 'invalid' should be a list of dictionaries, each of which is an invalid
@@ -140,10 +140,12 @@ enum_types = {
     'schema': {
         'properties': {
             'intenum': {
-                'enum': [1, 2, 3]
+                'enum': [1, 2, 3],
+                'type': 'integer'
             },
             'strenum': {
-                'enum': ['a', 'b', 'c']
+                'enum': ['a', 'b', 'c'],
+                'type': 'string'
             },
             'mixedenum': {
                 'enum': [1, 'A', False, None],
