@@ -92,11 +92,21 @@ class JSONSchema(object):
             raise NotImplementedError("Anonymous class name")
 
     @property
+    def filename(self):
+        if self.name:
+            return self.name.lower() + '.py'
+        elif self.is_root:
+            return "rootinstance.py"
+        else:
+            raise NotImplementedError("Anonymous filename")
+
+    @property
     def baseclass(self):
         return "T.HasTraits"
 
     @property
     def imports(self):
+        # TODO: add imports to properties
         return ["import traitlets as T",
                 "from . import jstraitlets as jst"]
 
@@ -146,15 +156,28 @@ class JSONSchema(object):
         else:
             raise ValueError(f"unrecognized type identifier: {typecode}")
 
+    def wrapped_definitions(self):
+        return {name.lower(): self.make_child(schema, name=name)
+                for name, schema in self.definitions.items()}
+
+    def object_code(self):
+        return jinja2.Template(self.object_template).render(cls=self)
+
     def module_spec(self):
         assert self.is_root
         submodroot = self.classname.lower()
 
         modspec = {
-            '__init__.py': ('from .jstraitlets import *\n'
-                            f'from .{submodroot} import *\n'),
             'jstraitlets.py': open(os.path.join(os.path.dirname(__file__),
                                    'json_traitlets.py')).read(),
-            f'{submodroot}.py': jinja2.Template(self.object_template).render(cls=self)
+            self.filename: self.object_code()
         }
+
+
+        modspec['__init__.py'] = ('from .jstraitlets import *\n'
+                                  f'from .{submodroot} import *\n')
+
+        modspec.update({schema.filename: schema.object_code()
+                        for schema in self.wrapped_definitions().values()})
+
         return modspec
