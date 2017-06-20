@@ -20,6 +20,7 @@ class JSONSchema(object):
     object_template = OBJECT_TEMPLATE
     __draft__ = 4
 
+    _cached_references = {}
     simple_types = ["boolean", "null", "number", "integer", "string"]
     valid_types = simple_types + ["array", "object"]
     traitlet_map = {'array': {'cls': 'jst.JSONArray'},
@@ -29,6 +30,13 @@ class JSONSchema(object):
                     'integer': {'cls': 'jst.JSONInteger'},
                     'string': {'cls': 'jst.JSONString'},
                    }
+    attr_defaults = {'title': '',
+                     'description': '',
+                     'properties': {},
+                     'definitions': {},
+                     'default': None,
+                     'examples': {},
+                     'type': 'object'}
 
     def __init__(self, schema, context=None, parent=None, name=None):
         self.schema = schema
@@ -46,38 +54,23 @@ class JSONSchema(object):
         return self.__class__(schema, context=self.context,
                               parent=self, name=name)
 
-    @property
-    def title(self):
-        return self.schema.get('title', '')
-
-    @property
-    def description(self):
-        return self.schema.get('description', '')
-
-    @property
-    def properties(self):
-        return self.schema.get('properties', '')
-
-    @property
-    def definitions(self):
-        return self.schema.get('definitions', {})
-
-    @property
-    def default(self):
-        return self.schema.get('default', None)
-
-    @property
-    def examples(self):
-        return self.schema.get('examples', [])
-
-    @property
-    def type(self):
-        # TODO: should the default type be considered object?
-        return self.schema.get('type', 'object')
+    def __getattr__(self, attr):
+        if attr in self.attr_defaults:
+            return self.schema.get(attr, self.attr_defaults[attr])
+        raise AttributeError(f"'{self.__class__.__name__}' object "
+                             f"has no attribute '{attr}'")
 
     @property
     def is_root(self):
         return self.context is self.schema
+
+    @property
+    def is_trait(self):
+        return self.type != 'object'
+
+    @property
+    def is_object(self):
+        return self.type == 'object'
 
     @property
     def classname(self):
@@ -90,12 +83,7 @@ class JSONSchema(object):
 
     @property
     def filename(self):
-        if self.name:
-            return self.name.lower() + '.py'
-        elif self.is_root:
-            return "rootinstance.py"
-        else:
-            raise NotImplementedError("Anonymous filename")
+        return self.classname.lower() + '.py'
 
     @property
     def baseclass(self):
@@ -106,6 +94,15 @@ class JSONSchema(object):
         # TODO: add imports to properties
         return ["import traitlets as T",
                 "from . import jstraitlets as jst"]
+
+    def wrapped_definitions(self):
+        return {name.lower(): self.make_child(schema, name=name)
+                for name, schema in self.definitions.items()}
+
+    def wrapped_properties(self):
+        """Return property dictionary wrapped as JSONSchema objects"""
+        return {key: self.make_child(val)
+                for key, val in self.properties.items()}
 
     @property
     def trait_code(self):
@@ -153,15 +150,6 @@ class JSONSchema(object):
         else:
             raise ValueError(f"unrecognized type identifier: {typecode}")
 
-    def wrapped_definitions(self):
-        return {name.lower(): self.make_child(schema, name=name)
-                for name, schema in self.definitions.items()}
-
-    def wrapped_properties(self):
-        """Return property dictionary wrapped as JSONSchema objects"""
-        return {key: self.make_child(val)
-                for key, val in self.properties.items()}
-
     def object_code(self):
         return jinja2.Template(self.object_template).render(cls=self)
 
@@ -183,3 +171,25 @@ class JSONSchema(object):
                         for schema in self.wrapped_definitions().values()})
 
         return modspec
+
+    def get_reference(self, ref, cache=True):
+        """
+        Get the JSONSchema object for the
+        """
+        if cache and ref in self._cached_references:
+            return self._cached_references[ref]
+
+        path = ref.split('/')
+        if path[0] != '#':
+            raise ValueError(f"Unrecognized $ref format: '{ref}'")
+        try:
+            schema = self.context
+            for key in path[1:]:
+                schema = schema[key]
+        except KeyError:
+            raise ValueError(f"$ref='{ref}' not present in the schema")
+
+        wrapped_schema = self.make_child(schema)
+        if cache:
+            self._cached_references[ref] = wrapped_schema
+        return wrapped_schema

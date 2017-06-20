@@ -15,3 +15,25 @@ from .. import JSONSchema
                            "jst.JSONEnum([None, 42, 'hello'])")])
 def test_trait_code(spec, output):
     assert JSONSchema(spec).trait_code == output
+
+
+def test_get_reference():
+    schema = {
+        'definitions': {
+            'MyString': {
+                'type': 'string'
+            },
+            'IntOrNone': {
+                'type': ['integer', 'null']
+            }
+        }
+    }
+
+    js = JSONSchema(schema)
+    for name, definition in schema['definitions'].items():
+        obj1 = js.get_reference(f'#/definitions/{name}')
+        obj2 = JSONSchema(definition)
+        assert obj1.trait_code == obj2.trait_code
+
+        obj3 = js.get_reference(f'#/definitions/{name}')
+        assert obj1 is obj3  # Make sure cacheing works correctly
