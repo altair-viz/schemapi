@@ -40,6 +40,15 @@ def test_testcases_traitlets(testcase):
     invalid = testcase.get('invalid', [])
 
     traitlets_obj = JSONSchema(schema)
+
+    for key, code in traitlets_obj.module_spec().items():
+        if key == 'jstraitlets.py':
+            continue
+        print(70 * '#')
+        print('# ' + key)
+        print(code)
+        print()
+
     schema = load_dynamic_module('_schema', traitlets_obj.module_spec(),
                                  reload_module=True)
     print(traitlets_obj.module_spec()['rootinstance.py'])

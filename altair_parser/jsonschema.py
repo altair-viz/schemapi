@@ -37,6 +37,8 @@ class JSONSchema(object):
                      'default': None,
                      'examples': {},
                      'type': 'object'}
+    basic_imports = ["import traitlets as T",
+                     "from . import jstraitlets as jst"]
 
     def __init__(self, schema, context=None, parent=None, name=None):
         self.schema = schema
@@ -66,11 +68,15 @@ class JSONSchema(object):
 
     @property
     def is_trait(self):
-        return self.type != 'object'
+        return self.type != 'object' and not self.is_reference
 
     @property
     def is_object(self):
-        return self.type == 'object'
+        return self.type == 'object' and not self.is_reference
+
+    @property
+    def is_reference(self):
+        return '$ref' in self.schema
 
     @property
     def classname(self):
@@ -78,31 +84,82 @@ class JSONSchema(object):
             return self.name
         elif self.is_root:
             return "RootInstance"
+        elif self.is_reference:
+            return self.schema['$ref'].split('/')[-1]
         else:
             raise NotImplementedError("Anonymous class name")
 
     @property
+    def modulename(self):
+        return self.classname.lower()
+
+    @property
     def filename(self):
-        return self.classname.lower() + '.py'
+        return self.modulename + '.py'
 
     @property
     def baseclass(self):
         return "T.HasTraits"
 
     @property
+    def import_statement(self):
+        return f"from .{self.modulename} import {self.classname}"
+
+    @property
     def imports(self):
-        # TODO: add imports to properties
-        return ["import traitlets as T",
-                "from . import jstraitlets as jst"]
+        imports = []
+        imports.extend(self.basic_imports)
+        for obj in self.wrapped_properties().values():
+            if obj.is_reference:
+                ref = self.get_reference(obj.schema['$ref'])
+                if ref.is_object:
+                    imports.append(ref.import_statement)
+        return imports
+
+    @property
+    def module_imports(self):
+        imports = []
+        for obj in self.wrapped_definitions().values():
+            if obj.is_object:
+                imports.append(obj.import_statement)
+        return imports
 
     def wrapped_definitions(self):
+        """Return definition dictionary wrapped as JSONSchema objects"""
         return {name.lower(): self.make_child(schema, name=name)
                 for name, schema in self.definitions.items()}
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
-        return {key: self.make_child(val)
-                for key, val in self.properties.items()}
+        return {name: self.make_child(val)
+                for name, val in self.properties.items()}
+
+    def get_reference(self, ref, cache=True):
+        """
+        Get the JSONSchema object for the given reference code.
+
+        Reference codes should look something like "#/definitions/MyDefinition"
+
+        By default, this will cache objects accessed by their ref code.
+        """
+        if cache and ref in self._cached_references:
+            return self._cached_references[ref]
+
+        path = ref.split('/')
+        name = path[-1]
+        if path[0] != '#':
+            raise ValueError(f"Unrecognized $ref format: '{ref}'")
+        try:
+            schema = self.context
+            for key in path[1:]:
+                schema = schema[key]
+        except KeyError:
+            raise ValueError(f"$ref='{ref}' not present in the schema")
+
+        wrapped_schema = self.make_child(schema, name=name)
+        if cache:
+            self._cached_references[ref] = wrapped_schema
+        return wrapped_schema
 
     @property
     def trait_code(self):
@@ -115,7 +172,12 @@ class JSONSchema(object):
         if "not" in self.schema:
             raise NotImplementedError("'not' keyword")
         elif "$ref" in self.schema:
-            raise NotImplementedError("'$ref' keyword")
+            # TODO: handle other properties in schema, maybe via allOf?
+            ref = self.get_reference(self.schema['$ref'])
+            if ref.is_object:
+                return f'T.Instance({ref.classname})'
+            else:
+                return ref.trait_code
         elif "anyOf" in self.schema:
             raise NotImplementedError("'anyOf' keyword")
         elif "allOf" in self.schema:
@@ -141,7 +203,7 @@ class JSONSchema(object):
                 itemtype = self.make_child(items).trait_code
             return construct_function_call('jst.JSONArray', Variable(itemtype))
         elif typecode == 'object':
-            raise NotImplementedError('trait code for type = "object"')
+            return construct_function_call('jst.JSONInstance', self.classname)
         elif isinstance(typecode, list):
             # TODO: if Null is in the list, then add keyword allow_none=True
             arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
@@ -163,33 +225,11 @@ class JSONSchema(object):
             self.filename: self.object_code()
         }
 
-
-        modspec['__init__.py'] = ('from .jstraitlets import *\n'
-                                  f'from .{submodroot} import *\n')
+        modspec['__init__.py'] = '\n'.join([self.import_statement]
+                                            + self.module_imports)
 
         modspec.update({schema.filename: schema.object_code()
-                        for schema in self.wrapped_definitions().values()})
+                        for schema in self.wrapped_definitions().values()
+                        if schema.is_object})
 
         return modspec
-
-    def get_reference(self, ref, cache=True):
-        """
-        Get the JSONSchema object for the
-        """
-        if cache and ref in self._cached_references:
-            return self._cached_references[ref]
-
-        path = ref.split('/')
-        if path[0] != '#':
-            raise ValueError(f"Unrecognized $ref format: '{ref}'")
-        try:
-            schema = self.context
-            for key in path[1:]:
-                schema = schema[key]
-        except KeyError:
-            raise ValueError(f"$ref='{ref}' not present in the schema")
-
-        wrapped_schema = self.make_child(schema)
-        if cache:
-            self._cached_references[ref] = wrapped_schema
-        return wrapped_schema

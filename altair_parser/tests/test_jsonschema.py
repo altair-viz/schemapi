@@ -38,4 +38,4 @@ def test_get_reference():
         assert obj1.trait_code == obj2.trait_code
 
         obj3 = js.get_reference(definition_code)
-        assert obj1 is obj3  # Make sure cacheing works correctly
+        assert obj1 is obj3  # Make sure reference cacheing works correctly
