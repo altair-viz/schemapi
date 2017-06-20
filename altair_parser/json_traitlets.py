@@ -153,5 +153,37 @@ class JSONInstance(T.Instance):
         return super(JSONInstance, self).validate(obj, value)
 
 
-# TODO: - create traits for AnyOf(), OneOf(), Not()
+class JSONAnyOf(T.Union):
+    pass
+
+class JSONOneOf(T.Union):
+    # TODO: specialize validation code: must match exactly one example
+    pass
+
+class JSONAllOf(T.Union):
+    # TODO: specialize validation code: must match all examples
+    pass
+
+class JSONNot(T.TraitType):
+    allow_undefined = True
+    default_value = undefined
+
+    def __init__(self, not_this, allow_undefined=True, **kwargs):
+        self.not_this = not_this
+        self.allow_undefined = allow_undefined
+        self.info_text = "not({0})".format(self.not_this.info_text)
+        super(JSONNull, self).__init__(**kwargs)
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+        try:
+            self.not_this.validate(obj, value)
+        except T.TraitError
+            return True
+        else:
+            return False
+
+
+# TODO: - create traits for OneOf(), Not()
 #       - create meta-trait for multiple checks in one? Use Allof?
