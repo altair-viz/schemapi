@@ -54,7 +54,17 @@ def test_testcases_traitlets(testcase):
 
     for instance in valid:
         obj = schema.RootInstance.from_dict(instance)
-        assert obj.to_dict() == instance  # Test to_dict round-trip
     for instance in invalid:
         with pytest.raises(T.TraitError):
             schema.RootInstance.from_dict(instance)
+
+@pytest.mark.parametrize('testcase', testcases.keys())
+def test_dict_round_trip(testcase):
+    testcase = testcases[testcase]
+    traitlets_obj = JSONSchema(testcase['schema'])
+    schema = load_dynamic_module('_schema', traitlets_obj.module_spec(),
+                                 reload_module=True)
+
+    for instance in testcase['valid']:
+        obj = schema.RootInstance.from_dict(instance)
+        assert obj.to_dict() == instance
