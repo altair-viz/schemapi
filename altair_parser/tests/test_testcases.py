@@ -46,7 +46,6 @@ def test_testcases_traitlets(testcase):
             continue
         # Print code here... useful for debugging when errors happen
         print(70 * '#')
-        print('# ' + key)
         print(code)
         print()
 
