@@ -10,7 +10,7 @@ OBJECT_TEMPLATE = """
 {%- endfor %}
 
 class {{ cls.classname }}({{ cls.baseclass }}):
-    {%- for (name, prop) in cls.properties.items() %}
+    {%- for (name, prop) in cls.wrapped_properties().items() %}
     {{ name }} = {{ prop.trait_code }}
     {%- endfor %}
 """
@@ -55,6 +55,10 @@ class JSONSchema(object):
         return self.schema.get('description', '')
 
     @property
+    def properties(self):
+        return self.schema.get('properties', '')
+
+    @property
     def definitions(self):
         return self.schema.get('definitions', {})
 
@@ -70,13 +74,6 @@ class JSONSchema(object):
     def type(self):
         # TODO: should the default type be considered object?
         return self.schema.get('type', 'object')
-
-    @property
-    def properties(self):
-        """Return property dictionary wrapped as JSONSchema objects"""
-        properties = self.schema.get('properties', {})
-        return {key: self.make_child(val)
-                for key, val in properties.items()}
 
     @property
     def is_root(self):
@@ -159,6 +156,11 @@ class JSONSchema(object):
     def wrapped_definitions(self):
         return {name.lower(): self.make_child(schema, name=name)
                 for name, schema in self.definitions.items()}
+
+    def wrapped_properties(self):
+        """Return property dictionary wrapped as JSONSchema objects"""
+        return {key: self.make_child(val)
+                for key, val in self.properties.items()}
 
     def object_code(self):
         return jinja2.Template(self.object_template).render(cls=self)

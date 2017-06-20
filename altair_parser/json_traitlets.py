@@ -179,11 +179,7 @@ class JSONNot(T.TraitType):
             return value
         try:
             self.not_this.validate(obj, value)
-        except T.TraitError
+        except T.TraitError:
             return True
         else:
             return False
-
-
-# TODO: - create traits for OneOf(), Not()
-#       - create meta-trait for multiple checks in one? Use Allof?
