@@ -42,8 +42,9 @@ def test_testcases_traitlets(testcase):
     traitlets_obj = JSONSchema(schema)
 
     for key, code in traitlets_obj.module_spec().items():
-        if key == 'jstraitlets.py':
+        if key in ['jstraitlets.py', 'baseobject.py']:
             continue
+        # Print code here... useful for debugging when errors happen
         print(70 * '#')
         print('# ' + key)
         print(code)
@@ -51,10 +52,9 @@ def test_testcases_traitlets(testcase):
 
     schema = load_dynamic_module('_schema', traitlets_obj.module_spec(),
                                  reload_module=True)
-    print(traitlets_obj.module_spec()['rootinstance.py'])
 
     for instance in valid:
-        schema.RootInstance(**instance)
+        schema.RootInstance.from_dict(instance)
     for instance in invalid:
         with pytest.raises(T.TraitError):
-            schema.RootInstance(**instance)
+            schema.RootInstance.from_dict(instance)

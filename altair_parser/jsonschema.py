@@ -38,7 +38,8 @@ class JSONSchema(object):
                      'examples': {},
                      'type': 'object'}
     basic_imports = ["import traitlets as T",
-                     "from . import jstraitlets as jst"]
+                     "from . import jstraitlets as jst",
+                     "from .baseobject import BaseObject"]
 
     def __init__(self, schema, context=None, parent=None, name=None):
         self.schema = schema
@@ -99,7 +100,7 @@ class JSONSchema(object):
 
     @property
     def baseclass(self):
-        return "T.HasTraits"
+        return "BaseObject"
 
     @property
     def import_statement(self):
@@ -222,6 +223,8 @@ class JSONSchema(object):
         modspec = {
             'jstraitlets.py': open(os.path.join(os.path.dirname(__file__),
                                    'json_traitlets.py')).read(),
+            'baseobject.py': open(os.path.join(os.path.dirname(__file__),
+                                  'baseobject.py')).read(),
             self.filename: self.object_code()
         }
 

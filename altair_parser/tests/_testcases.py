@@ -194,37 +194,37 @@ simple_references = {
             'a': {
                 '$ref': '#/definitions/StringOrInt'
             },
-            # 'b': {
-            #     '$ref': '#/definitions/CompoundObject'
-            # }
+            'b': {
+                '$ref': '#/definitions/CompoundObject'
+            }
         },
         'definitions': {
             'StringOrInt': {
                 'type' : ['string', 'integer']
             },
-            # 'CompoundObject': {
-            #     'type': 'object',
-            #     'properties': {
-            #         'val': {'type': 'integer'},
-            #         'name': {'type': 'string'}
-            #     }
-            # }
+            'CompoundObject': {
+                'type': 'object',
+                'properties': {
+                    'val': {'type': 'integer'},
+                    'name': {'type': 'string'}
+                }
+            }
         }
     },
     'valid': [{
         'a': 'hello',
-        # 'b': {'name': 'jake', 'val': 100}
+        'b': {'name': 'jake', 'val': 100}
     },
     {
         'a': 42,
-        # 'b': {'name': 'douglas', 'val': 42}
+        'b': {'name': 'douglas', 'val': 42}
     }],
     'invalid': [{
         'a': None,
-        # 'b': {'name': 'douglas', 'val': 'something else'}
+        'b': {'name': 'douglas', 'val': 'something else'}
     },
     {
         'a': 3.14159,
-        # 'b': {'name': 'douglas', 'val': 42}
+        'b': {'name': 'douglas', 'val': 42}
     }]
 }
