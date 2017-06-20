@@ -31,9 +31,11 @@ def test_get_reference():
 
     js = JSONSchema(schema)
     for name, definition in schema['definitions'].items():
-        obj1 = js.get_reference(f'#/definitions/{name}')
+        definition_code = f'#/definitions/{name}'
+
+        obj1 = js.get_reference(definition_code)
         obj2 = JSONSchema(definition)
         assert obj1.trait_code == obj2.trait_code
 
-        obj3 = js.get_reference(f'#/definitions/{name}')
+        obj3 = js.get_reference(definition_code)
         assert obj1 is obj3  # Make sure cacheing works correctly
