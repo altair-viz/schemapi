@@ -222,7 +222,7 @@ class JSONSchema(object):
 
         modspec = {
             'jstraitlets.py': open(os.path.join(os.path.dirname(__file__),
-                                   'json_traitlets.py')).read(),
+                                   'jstraitlets.py')).read(),
             'baseobject.py': open(os.path.join(os.path.dirname(__file__),
                                   'baseobject.py')).read(),
             self.filename: self.object_code()

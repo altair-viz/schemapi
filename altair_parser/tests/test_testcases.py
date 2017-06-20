@@ -54,7 +54,8 @@ def test_testcases_traitlets(testcase):
                                  reload_module=True)
 
     for instance in valid:
-        schema.RootInstance.from_dict(instance)
+        obj = schema.RootInstance.from_dict(instance)
+        assert obj.to_dict() == instance  # Test to_dict round-trip
     for instance in invalid:
         with pytest.raises(T.TraitError):
             schema.RootInstance.from_dict(instance)

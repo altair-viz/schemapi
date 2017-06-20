@@ -2,8 +2,8 @@ import pytest
 
 import traitlets as T
 
-from ..json_traitlets import (undefined, UndefinedType, JSONNull,
-                              JSONNumber, JSONString, JSONBoolean)
+from ..jstraitlets import (undefined, UndefinedType, JSONNull,
+                           JSONNumber, JSONString, JSONBoolean)
 
 
 def test_undefined_singleton():
