@@ -58,6 +58,7 @@ def test_testcases_traitlets(testcase):
         with pytest.raises(T.TraitError):
             schema.RootInstance.from_dict(instance)
 
+
 @pytest.mark.parametrize('testcase', testcases.keys())
 def test_dict_round_trip(testcase):
     testcase = testcases[testcase]

@@ -187,7 +187,7 @@ class JSONSchema(object):
             # TODO: handle other properties in schema, maybe via allOf?
             ref = self.get_reference(self.schema['$ref'])
             if ref.is_object:
-                return f'T.Instance({ref.classname})'
+                return f'jst.JSONInstance({ref.classname})'
             else:
                 return ref.trait_code
         elif "anyOf" in self.schema:
