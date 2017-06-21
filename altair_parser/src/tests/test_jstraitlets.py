@@ -40,6 +40,8 @@ def generate_test_cases():
     # Strings
     yield (jst.JSONString(), [50, None, True], ['abc', undefined])
     yield (jst.JSONString(allow_undefined=False), [undefined], [])
+    yield (jst.JSONString(minLength=2, maxLength=4), ['', 'a', 'abcde'],
+           ['ab', 'abc', 'abcd'])
 
     # Arrays
     yield (jst.JSONArray(jst.JSONString()),

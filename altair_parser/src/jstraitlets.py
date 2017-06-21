@@ -125,14 +125,36 @@ class JSONString(T.Unicode):
     default_value = undefined
     info_text = "a JSON string"
 
-    def __init__(self, allow_undefined=True, **kwargs):
+    def __init__(self, allow_undefined=True, minLength=None, maxLength=None,
+                 **kwargs):
         self.allow_undefined = allow_undefined
+        self.minLength = minLength
+        self.maxLength = maxLength
         super(JSONString, self).__init__(**kwargs)
+
+    def _validate_string_length(self, obj, value):
+        if self.minLength is not None and len(value) < self.minLength:
+            raise T.TraitError(
+                "The value of the '{name}' trait of {klass} instance should "
+                "not be shorter than {minLength}, but a value of {value} was "
+                "specified".format(
+                    name=self.name, klass=class_of(obj),
+                    value=value, minLength=self.minLength))
+
+        if self.maxLength is not None and len(value) > self.maxLength:
+            raise T.TraitError(
+                "The value of the '{name}' trait of {klass} instance should "
+                "not be longer than {maxLength}, but a value of {value} was "
+                "specified".format(
+                    name=self.name, klass=class_of(obj),
+                    value=value, maxLength=self.maxLength))
+        return value
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
             return value
-        return super(JSONString, self).validate(obj, value)
+        value = super(JSONString, self).validate(obj, value)
+        return self._validate_string_length(obj, value)
 
 
 class JSONBoolean(T.Bool):
