@@ -28,6 +28,7 @@ class JSONNull(T.TraitType):
 
     def __init__(self, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
+        kwargs['allow_none'] = True
         super(JSONNull, self).__init__(**kwargs)
 
     def validate(self, obj, value):
@@ -35,20 +36,8 @@ class JSONNull(T.TraitType):
             return value
         elif value is None:
             return value
-        self.error(obj, value)
-
-
-JSONSCHEMA_KEYS = ["multipleOf", "maximum", "exclusiveMaximum", "minimum",
-                   "exclusiveMinimum", "maxLength", "minLength", "pattern",
-                   "items", "additionalItems", "maxItems", "minItems",
-                   "uniqueItems", "contains", "maxProperties", "minProperties",
-                   "required", "properties", "patternProperties",
-                   "additionalProperties", "dependencies", "propertyNames",
-                   "enum", "const", "type", "allOf", "anyOf", "oneOf", "not"]
-
-# Needed for Altair: minimum/maximum/minItems/maxItems/required/additionalProperties
-# Need to infer when "allow_none" should be set, either from "none" in typelist
-# or from {'type': 'null'} in anyOf.
+        else:
+            self.error(obj, value)
 
 
 def _validate_numeric(trait, obj, value,
@@ -182,13 +171,16 @@ class JSONArray(T.List):
 
     def __init__(self, trait, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
+        if 'minItems' in kwargs:
+            kwargs['minlen'] = kwargs.pop('minItems')
+        if 'maxItems' in kwargs:
+            kwargs['maxlen'] = kwargs.pop('maxItems')
         super(JSONArray, self).__init__(trait, **kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
             return value
         return super(JSONArray, self).validate(obj, value)
-        l
 
 
 class JSONEnum(T.Enum):
