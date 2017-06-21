@@ -1,5 +1,6 @@
 import pytest
 from .. import JSONSchema
+from ..utils import load_dynamic_module
 
 
 @pytest.mark.parametrize('spec,output',
@@ -20,19 +21,44 @@ def test_trait_code(spec, output):
 def test_required_keyword():
     schema = {
         'type': 'object',
-        'properties': {
-            'name': {'type': 'string'},
-            'age': {'type': 'integer'},
-            'size': {'type': 'number'}
+        'definitions': {
+            'positiveInteger': {'type': 'integer', 'minimum': 0},
+            'twoNumbers': {'properties': {'num1': {'type': 'number'},
+                                          'num2': {'type': 'number'}}}
         },
-        'required': ['name', 'age']
+        'properties': {
+            'string1': {'type': 'string'},
+            'string2': {'type': 'string'},
+            'integer1': {'type': 'integer'},
+            'integer2': {'type': 'integer'},
+            'number1': {'type': 'number'},
+            'number2': {'type': 'number'},
+            'bool1': {'type': 'boolean'},
+            'bool2': {'type': 'boolean'},
+            'null1': {'type': 'null'},
+            'null2': {'type': 'null'},
+            'enum1': {'enum': [1, 2, 3]},
+            'enum2': {'enum': [1, 2, 3]},
+            'array1': {'type': 'array', 'items': {'type': 'integer'}},
+            'array2': {'type': 'array', 'items': {'type': 'integer'}},
+            'traitref1': {'$ref': '#/definitions/positiveInteger'},
+            'traitref2': {'$ref': '#/definitions/positiveInteger'},
+            'objref1': {'$ref': '#/definitions/twoNumbers'},
+            'objref2': {'$ref': '#/definitions/twoNumbers'},
+            'typelist1': {'type': ['string', 'integer']},
+            'typelist2': {'type': ['string', 'integer']},
+        },
+        'required': ['string1', 'integer1', 'number1',
+                     'bool1', 'null1', 'enum1', 'array1',
+                     'traitref1', 'objref1', 'typelist1']
     }
     js = JSONSchema(schema)
+    load_dynamic_module('_schema', js.module_spec(), reload_module=True)
+    from _schema import jstraitlets as jst
+    from _schema.twonumbers import twoNumbers
     for name, obj in js.wrapped_properties().items():
-        required = (name in schema['required'])
-        assert obj.metadata.get('required', False) == required
-        if required:
-            assert 'allow_undefined=False' in obj.trait_code
+        trait = eval(obj.trait_code)
+        assert bool(trait.allow_undefined) != bool(name in schema['required'])
 
 
 def test_get_reference():
