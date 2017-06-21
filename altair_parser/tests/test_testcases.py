@@ -53,7 +53,7 @@ def test_testcases_traitlets(testcase):
                                  reload_module=True)
 
     for instance in valid:
-        obj = schema.RootInstance.from_dict(instance)
+        schema.RootInstance.from_dict(instance)
     for instance in invalid:
         with pytest.raises(T.TraitError):
             schema.RootInstance.from_dict(instance)

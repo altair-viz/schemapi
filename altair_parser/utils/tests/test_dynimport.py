@@ -1,5 +1,3 @@
-import pytest
-
 from .. import load_dynamic_module
 
 dynmod_spec = {

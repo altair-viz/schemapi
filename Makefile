@@ -3,8 +3,8 @@ all: install
 install:
 	python setup.py install
 
-test :
+test:
 	py.test altair_parser --doctest-modules
 
-test-coverage :
+test-coverage:
 	py.test altair_parser --cov=altair_parser

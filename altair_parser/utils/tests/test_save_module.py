@@ -1,8 +1,6 @@
-import os
 import sys
 import tempfile
 import contextlib
-from contextlib import contextmanager
 
 import pytest
 
