@@ -1,5 +1,9 @@
 """
 Extensions to traitlets for compatibility with JSON Schema
+
+The biggest difference between these trait types and the built-in trait types
+is the addition of the ``undefined`` sentinel. Javascript has both a "null"
+and an "undefined" marker, while Python uses "None" for both.
 """
 import traitlets as T
 
@@ -33,19 +37,59 @@ class JSONNull(T.TraitType):
         self.error(obj, value)
 
 
+def _validate_numeric(trait, obj, value,
+                      minimum=undefined, maximum=undefined,
+                      exclusiveMinimum=undefined, exclusiveMaximum=undefined,
+                      multipleOf=undefined, **extra_kwds):
+    if value is None:
+        return value
+
+    if minimum is not undefined:
+        exclusive = exclusiveMinimum is not undefined and exclusiveMinimum
+        if value < minimum or (exclusive and value == minimum):
+            raise T.TraitError(
+                "The value of the '{name}' trait of {klass} instance should "
+                "not be less than {min_bound}, but a value of {value} was "
+                "specified".format(
+                    name=trait.name, klass=class_of(obj),
+                    value=value, min_bound=minimum))
+
+    if maximum is not undefined:
+        exclusive = exclusiveMaximum is not undefined and exclusiveMaximum
+        if value > maximum or (exclusive and value == maximum):
+            raise T.TraitError(
+                "The value of the '{name}' trait of {klass} instance should "
+                "not be greater than {max_bound}, but a value of {value} was "
+                "specified".format(
+                    name=trait.name, klass=class_of(obj),
+                    value=value, max_bound=maximum))
+
+    if multipleOf is not undefined:
+        if value % multipleOf != 0:
+            raise T.TraitError(
+                "The value of the '{name}' trait of {klass} instance should "
+                "be a multiple of {multiple}, but a value of {value} was "
+                "specified".format(
+                    name=trait.name, klass=class_of(obj),
+                    value=value, multiple=multipleOf))
+    return value
+
+
 class JSONNumber(T.Float):
     allow_undefined = True
     default_value = undefined
     info_text = "a JSON number"
 
-    def __init__(self, allow_undefined=True, **kwargs):
+    def __init__(self, allow_undefined=True, validation_kwds=None, **kwargs):
         self.allow_undefined = allow_undefined
+        self.validation_kwds = validation_kwds or {}
         super(JSONNumber, self).__init__(**kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
             return value
-        return super(JSONNumber, self).validate(obj, value)
+        value = super(JSONNumber, self).validate(obj, value)
+        return _validate_numeric(self, obj, value, **self.validation_kwds)
 
 
 class JSONInteger(T.Integer):
@@ -53,14 +97,16 @@ class JSONInteger(T.Integer):
     default_value = undefined
     info_text = "a JSON integer"
 
-    def __init__(self, allow_undefined=True, **kwargs):
+    def __init__(self, allow_undefined=True, validation_kwds=None, **kwargs):
         self.allow_undefined = allow_undefined
+        self.validation_kwds = validation_kwds or {}
         super(JSONInteger, self).__init__(**kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
             return value
-        return super(JSONInteger, self).validate(obj, value)
+        value = super(JSONInteger, self).validate(obj, value)
+        return _validate_numeric(self, obj, value, **self.validation_kwds)
 
 
 class JSONString(T.Unicode):

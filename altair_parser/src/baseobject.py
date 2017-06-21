@@ -5,6 +5,7 @@ from .jstraitlets import undefined
 class BaseObject(T.HasTraits):
     @classmethod
     def from_dict(cls, dct):
+        """Initialize an instance from a (nested) dictionary"""
         obj = cls()
         for key, val in dct.items():
             trait = obj.traits()[key]
@@ -14,6 +15,7 @@ class BaseObject(T.HasTraits):
         return obj
 
     def to_dict(self):
+        """Output a (nested) dict encoding the contents of this instance"""
         dct = {}
         for key in self.trait_names():
             val = getattr(self, key)
