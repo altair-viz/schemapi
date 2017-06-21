@@ -26,6 +26,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
     {%- endfor %}
 '''
 
+
 class JSONSchema(object):
     """A class to wrap JSON Schema objects and reason about their contents"""
     object_template = OBJECT_TEMPLATE
@@ -37,8 +38,16 @@ class JSONSchema(object):
     traitlet_map = {'array': {'cls': 'jst.JSONArray'},
                     'boolean': {'cls': 'jst.JSONBoolean'},
                     'null': {'cls': 'jst.JSONNull'},
-                    'number': {'cls': 'jst.JSONNumber'},
-                    'integer': {'cls': 'jst.JSONInteger'},
+                    'number': {'cls': 'jst.JSONNumber',
+                               'validation_keys': ['minimum', 'maximum',
+                                                   'exclusiveMinimum',
+                                                   'exclusiveMaximum',
+                                                   'multipleOf']},
+                    'integer': {'cls': 'jst.JSONInteger',
+                                'validation_keys': ['minimum', 'maximum',
+                                                    'exclusiveMinimum',
+                                                    'exclusiveMaximum',
+                                                    'multipleOf']},
                     'string': {'cls': 'jst.JSONString'},
                    }
     attr_defaults = {'title': '',
@@ -199,23 +208,35 @@ class JSONSchema(object):
         elif "enum" in self.schema:
             return construct_function_call('jst.JSONEnum', self.schema["enum"])
         elif typecode in self.simple_types:
-            # TODO: implement checks like maximum, minimum, format, etc.
             info = self.traitlet_map[typecode]
-            return construct_function_call(info['cls'],
-                                           *info.get('args', []),
-                                           **info.get('kwargs', {}))
+            cls = info['cls']
+            args = info.get('args', ())
+            kwargs = info.get('kwargs', {})
+            keys = info.get('validation_keys', ())
+            kwargs.update({key: self.schema[key]
+                           for key in keys
+                           if key in self.schema})
+            return construct_function_call(cls, *args, **kwargs)
         elif typecode == 'array':
             # TODO: implement checks like maxLength, minLength, etc.
             items = self.schema['items']
+            kwargs = {}
+            if 'minItems' in self.schema:
+                kwargs['minlen'] = self.schema['minItems']
+            if 'maxItems' in self.schema:
+                kwargs['maxlen'] = self.schema['maxItems']
+            if 'uniqueItems' in self.schema:
+                kwargs['uniqueItems'] = self.schema['uniqueItems']
             if isinstance(items, list):
                 # TODO: need to implement this in the JSONArray traitlet
                 # Also need to check value of "additionalItems"
                 raise NotImplementedError("'items' keyword as list")
             else:
                 itemtype = self.make_child(items).trait_code
-            return construct_function_call('jst.JSONArray', Variable(itemtype))
+            return construct_function_call('jst.JSONArray', Variable(itemtype),
+                                           **kwargs)
         elif typecode == 'object':
-            return construct_function_call('jst.JSONInstance', self.classname)
+            raise NotImplementedError("Unnamed Objects")
         elif isinstance(typecode, list):
             # TODO: if Null is in the list, then add keyword allow_none=True
             arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code

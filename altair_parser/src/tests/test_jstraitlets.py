@@ -14,6 +14,16 @@ def generate_test_cases():
     yield (jst.JSONNull(), [0, "None"], [None])
     yield (jst.JSONBoolean(), [0, 2, 'abc'], [True, False])
     yield (jst.JSONNumber(), [None, '123'], [-10.5, 42, 3.14])
+    yield (jst.JSONNumber(minimum=0, maximum=100, multipleOf=0.5),
+           [-10, 110, 33.3], [0, 50, 60.5, 100])
+    yield (jst.JSONNumber(minimum=0, maximum=100,
+                          exclusiveMinimum=True, exclusiveMaximum=True),
+           [0, 100], [0.01, 0.99])
+    yield (jst.JSONInteger(minimum=0, maximum=100, multipleOf=2),
+           [-10, 110, 29], [0, 50, 62, 100])
+    yield (jst.JSONInteger(minimum=0, maximum=100,
+                          exclusiveMinimum=True, exclusiveMaximum=True),
+           [0, 100], [1, 99])
     yield (jst.JSONInteger(), [None, '123', 3.14], [-10, 0, 42])
     yield (jst.JSONString(), [50, None, True], ['abc'])
     yield (jst.JSONUnion([jst.JSONInteger(), jst.JSONString()]),

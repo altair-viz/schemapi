@@ -6,6 +6,7 @@ is the addition of the ``undefined`` sentinel. Javascript has both a "null"
 and an "undefined" marker, while Python uses "None" for both.
 """
 import traitlets as T
+from traitlets.traitlets import class_of
 
 
 class UndefinedType(object):
@@ -35,6 +36,19 @@ class JSONNull(T.TraitType):
         elif value is None:
             return value
         self.error(obj, value)
+
+
+JSONSCHEMA_KEYS = ["multipleOf", "maximum", "exclusiveMaximum", "minimum",
+                   "exclusiveMinimum", "maxLength", "minLength", "pattern",
+                   "items", "additionalItems", "maxItems", "minItems",
+                   "uniqueItems", "contains", "maxProperties", "minProperties",
+                   "required", "properties", "patternProperties",
+                   "additionalProperties", "dependencies", "propertyNames",
+                   "enum", "const", "type", "allOf", "anyOf", "oneOf", "not"]
+
+# Needed for Altair: minimum/maximum/minItems/maxItems/required/additionalProperties
+# Need to infer when "allow_none" should be set, either from "none" in typelist
+# or from {'type': 'null'} in anyOf.
 
 
 def _validate_numeric(trait, obj, value,
@@ -79,34 +93,42 @@ class JSONNumber(T.Float):
     allow_undefined = True
     default_value = undefined
     info_text = "a JSON number"
+    _validation_keywords = ["minimum", "maximum", "exclusiveMinimum",
+                            "exclusiveMaximum", "multipleOf"]
 
-    def __init__(self, allow_undefined=True, validation_kwds=None, **kwargs):
+    def __init__(self, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
-        self.validation_kwds = validation_kwds or {}
+        self._validation_dict = {key: kwargs.pop(key)
+                                 for key in self._validation_keywords
+                                 if key in kwargs}
         super(JSONNumber, self).__init__(**kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
             return value
         value = super(JSONNumber, self).validate(obj, value)
-        return _validate_numeric(self, obj, value, **self.validation_kwds)
+        return _validate_numeric(self, obj, value, **self._validation_dict)
 
 
 class JSONInteger(T.Integer):
     allow_undefined = True
     default_value = undefined
     info_text = "a JSON integer"
+    _validation_keywords = ["minimum", "maximum", "exclusiveMinimum",
+                            "exclusiveMaximum", "multipleOf"]
 
-    def __init__(self, allow_undefined=True, validation_kwds=None, **kwargs):
+    def __init__(self, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
-        self.validation_kwds = validation_kwds or {}
+        self._validation_dict = {key: kwargs.pop(key)
+                                 for key in self._validation_keywords
+                                 if key in kwargs}
         super(JSONInteger, self).__init__(**kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
             return value
         value = super(JSONInteger, self).validate(obj, value)
-        return _validate_numeric(self, obj, value, **self.validation_kwds)
+        return _validate_numeric(self, obj, value, **self._validation_dict)
 
 
 class JSONString(T.Unicode):
@@ -166,6 +188,7 @@ class JSONArray(T.List):
         if self.allow_undefined and value is undefined:
             return value
         return super(JSONArray, self).validate(obj, value)
+        l
 
 
 class JSONEnum(T.Enum):
