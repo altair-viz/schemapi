@@ -189,6 +189,18 @@ class JSONSchema(object):
             self._cached_references[ref] = wrapped_schema
         return wrapped_schema
 
+    def _simple_trait_code(self, typecode, kwargs):
+        assert typecode in self.simple_types
+        info = self.traitlet_map[typecode]
+        cls = info['cls']
+        args = info.get('args', ())
+        kwargs.update(info.get('kwargs', {}))
+        keys = info.get('validation_keys', ())
+        kwargs.update({key: self.schema[key]
+                       for key in keys
+                       if key in self.schema})
+        return construct_function_call(cls, *args, **kwargs)
+
     @property
     def trait_code(self):
         """Create the trait code for the given typecode"""
@@ -224,17 +236,9 @@ class JSONSchema(object):
             return construct_function_call('jst.JSONEnum', self.schema["enum"],
                                            **kwargs)
         elif typecode in self.simple_types:
-            info = self.traitlet_map[typecode]
-            cls = info['cls']
-            args = info.get('args', ())
-            kwargs.update(info.get('kwargs', {}))
-            keys = info.get('validation_keys', ())
-            kwargs.update({key: self.schema[key]
-                           for key in keys
-                           if key in self.schema})
-            return construct_function_call(cls, *args, **kwargs)
+            return self._simple_trait_code(typecode, kwargs)
         elif typecode == 'array':
-            # TODO: implement checks like maxLength, minLength, etc.
+            # TODO: fix items and implement additionalItems
             items = self.schema['items']
             if 'minItems' in self.schema:
                 kwargs['minlen'] = self.schema['minItems']
@@ -253,10 +257,17 @@ class JSONSchema(object):
         elif typecode == 'object':
             raise NotImplementedError("Unnamed Objects")
         elif isinstance(typecode, list):
-            # TODO: if Null is in the list, then add keyword allow_none=True
-            arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
-                                           for typ in typecode))
-            return construct_function_call('jst.JSONUnion', Variable(arg), **kwargs)
+            for typ in typecode:
+                assert typ in self.simple_types
+            if 'null' in typecode:
+                kwargs['allow_none'] = True
+            typecode = [typ for typ in typecode if typ != 'null']
+            if len(typecode) == 1:
+                return self._simple_trait_code(typecode[0], kwargs)
+            else:
+                arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
+                                               for typ in typecode))
+                return construct_function_call('jst.JSONUnion', Variable(arg), **kwargs)
         else:
             raise ValueError(f"unrecognized type identifier: {typecode}")
 
