@@ -229,6 +229,12 @@ class JSONSchema(object):
         return jinja2.Template(self.object_template).render(cls=self, date=now)
 
     def module_spec(self):
+        """Return the JSON specification of the module
+
+        This can be passed to ``altair_parser.utils.load_dynamic_module``
+        or to ``altair_parser.utils.save_module``
+
+        """
         assert self.is_root
         submodroot = self.classname.lower()
 
