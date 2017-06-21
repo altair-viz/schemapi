@@ -256,6 +256,13 @@ class JSONSchema(object):
         return construct_function_call('jst.JSONArray', Variable(itemtype),
                                        **kwargs)
 
+    def _anyOf_trait_code(self, typecode, kwargs):
+        assert 'anyOf' in self.schema
+        children = [Variable(self.make_child(schema).trait_code)
+                    for schema in self.schema['anyOf']]
+        return construct_function_call('jst.JSONAnyOf', Variable(children),
+                                       **kwargs)
+
     @property
     def trait_code(self):
         """Create the trait code for the given typecode"""
@@ -272,7 +279,7 @@ class JSONSchema(object):
         elif "$ref" in self.schema:
             return self._ref_trait_code(typecode, kwargs)
         elif "anyOf" in self.schema:
-            raise NotImplementedError("'anyOf' keyword")
+            return self._anyOf_trait_code(typecode, kwargs)
         elif "allOf" in self.schema:
             raise NotImplementedError("'allOf' keyword")
         elif "oneOf" in self.schema:

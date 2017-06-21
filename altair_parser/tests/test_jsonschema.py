@@ -17,7 +17,9 @@ from ..utils import load_dynamic_module
                           ({'type': 'array', 'items': {'type': 'string'}},
                            'jst.JSONArray(jst.JSONString())'),
                           ({'enum': [None, 42, "hello"]},
-                           "jst.JSONEnum([None, 42, 'hello'])")])
+                           "jst.JSONEnum([None, 42, 'hello'])"),
+                          ({'anyOf': [{'type': 'integer'}, {'type': 'string'}]},
+                           "jst.JSONAnyOf([jst.JSONInteger(), jst.JSONString()])")])
 def test_trait_code(spec, output):
     assert JSONSchema(spec).trait_code == output
 
