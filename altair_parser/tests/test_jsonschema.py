@@ -58,7 +58,8 @@ def test_required_keyword():
     from _schema.twonumbers import twoNumbers
     for name, obj in js.wrapped_properties().items():
         trait = eval(obj.trait_code)
-        assert bool(trait.allow_undefined) != bool(name in schema['required'])
+        required = name in schema['required']
+        assert required == (not trait.allow_undefined)
 
 
 def test_get_reference():
