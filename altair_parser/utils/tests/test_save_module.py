@@ -33,7 +33,7 @@ def temporary_import(module):
 
 @contextlib.contextmanager
 def import_path(*paths):
-    """Context manager to set import paths"""
+    """Context manager to set temporary import paths"""
     old_paths = sys.path
     sys.path = list(paths)
     yield

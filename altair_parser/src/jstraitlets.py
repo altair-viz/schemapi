@@ -96,7 +96,6 @@ class JSONBoolean(T.Bool):
 class JSONUnion(T.Union):
     allow_undefined = True
     default_value = undefined
-    info_text = "a Union of types"
 
     def __init__(self, trait_types, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
@@ -154,15 +153,73 @@ class JSONInstance(T.Instance):
 
 
 class JSONAnyOf(T.Union):
-    pass
+    allow_undefined = True
+    default_value = undefined
+
+    def __init__(self, trait_types, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONAnyOf, self).__init__(trait_types, **kwargs)
+        self.info_text = "AnyOf({0})".format(", ".join(tt.info() for tt in self.trait_types))
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+        return super(JSONAnyOf, self).validate(obj, value)
+
 
 class JSONOneOf(T.Union):
-    # TODO: specialize validation code: must match exactly one example
-    pass
+    allow_undefined = True
+    default_value = undefined
+
+    def __init__(self, trait_types, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONOneOf, self).__init__(trait_types, **kwargs)
+        self.info_text = "OneOf({0})".format(", ".join(tt.info() for tt in self.trait_types))
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+
+        # Should validate against only one of the trait types
+        valid_count = 0
+        with obj.cross_validation_lock:
+            for trait_type in self.trait_types:
+                try:
+                    v = trait_type._validate(obj, value)
+                except T.TraitError:
+                    continue
+                valid_count += 1
+            if valid_count == 1:
+                # In the case of an element trait, the name is None
+                if self.name is not None:
+                    setattr(obj, '_' + self.name + '_metadata', trait_type.metadata)
+                return v
+        self.error(obj, value)
+
 
 class JSONAllOf(T.Union):
-    # TODO: specialize validation code: must match all examples
-    pass
+    allow_undefined = True
+    default_value = undefined
+
+    def __init__(self, trait_types, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONAllOf, self).__init__(trait_types, **kwargs)
+        self.info_text = "AllOf({0})".format(", ".join(tt.info() for tt in self.trait_types))
+
+    def validate(self, obj, value):
+        if self.allow_undefined and value is undefined:
+            return value
+
+        # should validate against all of the trait types
+        with obj.cross_validation_lock:
+            for trait_type in self.trait_types:
+                v = trait_type._validate(obj, value)
+                # In the case of an element trait, the name is None
+                if self.name is not None:
+                    setattr(obj, '_' + self.name + '_metadata', trait_type.metadata)
+                return v
+        self.error(obj, value)
+
 
 class JSONNot(T.TraitType):
     allow_undefined = True
@@ -171,8 +228,8 @@ class JSONNot(T.TraitType):
     def __init__(self, not_this, allow_undefined=True, **kwargs):
         self.not_this = not_this
         self.allow_undefined = allow_undefined
-        self.info_text = "not({0})".format(self.not_this.info_text)
-        super(JSONNull, self).__init__(**kwargs)
+        self.info_text = "Not({0})".format(self.not_this.info())
+        super(JSONNot, self).__init__(**kwargs)
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
@@ -182,4 +239,4 @@ class JSONNot(T.TraitType):
         except T.TraitError:
             return True
         else:
-            return False
+            self.error(obj, value)
