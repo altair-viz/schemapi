@@ -191,6 +191,7 @@ class JSONSchema(object):
 
     def _simple_trait_code(self, typecode, kwargs):
         assert typecode in self.simple_types
+
         info = self.traitlet_map[typecode]
         cls = info['cls']
         args = info.get('args', ())
@@ -201,6 +202,60 @@ class JSONSchema(object):
                        if key in self.schema})
         return construct_function_call(cls, *args, **kwargs)
 
+    def _compound_trait_code(self, typecode, kwargs):
+        assert isinstance(typecode, list)
+
+        for typ in typecode:
+            assert typ in self.simple_types
+        if 'null' in typecode:
+            kwargs['allow_none'] = True
+        typecode = [typ for typ in typecode if typ != 'null']
+        if len(typecode) == 1:
+            return self._simple_trait_code(typecode[0], kwargs)
+        else:
+            item_kwargs = {key:val for key, val in kwargs.items()
+                           if key not in ['allow_none', 'allow_undefined']}
+            arg = "[{0}]".format(', '.join(self._simple_trait_code(typ, item_kwargs)
+                                           for typ in typecode))
+            return construct_function_call('jst.JSONUnion', Variable(arg), **kwargs)
+
+    def _ref_trait_code(self, typecode, kwargs):
+        assert '$ref' in self.schema
+
+        ref = self.get_reference(self.schema['$ref'])
+        if ref.is_object:
+            return construct_function_call('jst.JSONInstance',
+                                           Variable(ref.classname),
+                                           **kwargs)
+        else:
+            ref = ref.copy()  # TODO: maybe can remove this?
+            ref.metadata = self.metadata
+            return ref.trait_code
+
+    def _enum_trait_code(self, typecode, kwargs):
+        assert 'enum' in self.schema
+        return construct_function_call('jst.JSONEnum', self.schema["enum"],
+                                       **kwargs)
+
+    def _array_trait_code(self, typecode, kwargs):
+        assert typecode == 'array'
+        # TODO: fix items and implement additionalItems
+        items = self.schema['items']
+        if 'minItems' in self.schema:
+            kwargs['minlen'] = self.schema['minItems']
+        if 'maxItems' in self.schema:
+            kwargs['maxlen'] = self.schema['maxItems']
+        if 'uniqueItems' in self.schema:
+            kwargs['uniqueItems'] = self.schema['uniqueItems']
+        if isinstance(items, list):
+            # TODO: need to implement this in the JSONArray traitlet
+            # Also need to check value of "additionalItems"
+            raise NotImplementedError("'items' keyword as list")
+        else:
+            itemtype = self.make_child(items).trait_code
+        return construct_function_call('jst.JSONArray', Variable(itemtype),
+                                       **kwargs)
+
     @property
     def trait_code(self):
         """Create the trait code for the given typecode"""
@@ -210,22 +265,12 @@ class JSONSchema(object):
         else:
             kwargs = {}
 
-        # TODO: check how jsonschema handles multiple entries...
-        #       e.g. anyOf + enum or $ref + oneOf
+        # TODO: handle multiple entries...
 
         if "not" in self.schema:
             raise NotImplementedError("'not' keyword")
         elif "$ref" in self.schema:
-            # TODO: handle other properties in schema, maybe via allOf?
-            ref = self.get_reference(self.schema['$ref'])
-            if ref.is_object:
-                return construct_function_call('jst.JSONInstance',
-                                               Variable(ref.classname),
-                                               **kwargs)
-            else:
-                ref = ref.copy()  # TODO: maybe can remove this?
-                ref.metadata = self.metadata
-                return ref.trait_code
+            return self._ref_trait_code(typecode, kwargs)
         elif "anyOf" in self.schema:
             raise NotImplementedError("'anyOf' keyword")
         elif "allOf" in self.schema:
@@ -233,45 +278,20 @@ class JSONSchema(object):
         elif "oneOf" in self.schema:
             raise NotImplementedError("'oneOf' keyword")
         elif "enum" in self.schema:
-            return construct_function_call('jst.JSONEnum', self.schema["enum"],
-                                           **kwargs)
+            return self._enum_trait_code(typecode, kwargs)
         elif typecode in self.simple_types:
             return self._simple_trait_code(typecode, kwargs)
         elif typecode == 'array':
-            # TODO: fix items and implement additionalItems
-            items = self.schema['items']
-            if 'minItems' in self.schema:
-                kwargs['minlen'] = self.schema['minItems']
-            if 'maxItems' in self.schema:
-                kwargs['maxlen'] = self.schema['maxItems']
-            if 'uniqueItems' in self.schema:
-                kwargs['uniqueItems'] = self.schema['uniqueItems']
-            if isinstance(items, list):
-                # TODO: need to implement this in the JSONArray traitlet
-                # Also need to check value of "additionalItems"
-                raise NotImplementedError("'items' keyword as list")
-            else:
-                itemtype = self.make_child(items).trait_code
-            return construct_function_call('jst.JSONArray', Variable(itemtype),
-                                           **kwargs)
+            return self._array_trait_code(typecode, kwargs)
         elif typecode == 'object':
-            raise NotImplementedError("Unnamed Objects")
+            raise NotImplementedError("Anonymous Objects")
         elif isinstance(typecode, list):
-            for typ in typecode:
-                assert typ in self.simple_types
-            if 'null' in typecode:
-                kwargs['allow_none'] = True
-            typecode = [typ for typ in typecode if typ != 'null']
-            if len(typecode) == 1:
-                return self._simple_trait_code(typecode[0], kwargs)
-            else:
-                arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
-                                               for typ in typecode))
-                return construct_function_call('jst.JSONUnion', Variable(arg), **kwargs)
+            return self._compound_trait_code(typecode, kwargs)
         else:
             raise ValueError(f"unrecognized type identifier: {typecode}")
 
     def object_code(self):
+        """Return code to define a BaseObject for this schema"""
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return jinja2.Template(self.object_template).render(cls=self, date=now)
 
