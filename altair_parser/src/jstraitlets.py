@@ -1,5 +1,5 @@
 """
-Extensions to traitlets for use with JSON
+Extensions to traitlets for compatibility with JSON Schema
 """
 import traitlets as T
 
