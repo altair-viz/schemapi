@@ -56,26 +56,33 @@ class JSONSchema(object):
                      'definitions': {},
                      'default': None,
                      'examples': {},
-                     'type': 'object'}
+                     'type': 'object',
+                     'required': []}
     basic_imports = ["import traitlets as T",
                      "from . import jstraitlets as jst",
                      "from .baseobject import BaseObject"]
 
-    def __init__(self, schema, context=None, parent=None, name=None):
+    def __init__(self, schema, context=None, parent=None, name=None, metadata=None):
         self.schema = schema
         self.parent = parent
         self.name = name
+        self.metadata = metadata or {}
 
         # if context is not given, then assume this is a root instance that
         # defines its context
         self.context = context or schema
 
-    def make_child(self, schema, name=None):
+    def copy(self):
+        return self.__class__(schema=self.schema, context=self.context,
+                              parent=self.parent, name=self.name,
+                              metadata=self.metadata)
+
+    def make_child(self, schema, name=None, metadata=None):
         """
         Make a child instance, appropriately defining the parent and context
         """
         return self.__class__(schema, context=self.context,
-                              parent=self, name=name)
+                              parent=self, name=name, metadata=metadata)
 
     def __getattr__(self, attr):
         if attr in self.attr_defaults:
@@ -152,7 +159,7 @@ class JSONSchema(object):
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
-        return {name: self.make_child(val)
+        return {name: self.make_child(val, metadata={'required': name in self.required})
                 for name, val in self.properties.items()}
 
     def get_reference(self, ref, cache=True):
@@ -186,6 +193,10 @@ class JSONSchema(object):
     def trait_code(self):
         """Create the trait code for the given typecode"""
         typecode = self.type
+        if self.metadata.get('required', False):
+            kwargs = {'allow_undefined': False}
+        else:
+            kwargs = {}
 
         # TODO: check how jsonschema handles multiple entries...
         #       e.g. anyOf + enum or $ref + oneOf
@@ -196,8 +207,12 @@ class JSONSchema(object):
             # TODO: handle other properties in schema, maybe via allOf?
             ref = self.get_reference(self.schema['$ref'])
             if ref.is_object:
-                return f'jst.JSONInstance({ref.classname})'
+                return construct_function_call('jst.JSONInstance',
+                                               Variable(ref.classname),
+                                               **kwargs)
             else:
+                ref = ref.copy()  # TODO: maybe can remove this?
+                ref.metadata = self.metadata
                 return ref.trait_code
         elif "anyOf" in self.schema:
             raise NotImplementedError("'anyOf' keyword")
@@ -206,12 +221,13 @@ class JSONSchema(object):
         elif "oneOf" in self.schema:
             raise NotImplementedError("'oneOf' keyword")
         elif "enum" in self.schema:
-            return construct_function_call('jst.JSONEnum', self.schema["enum"])
+            return construct_function_call('jst.JSONEnum', self.schema["enum"],
+                                           **kwargs)
         elif typecode in self.simple_types:
             info = self.traitlet_map[typecode]
             cls = info['cls']
             args = info.get('args', ())
-            kwargs = info.get('kwargs', {})
+            kwargs.update(info.get('kwargs', {}))
             keys = info.get('validation_keys', ())
             kwargs.update({key: self.schema[key]
                            for key in keys
@@ -220,7 +236,6 @@ class JSONSchema(object):
         elif typecode == 'array':
             # TODO: implement checks like maxLength, minLength, etc.
             items = self.schema['items']
-            kwargs = {}
             if 'minItems' in self.schema:
                 kwargs['minlen'] = self.schema['minItems']
             if 'maxItems' in self.schema:
@@ -241,7 +256,7 @@ class JSONSchema(object):
             # TODO: if Null is in the list, then add keyword allow_none=True
             arg = "[{0}]".format(', '.join(self.make_child({'type':typ}).trait_code
                                            for typ in typecode))
-            return construct_function_call('jst.JSONUnion', Variable(arg))
+            return construct_function_call('jst.JSONUnion', Variable(arg), **kwargs)
         else:
             raise ValueError(f"unrecognized type identifier: {typecode}")
 

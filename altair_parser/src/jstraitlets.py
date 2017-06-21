@@ -4,9 +4,15 @@ Extensions to traitlets for compatibility with JSON Schema
 The biggest difference between these trait types and the built-in trait types
 is the addition of the ``undefined`` sentinel. Javascript has both a "null"
 and an "undefined" marker, while Python uses "None" for both.
+
+Additionally, these traits support validation keywords related to those
+defined in the JSON Schema specification: http://json-schema.org.
+The code here targets jsonschema draft 04.
 """
 import traitlets as T
 from traitlets.traitlets import class_of
+
+__jsonschema_draft__ = 4
 
 
 class UndefinedType(object):
@@ -76,29 +82,6 @@ def _validate_numeric(trait, obj, value,
                     name=trait.name, klass=class_of(obj),
                     value=value, multiple=multipleOf))
     return value
-
-
-def _has_unique_elements(L):
-    """Return True if all items in the list are unique"""
-    # Hashable types
-    try:
-        S = set(L)
-    except TypeError:
-        pass
-    else:
-        return len(L) == len(S)
-
-    # Unhashable but orderable types
-    try:
-        L = sorted(L)
-    except TypeError:
-        pass
-    else:
-        from itertools import groupby
-        return len(L) == len([k for k, v in groupby(L)])
-
-    # Unhashable, unorderable types
-    return all(L[i] != L[j] for i in range(len(L)) for j in range(i, len(L)))
 
 
 class JSONNumber(T.Float):
@@ -207,6 +190,31 @@ class JSONUnion(T.Union):
         if self.allow_undefined and value is undefined:
             return value
         return super(JSONUnion, self).validate(obj, value)
+
+
+def _has_unique_elements(L):
+    """Return True if all items in the list are unique"""
+    # Hashable types
+    try:
+        S = set(L)
+    except TypeError:
+        pass
+    else:
+        return len(L) == len(S)
+
+    # Unhashable but orderable types
+    try:
+        L = sorted(L)
+    except TypeError:
+        pass
+    else:
+        from itertools import groupby
+        return len(L) == len([k for k, v in groupby(L)])
+
+    # Unhashable, unorderable types
+    return all(L[i] != L[j]
+               for i in range(len(L))
+               for j in range(i + 1, len(L)))
 
 
 class JSONArray(T.List):

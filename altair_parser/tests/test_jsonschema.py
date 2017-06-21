@@ -17,6 +17,24 @@ def test_trait_code(spec, output):
     assert JSONSchema(spec).trait_code == output
 
 
+def test_required_keyword():
+    schema = {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'age': {'type': 'integer'},
+            'size': {'type': 'number'}
+        },
+        'required': ['name', 'age']
+    }
+    js = JSONSchema(schema)
+    for name, obj in js.wrapped_properties().items():
+        required = (name in schema['required'])
+        assert obj.metadata.get('required', False) == required
+        if required:
+            assert 'allow_undefined=False' in obj.trait_code
+
+
 def test_get_reference():
     schema = {
         'definitions': {
