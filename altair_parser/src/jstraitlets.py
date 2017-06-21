@@ -78,6 +78,29 @@ def _validate_numeric(trait, obj, value,
     return value
 
 
+def _has_unique_elements(L):
+    """Return True if all items in the list are unique"""
+    # Hashable types
+    try:
+        S = set(L)
+    except TypeError:
+        pass
+    else:
+        return len(L) == len(S)
+
+    # Unhashable but orderable types
+    try:
+        L = sorted(L)
+    except TypeError:
+        pass
+    else:
+        from itertools import groupby
+        return len(L) == len([k for k, v in groupby(L)])
+
+    # Unhashable, unorderable types
+    return all(L[i] != L[j] for i in range(len(L)) for j in range(i, len(L)))
+
+
 class JSONNumber(T.Float):
     allow_undefined = True
     default_value = undefined
@@ -191,8 +214,9 @@ class JSONArray(T.List):
     default_value = undefined
     info_text = "an Array of values"
 
-    def __init__(self, trait, allow_undefined=True, **kwargs):
+    def __init__(self, trait, allow_undefined=True, uniqueItems=False, **kwargs):
         self.allow_undefined = allow_undefined
+        self.uniqueItems = uniqueItems
         if 'minItems' in kwargs:
             kwargs['minlen'] = kwargs.pop('minItems')
         if 'maxItems' in kwargs:
@@ -202,7 +226,14 @@ class JSONArray(T.List):
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
             return value
-        return super(JSONArray, self).validate(obj, value)
+        value = super(JSONArray, self).validate(obj, value)
+        print(self.uniqueItems, value)
+        if self.uniqueItems and not _has_unique_elements(value):
+            raise T.TraitError(
+                "The value of the '{name}' trait of {klass} instance should "
+                "have unique elements".format(
+                    name=self.name, klass=class_of(obj)))
+        return value
 
 
 class JSONEnum(T.Enum):

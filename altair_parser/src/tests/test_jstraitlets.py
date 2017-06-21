@@ -45,11 +45,15 @@ def generate_test_cases():
 
     # Arrays
     yield (jst.JSONArray(jst.JSONString()),
-           ["a", [1, 'b']], [["a", "b"], ['a'], undefined])
+           ["a", [1, 'b']], [["a", "a"], ['a'], undefined])
     yield (jst.JSONArray(jst.JSONString(), allow_undefined=False),
            [undefined], [])
     yield (jst.JSONArray(jst.JSONInteger(), minItems=1, maxItems=2),
-           [[], [1, 2, 3]], [[1], [1, 2]])
+           [[], [1, 2, 3]], [[1], [1, 1]])
+    yield(jst.JSONArray(jst.JSONInteger(), uniqueItems=True),
+          [[1, 1], [1, 2, 1]], [[], [1], [1, 2]])
+    yield(jst.JSONArray(jst.JSONInstance(list), uniqueItems=True),
+          [[[], []], [[1], [1]]], [[[], [1]], [[1], [2], [3]]])
 
     # Enums
     yield (jst.JSONEnum([1, "2", None]), ["1", 2, [1]],
