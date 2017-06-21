@@ -19,7 +19,11 @@ from ..utils import load_dynamic_module
                           ({'enum': [None, 42, "hello"]},
                            "jst.JSONEnum([None, 42, 'hello'])"),
                           ({'anyOf': [{'type': 'integer'}, {'type': 'string'}]},
-                           "jst.JSONAnyOf([jst.JSONInteger(), jst.JSONString()])")])
+                           "jst.JSONAnyOf([jst.JSONInteger(), jst.JSONString()])"),
+                          ({'allOf': [{'type': 'integer'}, {'type': 'string'}]},
+                           "jst.JSONAllOf([jst.JSONInteger(), jst.JSONString()])"),
+                          ({'oneOf': [{'type': 'integer'}, {'type': 'string'}]},
+                           "jst.JSONOneOf([jst.JSONInteger(), jst.JSONString()])")])
 def test_trait_code(spec, output):
     assert JSONSchema(spec).trait_code == output
 
