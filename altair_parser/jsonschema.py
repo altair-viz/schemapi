@@ -179,29 +179,20 @@ class NotTraitCode(TraitCodeExtractor):
                                        **kwargs)
 
 
+class ObjectTraitCode(TraitCodeExtractor):
+    def check(self):
+        return self.typecode == 'object'
+
+    def trait_code(self, **kwargs):
+        raise NotImplementedError("Anonymous Objects")
+
+
 class JSONSchema(object):
     """A class to wrap JSON Schema objects and reason about their contents"""
     object_template = OBJECT_TEMPLATE
     __draft__ = 4
 
     _cached_references = {}
-    simple_types = ["boolean", "null", "number", "integer", "string"]
-    valid_types = simple_types + ["array", "object"]
-    traitlet_map = {'array': {'cls': 'jst.JSONArray'},
-                    'boolean': {'cls': 'jst.JSONBoolean'},
-                    'null': {'cls': 'jst.JSONNull'},
-                    'number': {'cls': 'jst.JSONNumber',
-                               'validation_keys': ['minimum', 'maximum',
-                                                   'exclusiveMinimum',
-                                                   'exclusiveMaximum',
-                                                   'multipleOf']},
-                    'integer': {'cls': 'jst.JSONInteger',
-                                'validation_keys': ['minimum', 'maximum',
-                                                    'exclusiveMinimum',
-                                                    'exclusiveMaximum',
-                                                    'multipleOf']},
-                    'string': {'cls': 'jst.JSONString'},
-                   }
     attr_defaults = {'title': '',
                      'description': '',
                      'properties': {},
@@ -213,6 +204,10 @@ class JSONSchema(object):
     basic_imports = ["import traitlets as T",
                      "from . import jstraitlets as jst",
                      "from .baseobject import BaseObject"]
+    trait_extractors = [NotTraitCode, RefTraitCode, AnyOfTraitCode,
+                        AllOfTraitCode, OneOfTraitCode, EnumTraitCode,
+                        SimpleTraitCode, ArrayTraitCode, ObjectTraitCode,
+                        CompoundTraitCode]
 
     def __init__(self, schema, context=None, parent=None, name=None, metadata=None):
         self.schema = schema
@@ -357,31 +352,13 @@ class JSONSchema(object):
             kwargs = {}
 
         # TODO: handle multiple entries...
-
-        if "not" in self.schema:
-            validator = NotTraitCode(self, typecode)
-        elif "$ref" in self.schema:
-            validator = RefTraitCode(self, typecode)
-        elif "anyOf" in self.schema:
-            validator = AnyOfTraitCode(self, typecode)
-        elif "allOf" in self.schema:
-            validator = AllOfTraitCode(self, typecode)
-        elif "oneOf" in self.schema:
-            validator = OneOfTraitCode(self, typecode)
-        elif "enum" in self.schema:
-            validator = EnumTraitCode(self, typecode)
-        elif typecode in self.simple_types:
-            validator = SimpleTraitCode(self, typecode)
-        elif typecode == 'array':
-            validator = ArrayTraitCode(self, typecode)
-        elif isinstance(typecode, list):
-            validator = CompoundTraitCode(self, typecode)
-        elif typecode == 'object':
-            raise NotImplementedError("Anonymous Objects")
+        for TraitExtractor in self.trait_extractors:
+            trait_extractor = TraitExtractor(self)
+            if trait_extractor.check():
+                return trait_extractor.trait_code(**kwargs)
         else:
-            raise ValueError(f"unrecognized type identifier: {typecode}")
-        assert validator.check()
-        return validator.trait_code(**kwargs)
+            raise ValueError("No recognized trait code for schema with keys "
+                             "{0}".format(tuple(self.schema.keys())))
 
     def object_code(self):
         """Return code to define a BaseObject for this schema"""
