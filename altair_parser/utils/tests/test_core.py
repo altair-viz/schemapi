@@ -14,6 +14,14 @@ def generate_schemas():
     yield [1, 2, 3]
     yield {1, 2, 3}
     yield (1, 2, 3)
+    yield {
+        'a': {
+            'key': [1, 2, 3],
+            'val': {'a', 'b', 'c'}
+            },
+        'b': [{}, {'name': 'bob', 'age': 31}],
+        'c': (1, 2, 3)
+    }
 
 
 def scramble(val):
