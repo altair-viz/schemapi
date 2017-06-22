@@ -277,6 +277,12 @@ class JSONSchema(object):
         return construct_function_call('jst.JSONOneOf', Variable(children),
                                        **kwargs)
 
+    def _not_trait_code(self, typecode, kwargs):
+        assert 'not' in self.schema
+        not_this = self.make_child(self.schema['not']).trait_code
+        return construct_function_call('jst.JSONNot', Variable(not_this),
+                                       **kwargs)
+
     @property
     def trait_code(self):
         """Create the trait code for the given typecode"""
@@ -289,7 +295,7 @@ class JSONSchema(object):
         # TODO: handle multiple entries...
 
         if "not" in self.schema:
-            raise NotImplementedError("'not' keyword")
+            return self._not_trait_code(typecode, kwargs)
         elif "$ref" in self.schema:
             return self._ref_trait_code(typecode, kwargs)
         elif "anyOf" in self.schema:

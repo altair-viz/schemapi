@@ -336,11 +336,10 @@ class JSONAllOf(T.Union):
         with obj.cross_validation_lock:
             for trait_type in self.trait_types:
                 v = trait_type._validate(obj, value)
-                # In the case of an element trait, the name is None
-                if self.name is not None:
-                    setattr(obj, '_' + self.name + '_metadata', trait_type.metadata)
-                return v
-        self.error(obj, value)
+        # In the case of an element trait, the name is None
+        if self.name is not None:
+            setattr(obj, '_' + self.name + '_metadata', trait_type.metadata)
+        return v
 
 
 class JSONNot(T.TraitType):
@@ -359,6 +358,6 @@ class JSONNot(T.TraitType):
         try:
             self.not_this.validate(obj, value)
         except T.TraitError:
-            return True
+            return value
         else:
             self.error(obj, value)

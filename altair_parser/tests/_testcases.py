@@ -228,3 +228,88 @@ simple_references = {
         'b': {'name': 'douglas', 'val': 42}
     }]
 }
+
+simple_anyof = {
+    'schema': {
+        'properties': {
+            'value': {
+                'anyOf': [
+                    {'type': 'integer'},
+                    {'type': 'array', 'items': {'type': 'integer'}}
+                ]
+            }
+        }
+    },
+    'valid': [
+        {'value': 4},
+        {'value': [2, 3, 4]}
+    ],
+    'invalid': [
+        {'value': 'a'},
+        {'value': [1, 2, 'a']}
+    ]
+}
+
+simple_oneOf = {
+    'schema': {
+        'properties': {
+            'value': {
+                'oneOf': [
+                    {'type': 'integer'},
+                    {'enum': [1, 2, 1.5, 'a']}
+                ]
+            }
+        }
+    },
+    'valid': [
+        {'value': 4},
+        {'value': 1.5},
+        {'value': 'a'}
+    ],
+    'invalid': [
+        {'value': 1},
+        {'value': 2}
+    ]
+}
+
+simple_allOf = {
+    'schema': {
+        'properties': {
+            'value': {
+                'allOf': [
+                    {'type': 'integer'},
+                    {'enum': [1, 2, 1.5, 'a']}
+                ]
+            }
+        }
+    },
+    'valid': [
+        {'value': 1},
+        {'value': 2}
+    ],
+    'invalid': [
+        {'value': 4},
+        {'value': 1.5},
+        {'value': 'a'}
+    ]
+}
+
+simple_not = {
+    'schema': {
+        'properties': {
+            'value': {
+                'not': {'type': 'integer'},
+            }
+        }
+    },
+    'valid': [
+        {'value': [1, 2, 3]},
+        {'value': 'a'},
+        {'value': None}
+    ],
+    'invalid': [
+        {'value': 0},
+        {'value': 1},
+        {'value': 2}
+    ]
+}
