@@ -163,4 +163,13 @@ class ObjectTraitCode(TraitCodeExtractor):
         return self.typecode == 'object'
 
     def trait_code(self, **kwargs):
-        raise NotImplementedError("Anonymous Objects")
+        hashval = self.schema.schema_hash
+        if hashval not in self.schema.anonymous_objects:
+            self.schema.anonymous_objects[hashval] = {
+                'name': self.schema._new_anonymous_name(),
+                'schema': self.schema
+            }
+        name = self.schema.anonymous_objects[hashval]['name']
+        return construct_function_call('jst.JSONInstance',
+                                       Variable('jst.{0}'.format(name)),
+                                       **kwargs)
