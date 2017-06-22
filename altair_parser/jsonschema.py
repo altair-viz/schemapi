@@ -52,10 +52,10 @@ class JSONSchema(object):
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
-    trait_extractors = [tx.NotTraitCode, tx.RefTraitCode, tx.AnyOfTraitCode,
+    trait_extractors = [tx.RefTraitCode, tx.NotTraitCode, tx.AnyOfTraitCode,
                         tx.AllOfTraitCode, tx.OneOfTraitCode, tx.EnumTraitCode,
                         tx.SimpleTraitCode, tx.ArrayTraitCode,
-                        tx.ObjectTraitCode, tx.CompoundTraitCode]
+                        tx.CompoundTraitCode, tx.ObjectTraitCode, ]
 
     def __init__(self, schema, context=None, parent=None, name=None, metadata=None):
         if not isinstance(schema, dict):
@@ -183,15 +183,6 @@ class JSONSchema(object):
                     imports.append(ref.import_statement)
         return imports
 
-    @property
-    def module_imports(self):
-        """List of imports of all definitions for the root module"""
-        imports = []
-        for obj in self.wrapped_definitions().values():
-            if obj.is_object:
-                imports.append(obj.import_statement)
-        return imports
-
     def wrapped_definitions(self):
         """Return definition dictionary wrapped as JSONSchema objects"""
         return {name.lower(): self.make_child(schema, name=name)
@@ -243,6 +234,25 @@ class JSONSchema(object):
         """Return code to define a traitlets.HasTraits object for this schema"""
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return jinja2.Template(self.object_template).render(cls=self, date=now)
+
+    @property
+    def object_imports(self):
+        """Return the list of imports required in the object_code definition"""
+        return []
+
+    @property
+    def trait_imports(self):
+        """Return the list of imports required in the trait_code definition"""
+        return []
+
+    @property
+    def module_imports(self):
+        """List of imports of all definitions for the root module"""
+        imports = []
+        for obj in self.wrapped_definitions().values():
+            if obj.is_object:
+                imports.append(obj.import_statement)
+        return imports
 
     def source_tree(self):
         """Return the JSON specification of the module source tree

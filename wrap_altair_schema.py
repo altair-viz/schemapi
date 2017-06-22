@@ -9,6 +9,8 @@ source_tree = schema.source_tree()
 print("writing to ./altair_schema/")
 save_module(source_tree, 'altair_schema', os.path.abspath('.'))
 
+print(schema.anonymous_objects)
+
 # def find_anonymous_objects(schema, name='#'):
 #     for prop, subschema in schema.get('definitions', {}).items():
 #         prop = name + '/definitions/' + prop
