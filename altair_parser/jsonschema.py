@@ -21,6 +21,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
         {{ prop.description }}
     {%- endfor %}
     """
+    _default_trait = {{ cls.default_trait }}
     {%- for (name, prop) in cls.wrapped_properties().items() %}
     {{ name }} = {{ prop.trait_code }}
     {%- endfor %}
@@ -40,7 +41,8 @@ class JSONSchema(object):
                      'default': None,
                      'examples': {},
                      'type': 'object',
-                     'required': []}
+                     'required': [],
+                     'additionalProperties': True}
     basic_imports = ["import traitlets as T",
                      "from . import jstraitlets as jst",
                      "from .baseobject import BaseObject"]
@@ -137,6 +139,14 @@ class JSONSchema(object):
     @property
     def baseclass(self):
         return "BaseObject"
+
+    @property
+    def default_trait(self):
+        if self.additionalProperties in [True, False]:
+            return repr(self.additionalProperties)
+        else:
+            trait = self.make_child(self.additionalProperties)
+            return "jst.DefaultTrait({0})".format(trait.trait_code)
 
     @property
     def import_statement(self):

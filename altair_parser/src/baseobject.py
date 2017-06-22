@@ -3,7 +3,7 @@ from .jstraitlets import undefined, DefaultHasTraits
 
 
 class BaseObject(DefaultHasTraits):
-    _default_trait = True
+    _default_trait = False
 
     @classmethod
     def from_dict(cls, dct):
