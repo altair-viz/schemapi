@@ -91,6 +91,3 @@ def test_get_reference():
         obj1 = js.get_reference(definition_code)
         obj2 = JSONSchema(definition)
         assert obj1.trait_code == obj2.trait_code
-
-        obj3 = js.get_reference(definition_code)
-        assert obj1 is obj3  # Make sure reference cacheing works correctly

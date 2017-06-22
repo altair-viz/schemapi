@@ -33,7 +33,6 @@ class JSONSchema(object):
     object_template = OBJECT_TEMPLATE
     __draft__ = 4
 
-    _cached_references = {}
     attr_defaults = {'title': '',
                      'description': '',
                      'properties': {},
@@ -183,17 +182,12 @@ class JSONSchema(object):
         return {name: self.make_child(val, metadata={'required': name in self.required})
                 for name, val in self.properties.items()}
 
-    def get_reference(self, ref, cache=True):
+    def get_reference(self, ref):
         """
         Get the JSONSchema object for the given reference code.
 
         Reference codes should look something like "#/definitions/MyDefinition"
-
-        By default, this will cache objects accessed by their ref code.
         """
-        if cache and ref in self._cached_references:
-            return self._cached_references[ref]
-
         path = ref.split('/')
         name = path[-1]
         if path[0] != '#':
@@ -205,10 +199,7 @@ class JSONSchema(object):
         except KeyError:
             raise ValueError(f"$ref='{ref}' not present in the schema")
 
-        wrapped_schema = self.make_child(schema, name=name)
-        if cache:
-            self._cached_references[ref] = wrapped_schema
-        return wrapped_schema
+        return self.make_child(schema, name=name)
 
     @property
     def trait_code(self):
