@@ -53,6 +53,9 @@ class JSONSchema(object):
                         tx.ObjectTraitCode, tx.CompoundTraitCode]
 
     def __init__(self, schema, context=None, parent=None, name=None, metadata=None):
+        if not isinstance(schema, dict):
+            raise ValueError("schema should be supplied as a dict")
+
         self.schema = schema
         self.parent = parent
         self.name = name
@@ -61,6 +64,13 @@ class JSONSchema(object):
         # if context is not given, then assume this is a root instance that
         # defines its own context
         self.context = context or schema
+
+    @classmethod
+    def from_json_file(cls, filename):
+        import json
+        with open(filename) as f:
+            schema = json.load(f)
+        return cls(schema)
 
     def __getitem__(self, key):
         return self.schema[key]

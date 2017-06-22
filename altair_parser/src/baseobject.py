@@ -1,8 +1,10 @@
 import traitlets as T
-from .jstraitlets import undefined
+from .jstraitlets import undefined, DefaultHasTraits
 
 
-class BaseObject(T.HasTraits):
+class BaseObject(DefaultHasTraits):
+    _default_trait = True
+
     @classmethod
     def from_dict(cls, dct):
         """Initialize an instance from a (nested) dictionary"""

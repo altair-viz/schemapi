@@ -27,6 +27,55 @@ class UndefinedType(object):
 undefined = UndefinedType()
 
 
+class DefaultTrait(object):
+    def __init__(self, trait):
+        self.trait = trait
+
+    def __bool__(self):
+        return self.trait is not None
+
+
+class DefaultHasTraits(T.HasTraits):
+    """A version of HasTraits supporting default member types
+
+    This class operates just like T.HasTraits, except it allows
+    specification of a default trait type for any members that
+    are not explicitly specified in the class definition.
+
+    Example
+    -------
+    >>> class Foo(DefaultHasTraits):
+    ...     name = T.Unicode()
+    ...     _default_trait = DefaultTrait(T.Integer())
+    >>> f = Foo(name="Guido", score=42)
+    >>> f.set_trait('value', 100)
+    >>> f.trait_names()
+    ['name', 'score', 'value']
+    """
+    _default_trait = DefaultTrait(T.Any())
+
+    def _get_default_trait(self):
+        if isinstance(self._default_trait, DefaultTrait):
+            return self._default_trait.trait
+        elif self._default_trait:
+            return T.Any()
+        else:
+            return None
+
+    def __init__(self, *args, **kwargs):
+        default = self._get_default_trait()
+        if default:
+            self.add_traits(**{key: default for key in kwargs
+                               if key not in self.traits()})
+        super(DefaultHasTraits, self).__init__(*args, **kwargs)
+
+    def set_trait(self, name, value):
+        default = self._get_default_trait()
+        if default and name not in self.traits():
+            self.add_traits(**{name: default})
+        super(DefaultHasTraits, self).set_trait(name, value)
+
+
 class JSONNull(T.TraitType):
     allow_undefined = True
     default_value = undefined

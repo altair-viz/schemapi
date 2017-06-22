@@ -6,6 +6,7 @@
 import sys
 import types
 import importlib
+import importlib.abc
 
 
 class DynamicImporter(importlib.abc.MetaPathFinder):

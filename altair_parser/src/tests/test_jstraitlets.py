@@ -86,3 +86,19 @@ def test_traits(trait, failcases, passcases):
     for failcase in failcases:
         with pytest.raises(T.TraitError) as err:
             trait.validate(obj, failcase)
+
+
+def test_defaulthastraits():
+    class Foo(jst.DefaultHasTraits):
+        _default_trait = jst.DefaultTrait(T.Integer())
+        name = T.Unicode()
+
+    f = Foo(name="Bob", age=40)
+    f.set_trait('year', 2000)
+    assert set(f.trait_names()) == {'name', 'age', 'year'}
+
+    with pytest.raises(T.TraitError) as err:
+        f.set_trait('foo', 'abc')
+
+    with pytest.raises(T.TraitError) as err:
+        f.set_trait('age', 'blah')
