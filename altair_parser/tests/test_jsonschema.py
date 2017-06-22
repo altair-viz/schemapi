@@ -63,7 +63,7 @@ def test_required_keyword():
                      'traitref1', 'objref1', 'typelist1']
     }
     js = JSONSchema(schema)
-    load_dynamic_module('_schema', js.module_spec(), reload_module=True)
+    load_dynamic_module('_schema', js.source_tree(), reload_module=True)
     from _schema import jstraitlets as jst
     from _schema.twonumbers import twoNumbers
     for name, obj in js.wrapped_properties().items():
