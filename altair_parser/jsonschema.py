@@ -347,51 +347,6 @@ class JSONSchema(object):
             self._cached_references[ref] = wrapped_schema
         return wrapped_schema
 
-    def _simple_trait_code(self, typecode, kwargs):
-        validator = SimpleTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _compound_trait_code(self, typecode, kwargs):
-        validator = CompoundTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _ref_trait_code(self, typecode, kwargs):
-        validator = RefTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _enum_trait_code(self, typecode, kwargs):
-        validator = EnumTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _array_trait_code(self, typecode, kwargs):
-        validator = ArrayTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _anyOf_trait_code(self, typecode, kwargs):
-        validator = AnyOfTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _allOf_trait_code(self, typecode, kwargs):
-        validator = AllOfTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _oneOf_trait_code(self, typecode, kwargs):
-        validator = OneOfTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
-    def _not_trait_code(self, typecode, kwargs):
-        validator = NotTraitCode(self, typecode)
-        assert validator.check()
-        return validator.trait_code(**kwargs)
-
     @property
     def trait_code(self):
         """Create the trait code for the given typecode"""
@@ -404,27 +359,29 @@ class JSONSchema(object):
         # TODO: handle multiple entries...
 
         if "not" in self.schema:
-            return self._not_trait_code(typecode, kwargs)
+            validator = NotTraitCode(self, typecode)
         elif "$ref" in self.schema:
-            return self._ref_trait_code(typecode, kwargs)
+            validator = RefTraitCode(self, typecode)
         elif "anyOf" in self.schema:
-            return self._anyOf_trait_code(typecode, kwargs)
+            validator = AnyOfTraitCode(self, typecode)
         elif "allOf" in self.schema:
-            return self._allOf_trait_code(typecode, kwargs)
+            validator = AllOfTraitCode(self, typecode)
         elif "oneOf" in self.schema:
-            return self._oneOf_trait_code(typecode, kwargs)
+            validator = OneOfTraitCode(self, typecode)
         elif "enum" in self.schema:
-            return self._enum_trait_code(typecode, kwargs)
+            validator = EnumTraitCode(self, typecode)
         elif typecode in self.simple_types:
-            return self._simple_trait_code(typecode, kwargs)
+            validator = SimpleTraitCode(self, typecode)
         elif typecode == 'array':
-            return self._array_trait_code(typecode, kwargs)
+            validator = ArrayTraitCode(self, typecode)
+        elif isinstance(typecode, list):
+            validator = CompoundTraitCode(self, typecode)
         elif typecode == 'object':
             raise NotImplementedError("Anonymous Objects")
-        elif isinstance(typecode, list):
-            return self._compound_trait_code(typecode, kwargs)
         else:
             raise ValueError(f"unrecognized type identifier: {typecode}")
+        assert validator.check()
+        return validator.trait_code(**kwargs)
 
     def object_code(self):
         """Return code to define a BaseObject for this schema"""
