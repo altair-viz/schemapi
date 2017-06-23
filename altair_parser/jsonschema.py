@@ -45,8 +45,6 @@ class JSONSchema(object):
     object_template = OBJECT_TEMPLATE
     __draft__ = 4
 
-    anonymous_objects = {}
-
     attr_defaults = {'title': '',
                      'description': '',
                      'properties': {},
@@ -78,7 +76,17 @@ class JSONSchema(object):
 
         # if context is not given, then assume this is a root instance that
         # defines its own context
-        self.context = context or schema
+        self.context = context or self
+
+        # Here is where we cache anonymous objects defined in the schema.
+        # We store them by generating a unique hash for the schema definition,
+        # so that even if the schema defines the same object in multiple cases,
+        # the Python wrapper will recognize that they're the same type.
+        self._anonymous_objects = {}
+
+    @property
+    def anonymous_objects(self):
+        return self.context._anonymous_objects
 
     @classmethod
     def from_json_file(cls, filename):
@@ -120,7 +128,7 @@ class JSONSchema(object):
 
     @property
     def is_root(self):
-        return self.context is self.schema
+        return self.context is self
 
     @property
     def is_trait(self):
@@ -206,7 +214,7 @@ class JSONSchema(object):
         if path[0] != '#':
             raise ValueError(f"Unrecognized $ref format: '{ref}'")
         try:
-            schema = self.context
+            schema = self.context.schema
             for key in path[1:]:
                 schema = schema[key]
         except KeyError:
