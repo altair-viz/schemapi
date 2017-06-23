@@ -284,7 +284,6 @@ class JSONArray(T.List):
         if self.allow_undefined and value is undefined:
             return value
         value = super(JSONArray, self).validate(obj, value)
-        print(self.uniqueItems, value)
         if self.uniqueItems and not _has_unique_elements(value):
             raise T.TraitError(
                 "The value of the '{name}' trait of {klass} instance should "

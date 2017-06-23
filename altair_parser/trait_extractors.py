@@ -2,6 +2,15 @@
 from .utils import construct_function_call, Variable
 
 
+class ImportStatement(object):
+    def __init__(self, path, names):
+        self.path = path
+        self.names = names
+
+    def __repr__(self):
+        return "from {0} import {1}".format(self.path, ', '.join(self.names))
+
+
 class TraitCodeExtractor(object):
     """Base class for trait code extractors.
 
@@ -17,6 +26,9 @@ class TraitCodeExtractor(object):
 
     def trait_code(self, **kwargs):
         raise NotImplementedError()
+
+    def imports(self):
+        return []
 
 
 class SimpleTraitCode(TraitCodeExtractor):
@@ -83,6 +95,13 @@ class RefTraitCode(TraitCodeExtractor):
             ref.metadata = self.schema.metadata
             return ref.trait_code
 
+    def imports(self):
+        ref = self.schema.get_reference(self.schema['$ref'])
+        if ref.is_object:
+            return [f'from .{ref.modulename} import {ref.classname}']
+        else:
+            return ref.trait_imports
+
 
 class EnumTraitCode(TraitCodeExtractor):
     def check(self):
@@ -114,6 +133,13 @@ class ArrayTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONArray', Variable(itemtype),
                                        **kwargs)
 
+    def imports(self):
+        items = self.schema['items']
+        if isinstance(items, list):
+            raise NotImplementedError("'items' keyword as list")
+        else:
+            return self.schema.make_child(items).trait_imports
+
 
 class AnyOfTraitCode(TraitCodeExtractor):
     def check(self):
@@ -124,6 +150,10 @@ class AnyOfTraitCode(TraitCodeExtractor):
                     for sub_schema in self.schema['anyOf']]
         return construct_function_call('jst.JSONAnyOf', Variable(children),
                                        **kwargs)
+
+    def imports(self):
+        return sum((self.schema.make_child(sub_schema).trait_imports
+                    for sub_schema in self.schema['anyOf']), [])
 
 
 class OneOfTraitCode(TraitCodeExtractor):
@@ -136,6 +166,10 @@ class OneOfTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONOneOf', Variable(children),
                                        **kwargs)
 
+    def imports(self):
+        return sum((self.schema.make_child(sub_schema).trait_imports
+                    for sub_schema in self.schema['oneOf']), [])
+
 
 class AllOfTraitCode(TraitCodeExtractor):
     def check(self):
@@ -147,6 +181,10 @@ class AllOfTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONAllOf', Variable(children),
                                        **kwargs)
 
+    def imports(self):
+        return sum((self.schema.make_child(sub_schema).trait_imports
+                    for sub_schema in self.schema['allOf']), [])
+
 
 class NotTraitCode(TraitCodeExtractor):
     def check(self):
@@ -156,6 +194,9 @@ class NotTraitCode(TraitCodeExtractor):
         not_this = self.schema.make_child(self.schema['not']).trait_code
         return construct_function_call('jst.JSONNot', Variable(not_this),
                                        **kwargs)
+
+    def imports(self):
+        return self.schema.make_child(self.schema['not']).trait_imports
 
 
 class ObjectTraitCode(TraitCodeExtractor):
@@ -170,6 +211,15 @@ class ObjectTraitCode(TraitCodeExtractor):
                 'schema': self.schema
             }
         name = self.schema.anonymous_objects[hashval]['name']
-        return construct_function_call('jst.JSONInstance',
-                                       Variable('jst.{0}'.format(name)),
+        return construct_function_call('jst.JSONInstance', Variable(name),
                                        **kwargs)
+
+    def imports(self):
+        hashval = self.schema.schema_hash
+        if hashval not in self.schema.anonymous_objects:
+            self.schema.anonymous_objects[hashval] = {
+                'name': self.schema._new_anonymous_name(),
+                'schema': self.schema
+            }
+        schema = self.schema.anonymous_objects[hashval]['schema'].schema
+        return self.schema.make_child(schema).trait_imports
