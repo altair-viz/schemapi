@@ -34,12 +34,13 @@ def test_testcases_jsonschema(testcase):
 @pytest.mark.parametrize('testcase', testcases.keys())
 def test_testcases_traitlets(testcase):
     testcase = testcases[testcase]
+    modulename = '_schema'
 
     schema = testcase['schema']
     valid = testcase['valid']
     invalid = testcase.get('invalid', [])
 
-    traitlets_obj = JSONSchema(schema)
+    traitlets_obj = JSONSchema(schema, module=modulename)
 
     for key, code in traitlets_obj.source_tree().items():
         if key in ['jstraitlets.py', 'baseobject.py']:
@@ -49,7 +50,7 @@ def test_testcases_traitlets(testcase):
         print(code)
         print()
 
-    schema = load_dynamic_module('_schema', traitlets_obj.source_tree(),
+    schema = load_dynamic_module(modulename, traitlets_obj.source_tree(),
                                  reload_module=True)
 
     for instance in valid:
@@ -62,8 +63,9 @@ def test_testcases_traitlets(testcase):
 @pytest.mark.parametrize('testcase', testcases.keys())
 def test_dict_round_trip(testcase):
     testcase = testcases[testcase]
-    traitlets_obj = JSONSchema(testcase['schema'])
-    schema = load_dynamic_module('_schema', traitlets_obj.source_tree(),
+    modulename = '_schema'
+    traitlets_obj = JSONSchema(testcase['schema'], module=modulename)
+    schema = load_dynamic_module(modulename, traitlets_obj.source_tree(),
                                  reload_module=True)
 
     for instance in testcase['valid']:

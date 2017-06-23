@@ -88,7 +88,7 @@ class RefTraitCode(TraitCodeExtractor):
         ref = self.schema.wrapped_ref()
         if ref.is_object:
             return construct_function_call('jst.JSONInstance',
-                                           Variable(ref.classname),
+                                           ref.full_classname,
                                            **kwargs)
         else:
             ref = ref.copy()  # TODO: maybe can remove this?

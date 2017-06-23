@@ -355,3 +355,29 @@ anonymous_objects = {
         {'item': 42}
     ]
 }
+
+
+circular_reference = {
+    'schema': {
+        '$ref': '#/definitions/Repeat',
+        'definitions': {
+            'Repeat': {
+                'type': 'object',
+                'properties': {
+                    'repeat': {
+                        'anyOf': [
+                            {'$ref': '#/definitions/Repeat'},
+                            {'type': 'string'}
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    'valid': [
+        {'repeat': 'foo'},
+        {'repeat': {'repeat': 'foo'}},
+        #{'repeat': {'repeat': {'repeat': 'foo'}}},
+    ],
+    'invalid': []
+}

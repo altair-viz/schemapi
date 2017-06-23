@@ -13,9 +13,13 @@ class BaseObject(DefaultHasTraits):
             raise T.TraitError("Argument to from_dict should be a dict, "
                                "but got {0}".format(dct))
         for key, val in dct.items():
-            trait = obj.traits()[key]
-            if isinstance(trait, T.Instance) and issubclass(trait.klass, BaseObject):
-                val = trait.klass.from_dict(val)
+            if isinstance(val, dict):
+                trait = obj.traits()[key]
+                subtraits = trait.trait_types if isinstance(trait, T.Union) else [trait]
+                for subtrait in subtraits:
+                    if isinstance(subtrait, T.Instance) and issubclass(subtrait.klass, BaseObject):
+                        val = subtrait.klass.from_dict(val)
+                        break
             obj.set_trait(key, val)
         return obj
 

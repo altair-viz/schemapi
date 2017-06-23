@@ -14,7 +14,7 @@ OBJECT_TEMPLATE = '''
 {%- endif %}
 
 {% if not hide_imports -%}
-{%- for import in cls.object_imports %}
+{%- for import in cls.basic_imports %}
 {{ import }}
 {%- endfor %}
 {%- endif %}
@@ -24,6 +24,8 @@ OBJECT_TEMPLATE = '''
 {% endfor %}
 
 {% if cls.is_reference %}
+{{ cls.wrapped_ref().import_statement }}
+
 class {{ cls.classname }}({{ cls.wrapped_ref().classname }}):
     pass
 {%- else -%}
@@ -186,6 +188,13 @@ class JSONSchema(object):
         else:
             raise NotImplementedError("class name for schema with keys "
                                       "{0}".format(tuple(self.schema.keys())))
+
+    @property
+    def full_classname(self):
+        if not self.module:
+            return self.classname
+        else:
+            return self.module + '.' + self.classname
 
     @property
     def schema_hash(self):
