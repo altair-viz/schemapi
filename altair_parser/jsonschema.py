@@ -49,6 +49,9 @@ class JSONSchema(object):
     basic_imports = ["import traitlets as T",
                      "from . import jstraitlets as jst",
                      "from .baseobject import BaseObject"]
+    # TODO: support these...
+    unsupported_keys = {'pattern', 'additionalItems', 'patternProperties',
+                        'minProperties', 'maxProperties', 'dependencies'}
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
@@ -61,6 +64,9 @@ class JSONSchema(object):
         if not isinstance(schema, dict):
             raise ValueError("schema should be supplied as a dict")
 
+        for key in (self.unsupported_keys & schema.keys()):
+            warnings.warn(f"'{key}' key in schema is unsupported by JSONSchema")
+
         self.schema = schema
         self.parent = parent
         self.name = name
@@ -72,6 +78,7 @@ class JSONSchema(object):
 
     @classmethod
     def from_json_file(cls, filename):
+        """Instantiate a JSONSchema object from a JSON file"""
         import json
         with open(filename) as f:
             schema = json.load(f)
