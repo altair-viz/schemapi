@@ -1,6 +1,7 @@
 import jinja2
 import os
 from datetime import datetime
+import keyword
 
 from . import trait_extractors as tx
 from . import utils
@@ -61,6 +62,7 @@ class JSONSchema(object):
     basic_imports = ["import traitlets as T",
                      "from . import jstraitlets as jst",
                      "from .baseobject import BaseObject"]
+
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
@@ -69,11 +71,13 @@ class JSONSchema(object):
                         tx.SimpleTraitCode, tx.ArrayTraitCode,
                         tx.CompoundTraitCode, tx.ObjectTraitCode, ]
 
-    def __init__(self, schema, context=None, parent=None, name=None, metadata=None):
+    def __init__(self, schema, module=None, context=None,
+                 parent=None, name=None, metadata=None):
         if not isinstance(schema, dict):
             raise ValueError("schema should be supplied as a dict")
 
         self.schema = schema
+        self.module = module
         self.parent = parent
         self.name = name
         self.metadata = metadata or {}
@@ -90,12 +94,33 @@ class JSONSchema(object):
         self.anonymous_objects = {}
 
     @classmethod
-    def from_json_file(cls, filename):
+    def from_json_file(cls, filename, module):
         """Instantiate a JSONSchema object from a JSON file"""
         import json
         with open(filename) as f:
             schema = json.load(f)
         return cls(schema)
+
+    def copy(self, **kwargs):
+        """Make a copy, optionally overwriting any init arguments"""
+        kwds = dict(schema=self.schema, module=self.module,
+                    context=self.context, parent=self.parent,
+                    name=self.name, metadata=self.metadata)
+        kwds.update(kwargs)
+        return self.__class__(**kwds)
+
+    def make_child(self, schema, name=None, metadata=None):
+        """
+        Make a child instance, appropriately defining the parent and context
+        """
+        return self.__class__(schema, module=self.module, context=self.context,
+                              parent=self, name=name, metadata=metadata)
+
+    @staticmethod
+    def name_map(name):
+        if keyword.iskeyword(name):
+            return name + '_'
+        return name
 
     def __getitem__(self, key):
         return self.schema[key]
@@ -131,21 +156,6 @@ class JSONSchema(object):
             return "AnonymousMapping"
         else:
             return "AnonymousMapping{0}".format(len(self.anonymous_objects))
-
-    def copy(self, **kwargs):
-        """Make a copy, optionally overwriting any init arguments"""
-        kwds = dict(schema=self.schema, context=self.context,
-                    parent=self.parent, name=self.name,
-                    metadata=self.metadata)
-        kwds.update(kwargs)
-        return self.__class__(**kwds)
-
-    def make_child(self, schema, name=None, metadata=None):
-        """
-        Make a child instance, appropriately defining the parent and context
-        """
-        return self.__class__(schema, context=self.context,
-                              parent=self, name=name, metadata=metadata)
 
     @property
     def is_root(self):
@@ -212,7 +222,7 @@ class JSONSchema(object):
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
-        return {name: self.make_child(val, metadata={'required': name in self.required})
+        return {self.name_map(name): self.make_child(val, metadata={'required': name in self.required})
                 for name, val in self.properties.items()}
 
     def wrapped_ref(self):
