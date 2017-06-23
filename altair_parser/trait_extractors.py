@@ -85,7 +85,7 @@ class RefTraitCode(TraitCodeExtractor):
         return '$ref' in self.schema
 
     def trait_code(self, **kwargs):
-        ref = self.schema.get_reference(self.schema['$ref'])
+        ref = self.schema.wrapped_ref()
         if ref.is_object:
             return construct_function_call('jst.JSONInstance',
                                            Variable(ref.classname),
@@ -96,7 +96,7 @@ class RefTraitCode(TraitCodeExtractor):
             return ref.trait_code
 
     def imports(self):
-        ref = self.schema.get_reference(self.schema['$ref'])
+        ref = self.schema.wrapped_ref()
         if ref.is_object:
             return [f'from .{ref.modulename} import {ref.classname}']
         else:
@@ -222,4 +222,4 @@ class ObjectTraitCode(TraitCodeExtractor):
                 'schema': self.schema
             }
         schema = self.schema.anonymous_objects[hashval]['schema'].schema
-        return self.schema.make_child(schema).trait_imports
+        return [self.schema.make_child(schema).import_statement]
