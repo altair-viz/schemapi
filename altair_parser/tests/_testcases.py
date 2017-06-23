@@ -313,3 +313,23 @@ simple_not = {
         {'value': 2}
     ]
 }
+
+passthrough_ref = {
+    'schema': {
+        '$ref' : '#/definitions/TopLevel',
+        'definitions': {
+            'TopLevel': {
+                'properties': {
+                    'val': {'type': 'integer'},
+                    'name': {'type': 'string'}
+                }
+            }
+        }
+    },
+    'valid': [
+        {'val': 42, 'name': 'the_answer'}
+    ],
+    'invalid': [
+        {'val': 'yo', 'name': 123}
+    ]
+}
