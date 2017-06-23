@@ -233,7 +233,7 @@ class JSONSchema(object):
 
     def object_code(self, **kwargs):
         """Return code to define a traitlets.HasTraits object for this schema"""
-        if self.is_reference or self.is_object:
+        if (self.is_reference and self.is_root) or self.is_object:
             template = jinja2.Template(self.object_template)
         else:
             raise ValueError("Cannot generate object code for non-object")
