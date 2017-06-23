@@ -2,12 +2,15 @@ import os
 from altair_parser import JSONSchema
 from altair_parser.utils.save_module import save_module
 
-schema = JSONSchema.from_json_file('altair_parser/schemas/vega-lite-v2.0.0.json')
+module = '_altair_schema'
+if os.path.exists(module):
+    raise ValueError("{module} already exists.".format(module=module))
 
+schemafile = 'altair_parser/schemas/vega-lite-v2.0.0.json'
+schema = JSONSchema.from_json_file(schemafile, module='_altair_schema')
 source_tree = schema.source_tree()
-
-print("writing to ./_altair_schema/")
-save_module(source_tree, '_altair_schema', os.path.abspath('.'))
+print("writing to {module}".format(module=module))
+save_module(source_tree, module, os.path.abspath('.'))
 
 # def find_anonymous_objects(schema, name='#'):
 #     for prop, subschema in schema.get('definitions', {}).items():

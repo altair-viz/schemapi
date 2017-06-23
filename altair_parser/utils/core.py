@@ -1,4 +1,5 @@
 import re
+import keyword
 
 def hash_schema(schema, hashfunc=hash):
     """Compute a unique hash for a (nested) schema
@@ -32,5 +33,7 @@ def regularize_name(name):
     """
     name, subs = re.subn('[^_a-zA-Z0-9]+', '_', name)
     if name[0].isdigit():
+        name = '_' + name
+    if keyword.iskeyword(name):
         name = '_' + name
     return name

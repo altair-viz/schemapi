@@ -204,6 +204,6 @@ class ObjectTraitCode(TraitCodeExtractor):
         return self.typecode == 'object'
 
     def trait_code(self, **kwargs):
-        name = self.schema.as_anonymous_object().classname
-        return construct_function_call('jst.JSONInstance', Variable(name),
+        name = self.schema.as_anonymous_object().full_classname
+        return construct_function_call('jst.JSONInstance', name,
                                        **kwargs)
