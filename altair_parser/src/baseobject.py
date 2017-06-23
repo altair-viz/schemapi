@@ -9,6 +9,9 @@ class BaseObject(DefaultHasTraits):
     def from_dict(cls, dct):
         """Initialize an instance from a (nested) dictionary"""
         obj = cls()
+        if not isinstance(dct, dict):
+            raise T.TraitError("Argument to from_dict should be a dict, "
+                               "but got {0}".format(dct))
         for key, val in dct.items():
             trait = obj.traits()[key]
             if isinstance(trait, T.Instance) and issubclass(trait.klass, BaseObject):

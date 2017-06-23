@@ -333,3 +333,25 @@ passthrough_ref = {
         {'val': 'yo', 'name': 123}
     ]
 }
+
+anonymous_objects = {
+    'schema': {
+        'type': 'object',
+        'properties': {
+            'item': {
+                'type': 'object',
+                'properties': {
+                    'val': {'type': 'integer'},
+                    'name': {'type': 'string'}
+                }
+            }
+        }
+    },
+    'valid': [
+        {'item': {'val': 42, 'name': "the_answer"}}
+    ],
+    'invalid': [
+        {'item': {'val': "42", 'name': 100}},
+        {'item': 42}
+    ]
+}

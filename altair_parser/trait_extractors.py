@@ -207,6 +207,3 @@ class ObjectTraitCode(TraitCodeExtractor):
         name = self.schema.as_anonymous_object().classname
         return construct_function_call('jst.JSONInstance', Variable(name),
                                        **kwargs)
-
-    def imports(self):
-        return [self.schema.as_anonymous_object().import_statement]

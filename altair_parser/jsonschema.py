@@ -18,7 +18,11 @@ OBJECT_TEMPLATE = '''
 {%- endfor %}
 {%- endif %}
 
-{% if cls.is_reference -%}
+{% for classdef in cls.anonymous_classdefs() -%}
+{{ classdef }}
+{% endfor %}
+
+{% if cls.is_reference %}
 class {{ cls.classname }}({{ cls.wrapped_ref().classname }}):
     pass
 {%- else -%}
@@ -81,8 +85,9 @@ class JSONSchema(object):
         # Here is where we cache anonymous objects defined in the schema.
         # We store them by generating a unique hash of the schema definition,
         # so that even if the schema defines the same object multiple times,
-        # the Python wrapper will recognize that they're the same type.
-        self._anonymous_objects = {}
+        # the Python wrapper will recognize that they're the same type and
+        # only generate a single HasTraits class
+        self.anonymous_objects = {}
 
     @classmethod
     def from_json_file(cls, filename):
@@ -104,10 +109,6 @@ class JSONSchema(object):
         raise AttributeError(f"'{self.__class__.__name__}' object "
                              f"has no attribute '{attr}'")
 
-    @property
-    def anonymous_objects(self):
-        return self.context._anonymous_objects
-
     def as_anonymous_object(self):
         """Obtain a copy of self as an anonymous object
 
@@ -119,14 +120,17 @@ class JSONSchema(object):
         definitions to be mapped to one single name.
         """
         hashval = utils.hash_schema(self.schema)
-        if hashval not in self.anonymous_objects:
+        if hashval not in self.parent.anonymous_objects:
             newname = self._new_anonymous_name()
-            obj = self.context.make_child(self.schema, name=newname)
-            self.anonymous_objects[hashval] = obj
-        return self.anonymous_objects[hashval]
+            obj = self.parent.make_child(self.schema, name=newname)
+            self.parent.anonymous_objects[hashval] = obj
+        return self.parent.anonymous_objects[hashval]
 
     def _new_anonymous_name(self):
-        return "AnonymousMapping{0}".format(len(self.anonymous_objects) + 1)
+        if not self.anonymous_objects:
+            return "AnonymousMapping"
+        else:
+            return "AnonymousMapping{0}".format(len(self.anonymous_objects))
 
     def copy(self, **kwargs):
         """Make a copy, optionally overwriting any init arguments"""
@@ -257,7 +261,18 @@ class JSONSchema(object):
         else:
             raise ValueError("Cannot generate object code for non-object")
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # dry run makes sure all anonymous classes are defined
+        dry_run = template.render(cls=self, date=now, **kwargs)
+
+        # now we can return the result
         return template.render(cls=self, date=now, **kwargs)
+
+    def anonymous_classdefs(self):
+        """Return a list of class definitions for anonymous objects"""
+        # TODO: this will fail if there are nested anonymous objects
+        return [cls.object_code(hide_header=True, hide_imports=True)
+                for cls in self.anonymous_objects.values()]
 
     @property
     def trait_imports(self):
@@ -282,7 +297,9 @@ class JSONSchema(object):
             imports.append(self.wrapped_ref().import_statement)
         for trait in self.wrapped_properties().values():
             imports.extend(trait.trait_imports)
-        return imports
+        for obj in self.anonymous_objects.values():
+            imports.extend(obj.object_imports)
+        return sorted(set(imports), reverse=True)
 
     @property
     def module_imports(self):
