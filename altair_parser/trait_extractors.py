@@ -204,22 +204,9 @@ class ObjectTraitCode(TraitCodeExtractor):
         return self.typecode == 'object'
 
     def trait_code(self, **kwargs):
-        hashval = self.schema.schema_hash
-        if hashval not in self.schema.anonymous_objects:
-            self.schema.anonymous_objects[hashval] = {
-                'name': self.schema._new_anonymous_name(),
-                'schema': self.schema
-            }
-        name = self.schema.anonymous_objects[hashval]['name']
+        name = self.schema.as_anonymous_object().classname
         return construct_function_call('jst.JSONInstance', Variable(name),
                                        **kwargs)
 
     def imports(self):
-        hashval = self.schema.schema_hash
-        if hashval not in self.schema.anonymous_objects:
-            self.schema.anonymous_objects[hashval] = {
-                'name': self.schema._new_anonymous_name(),
-                'schema': self.schema
-            }
-        schema = self.schema.anonymous_objects[hashval]['schema'].schema
-        return [self.schema.make_child(schema).import_statement]
+        return [self.schema.as_anonymous_object().import_statement]

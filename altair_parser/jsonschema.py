@@ -79,14 +79,10 @@ class JSONSchema(object):
         self.context = context or self
 
         # Here is where we cache anonymous objects defined in the schema.
-        # We store them by generating a unique hash for the schema definition,
-        # so that even if the schema defines the same object in multiple cases,
+        # We store them by generating a unique hash of the schema definition,
+        # so that even if the schema defines the same object multiple times,
         # the Python wrapper will recognize that they're the same type.
         self._anonymous_objects = {}
-
-    @property
-    def anonymous_objects(self):
-        return self.context._anonymous_objects
 
     @classmethod
     def from_json_file(cls, filename):
@@ -107,6 +103,27 @@ class JSONSchema(object):
             return self.schema.get(attr, self.attr_defaults[attr])
         raise AttributeError(f"'{self.__class__.__name__}' object "
                              f"has no attribute '{attr}'")
+
+    @property
+    def anonymous_objects(self):
+        return self.context._anonymous_objects
+
+    def as_anonymous_object(self):
+        """Obtain a copy of self as an anonymous object
+
+        If a version of self does not exist in the anonymous_objects cache,
+        then add it there before returning.
+
+        The reason for this is that if a schema defines objects inline (that
+        is, outside the definitions fields), then we want the multiple
+        definitions to be mapped to one single name.
+        """
+        hashval = utils.hash_schema(self.schema)
+        if hashval not in self.anonymous_objects:
+            newname = self._new_anonymous_name()
+            obj = self.context.make_child(self.schema, name=newname)
+            self.anonymous_objects[hashval] = obj
+        return self.anonymous_objects[hashval]
 
     def _new_anonymous_name(self):
         return "AnonymousMapping{0}".format(len(self.anonymous_objects) + 1)
@@ -151,13 +168,7 @@ class JSONSchema(object):
         elif self.is_reference:
             return utils.regularize_name(self.schema['$ref'].split('/')[-1])
         elif self.is_object:
-            hashval = self.schema_hash
-            if hashval not in self.anonymous_objects:
-                self.anonymous_objects[hashval] = {
-                    'name': self._new_anonymous_name(),
-                    'schema': self
-                }
-            return utils.regularize_name(self.anonymous_objects[hashval]['name'])
+            return self.as_anonymous_object().classname
         else:
             raise NotImplementedError("class name for schema with keys "
                                       "{0}".format(tuple(self.schema.keys())))
