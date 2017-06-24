@@ -37,3 +37,20 @@ def regularize_name(name):
     if keyword.iskeyword(name):
         name = '_' + name
     return name
+
+
+def format_description(content, width=70, indent=8, indent_first=False):
+    """Format documentation description"""
+    # TODO: document, test, and use
+    lines = content.splitlines()
+    def format_line(line):
+        line.replace("__Default value:__", "default value:")
+        if line.startswith('-'):
+            return textwrap.indent(textwrap.fill(line, width - indent - 2),
+                                   (indent + 2) * ' ')[2:]
+        else:
+            return textwrap.indent(textwrap.fill(line, width - indent), indent * ' ')
+    result = '\n'.join(map(format_line, lines))
+    if not indent_first:
+        result = result.lstrip()
+    return result
