@@ -11,6 +11,8 @@ The code here targets jsonschema draft 04.
 """
 import traitlets as T
 from traitlets.traitlets import class_of
+from traitlets.utils.importstring import import_item
+import six
 
 __jsonschema_draft__ = 4
 
@@ -74,6 +76,28 @@ class DefaultHasTraits(T.HasTraits):
         if default and name not in self.traits():
             self.add_traits(**{name: default})
         super(DefaultHasTraits, self).set_trait(name, value)
+
+
+class HasTraitsUnion(T.HasTraits):
+    """A HasTraits class built from a union of other HasTraits objects"""
+    _classes = []
+    def __init__(self, *args, **kwargs):
+        for cls in self._classes:
+            if not isinstance(cls, DefaultHasTraits) or all(key in cls.class_traits() for key in kwargs):
+                if isinstance(cls, six.string_types):
+                    cls = import_item(cls)
+                try:
+                    cls(*args, **kwargs)
+                except (T.TraitError, ValueError):
+                    pass
+                else:
+                    self.add_traits(**cls.class_traits())
+                    break
+        else:
+            raise T.TraitError("{cls}: initialization arguments not "
+                               "valid in any wrapped classes"
+                               "".format(cls=self.__class__.__name__))
+        super(HasTraitsUnion, self).__init__(*args, **kwargs)
 
 
 class JSONNull(T.TraitType):

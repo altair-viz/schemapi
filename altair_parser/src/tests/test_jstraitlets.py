@@ -102,3 +102,29 @@ def test_defaulthastraits():
 
     with pytest.raises(T.TraitError) as err:
         f.set_trait('age', 'blah')
+
+
+def test_hastraitsunion():
+    class Foo(T.HasTraits):
+        intval = T.Integer()
+        flag = T.Bool()
+
+    class Bar(T.HasTraits):
+        strval = T.Unicode()
+        flag = T.Bool()
+
+    class FooBar(jst.HasTraitsUnion):
+        _classes = [Foo, Bar]
+        pass
+
+    FooBar(strval='hello', flag=True)
+    FooBar(intval=5, flag=True)
+
+    with pytest.raises(T.TraitError):
+        h = FooBar(strval=666, flag=False)
+    with pytest.raises(T.TraitError):
+        h = FooBar(strval='hello', flag='bad arg')
+    with pytest.raises(T.TraitError):
+        h = FooBar(intval='bad arg', flag=False)
+    with pytest.raises(T.TraitError):
+        h = FooBar(intval=42, flag='bad arg')
