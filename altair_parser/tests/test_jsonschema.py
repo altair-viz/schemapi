@@ -65,7 +65,7 @@ def test_required_keyword():
     js = JSONSchema(schema)
     load_dynamic_module('_schema', js.source_tree(), reload_module=True)
     from _schema import jstraitlets as jst
-    from _schema.twonumbers import twoNumbers
+    from _schema import twoNumbers
     for name, obj in js.wrapped_properties().items():
         trait = eval(obj.trait_code)
         required = name in schema['required']
