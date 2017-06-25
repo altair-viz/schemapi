@@ -60,8 +60,8 @@ class CompoundTraitCode(TraitCodeExtractor):
     simple_types = SimpleTraitCode.simple_types
 
     def check(self):
-        return (all(typ in self.simple_types for typ in self.typecode) and
-                isinstance(self.typecode, list))
+        return (isinstance(self.typecode, list) and
+                all(typ in self.simple_types for typ in self.typecode))
 
     def trait_code(self, **kwargs):
         if 'null' in self.typecode:
