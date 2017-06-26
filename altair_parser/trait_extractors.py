@@ -15,7 +15,20 @@ class TraitCodeExtractor(object):
     """Base class for trait code extractors.
 
     An ordered list of these is passed to JSONSchema, and they are used to
-    extract appropriate trait codes.
+    extract appropriate trait codes and object codes reflecting the schema.
+
+    Methods to Override
+    -------------------
+    check :
+        return True if this class can handle self.schema
+    object_code :
+        return the string of python code to define this object.
+    trait_code :
+        return the string of python code to reference this object as a trait.
+    object_imports :
+        return a list of import statements required for defining the object
+    trait_imports :
+        return a list of import statements required for defining the trait
     """
     def __init__(self, schema, typecode=None):
         self.schema = schema
@@ -27,8 +40,14 @@ class TraitCodeExtractor(object):
     def trait_code(self, **kwargs):
         raise NotImplementedError()
 
-    def imports(self):
-        return []
+    def object_code(self, **kwargs):
+        raise NotImplementedError()
+
+    def trait_imports(self):
+        raise NotImplementedError()
+
+    def object_imports(self):
+        raise NotImplementedError()
 
 
 class SimpleTraitCode(TraitCodeExtractor):
@@ -95,7 +114,7 @@ class RefTraitCode(TraitCodeExtractor):
             ref.metadata = self.schema.metadata
             return ref.trait_code
 
-    def imports(self):
+    def trait_imports(self):
         ref = self.schema.wrapped_ref()
         if ref.is_object:
             return [f'from .{ref.modulename} import {ref.classname}']
@@ -133,7 +152,7 @@ class ArrayTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONArray', Variable(itemtype),
                                        **kwargs)
 
-    def imports(self):
+    def trait_imports(self):
         items = self.schema['items']
         if isinstance(items, list):
             raise NotImplementedError("'items' keyword as list")
@@ -151,7 +170,7 @@ class AnyOfTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONAnyOf', Variable(children),
                                        **kwargs)
 
-    def imports(self):
+    def trait_imports(self):
         return sum((self.schema.make_child(sub_schema).trait_imports
                     for sub_schema in self.schema['anyOf']), [])
 
@@ -166,7 +185,7 @@ class OneOfTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONOneOf', Variable(children),
                                        **kwargs)
 
-    def imports(self):
+    def trait_imports(self):
         return sum((self.schema.make_child(sub_schema).trait_imports
                     for sub_schema in self.schema['oneOf']), [])
 
@@ -181,7 +200,7 @@ class AllOfTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONAllOf', Variable(children),
                                        **kwargs)
 
-    def imports(self):
+    def trait_imports(self):
         return sum((self.schema.make_child(sub_schema).trait_imports
                     for sub_schema in self.schema['allOf']), [])
 
@@ -195,7 +214,7 @@ class NotTraitCode(TraitCodeExtractor):
         return construct_function_call('jst.JSONNot', Variable(not_this),
                                        **kwargs)
 
-    def imports(self):
+    def trait_imports(self):
         return self.schema.make_child(self.schema['not']).trait_imports
 
 

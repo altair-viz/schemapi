@@ -294,7 +294,7 @@ class JSONSchema(object):
         for TraitExtractor in self.trait_extractors:
             trait_extractor = TraitExtractor(self)
             if trait_extractor.check():
-                return trait_extractor.imports()
+                return trait_extractor.trait_imports()
         else:
             raise ValueError("No recognized trait code for schema with "
                              "keys {0}".format(tuple(self.schema.keys())))
