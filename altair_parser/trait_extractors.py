@@ -27,7 +27,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
 '''
 
 REFUNION_TEMPLATE = '''
-class {{ cls.classname }}({{ cls.baseclass }}):
+class {{ cls.classname }}(jst.HasTraitsUnion):
     _classes = [{% for ref in cls.schema['anyOf'] -%}
         "{{ cls.make_child(ref).full_classname }}",
     {%- endfor %}]

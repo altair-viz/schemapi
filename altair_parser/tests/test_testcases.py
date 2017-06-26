@@ -33,8 +33,6 @@ def test_testcases_jsonschema(testcase):
 
 @pytest.mark.parametrize('testcase', testcases.keys())
 def test_testcases_traitlets(testcase):
-    if testcase == 'hastraitsunion_test':
-        pytest.xfail("hastraitsunion_test")
     testcase = testcases[testcase]
     modulename = '_schema'
 
