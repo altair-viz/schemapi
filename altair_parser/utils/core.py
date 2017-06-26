@@ -38,6 +38,15 @@ def regularize_name(name):
         name = '_' + name
     return name
 
+def make_ascii_compatible(s):
+    """Ensure a string is ascii-compatible.
+    This is not an issue for Python 3, but if used in code will break Python 2
+    """
+    # Replace common non-ascii characters with suitable equivalents
+    s = s.replace('\u2013', '-')
+    s.encode('ascii')  # if this errors, then add more replacements above
+    return s
+
 
 def format_description(content, width=70, indent=8, indent_first=False):
     """Format documentation description"""
