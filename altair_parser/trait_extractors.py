@@ -204,6 +204,10 @@ class ObjectTraitCode(TraitCodeExtractor):
         return self.typecode == 'object'
 
     def trait_code(self, **kwargs):
-        name = self.schema.as_anonymous_object().full_classname
-        return construct_function_call('jst.JSONInstance', name,
+        trait_codes = {name: Variable(prop.trait_code) for (name, prop)
+                       in self.schema.wrapped_properties().items()}
+        defn = construct_function_call("T.MetaHasTraits", 'Mapping',
+                                       (Variable(self.schema.baseclass),),
+                                       trait_codes)
+        return construct_function_call('jst.JSONInstance', Variable(defn),
                                        **kwargs)

@@ -77,6 +77,22 @@ class DefaultHasTraits(T.HasTraits):
         super(DefaultHasTraits, self).set_trait(name, value)
 
 
+def AnonymousMapping(**traits):
+    """Create an anonymous HasTraits mapping
+
+    This is used when a JSONSchema defines an object inline, rather than in
+    a separate statement
+
+    Example
+    -------
+    >>> Foo = AnonymousMapping(val=T.Integer())
+    >>> f = Foo(val=4)
+    >>> type(f)
+    <class 'traitlets.traitlets.AnonymousMapping'>
+    """
+    return T.MetaHasTraits('AnonymousMapping', (DefaultHasTraits,), traits)
+
+
 class HasTraitsUnion(T.HasTraits):
     """A HasTraits class built from a union of other HasTraits objects"""
     _classes = []

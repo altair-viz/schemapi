@@ -88,11 +88,11 @@ class JSONSchema(object):
         # so that even if the schema defines the same object multiple times,
         # the Python wrapper will recognize that they're the same type and
         # only generate a single HasTraits class
-        self._anonymous_objects = {}
+        # self._anonymous_objects = {}
 
-    @property
-    def anonymous_objects(self):
-        return self.context._anonymous_objects
+    # @property
+    # def anonymous_objects(self):
+    #     return self.context._anonymous_objects
 
     @classmethod
     def from_json_file(cls, filename, module=None):
@@ -129,28 +129,28 @@ class JSONSchema(object):
         raise AttributeError(f"'{self.__class__.__name__}' object "
                              f"has no attribute '{attr}'")
 
-    def as_anonymous_object(self):
-        """Obtain a copy of self as an anonymous object
+    # def as_anonymous_object(self):
+    #     """Obtain a copy of self as an anonymous object
+    #
+    #     If a version of self does not exist in the anonymous_objects cache,
+    #     then add it there before returning.
+    #
+    #     The reason for this is that if a schema defines objects inline (that
+    #     is, outside the definitions fields), then we want the multiple
+    #     definitions to be mapped to one single name.
+    #     """
+    #     hashval = utils.hash_schema(self.schema)
+    #     if hashval not in self.anonymous_objects:
+    #         newname = self._new_anonymous_name()
+    #         obj = self.make_child(self.schema, name=newname)
+    #         self.anonymous_objects[hashval] = obj
+    #     return self.anonymous_objects[hashval]
 
-        If a version of self does not exist in the anonymous_objects cache,
-        then add it there before returning.
-
-        The reason for this is that if a schema defines objects inline (that
-        is, outside the definitions fields), then we want the multiple
-        definitions to be mapped to one single name.
-        """
-        hashval = utils.hash_schema(self.schema)
-        if hashval not in self.anonymous_objects:
-            newname = self._new_anonymous_name()
-            obj = self.make_child(self.schema, name=newname)
-            self.anonymous_objects[hashval] = obj
-        return self.anonymous_objects[hashval]
-
-    def _new_anonymous_name(self):
-        if not self.anonymous_objects:
-            return "AnonymousMapping"
-        else:
-            return "AnonymousMapping{0}".format(len(self.anonymous_objects))
+    # def _new_anonymous_name(self):
+    #     if not self.anonymous_objects:
+    #         return "AnonymousMapping"
+    #     else:
+    #         return "AnonymousMapping{0}".format(len(self.anonymous_objects))
 
     @property
     def is_root(self):
@@ -182,8 +182,8 @@ class JSONSchema(object):
             return "RootInstance"
         elif self.is_reference:
             return utils.regularize_name(self.schema['$ref'].split('/')[-1])
-        elif self.is_object:
-            return self.as_anonymous_object().classname
+        # elif self.is_object:
+        #     return self.as_anonymous_object().classname
         else:
             raise NotImplementedError("class name for schema with keys "
                                       "{0}".format(tuple(self.schema.keys())))
@@ -282,7 +282,7 @@ class JSONSchema(object):
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # dry run makes sure all anonymous classes are defined
-        dry_run = template.render(cls=self, date=now, **kwargs)
+        # dry_run = template.render(cls=self, date=now, **kwargs)
 
         # now we can return the result
         return template.render(cls=self, date=now, **kwargs)
@@ -310,8 +310,8 @@ class JSONSchema(object):
             imports.append(self.wrapped_ref().import_statement)
         for trait in self.wrapped_properties().values():
             imports.extend(trait.trait_imports)
-        for obj in self.anonymous_objects.values():
-            imports.extend(obj.object_imports)
+        # for obj in self.anonymous_objects.values():
+        #     imports.extend(obj.object_imports)
         return sorted(set(imports), reverse=True)
 
     @property
@@ -321,19 +321,19 @@ class JSONSchema(object):
         for obj in self.wrapped_definitions().values():
             if obj.is_object:
                 imports.append(obj.import_statement)
-        for obj in self.anonymous_objects.values():
-            if obj.is_object:
-                imports.append(obj.import_statement)
+        # for obj in self.anonymous_objects.values():
+        #     if obj.is_object:
+        #         imports.append(obj.import_statement)
         return imports
 
-    @property
-    def anonymous_imports(self):
-        """List of imports of all anonymous objects"""
-        imports = []
-        for obj in self.anonymous_objects.values():
-            if obj.is_object:
-                imports.append(obj.import_statement)
-        return imports
+    # @property
+    # def anonymous_imports(self):
+    #     """List of imports of all anonymous objects"""
+    #     imports = []
+    #     for obj in self.anonymous_objects.values():
+    #         if obj.is_object:
+    #             imports.append(obj.import_statement)
+    #     return imports
 
     def source_tree(self):
         """Return the JSON specification of the module source tree
@@ -350,9 +350,9 @@ class JSONSchema(object):
                    if schema.is_object]
         classes += [self]
         # Run through once to find all anonymous objects
-        template.render(cls=self, classes=classes)
-        classes += [schema for schema in self.anonymous_objects.values()
-                    if schema.is_object]
+        # template.render(cls=self, classes=classes)
+        # classes += [schema for schema in self.anonymous_objects.values()
+        #             if schema.is_object]
 
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         imports = self.basic_imports
