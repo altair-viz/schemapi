@@ -381,3 +381,22 @@ circular_reference = {
     ],
     'invalid': []
 }
+
+additionalProperties_test = {
+    'schema': {
+        'type': 'object',
+        'properties': {
+            'foo': {'type': 'integer'}
+        },
+        'additionalProperties': {
+            'type': 'string'
+        }
+    },
+    'valid': [
+        {'foo': 42, 'name': 'blah'},
+    ],
+    'invalid': [
+        {'foo': 42, 'value': 4},
+        {'foo': 'blah'}
+    ]
+}

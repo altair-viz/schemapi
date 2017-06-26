@@ -90,7 +90,7 @@ def test_traits(trait, failcases, passcases):
 
 def test_defaulthastraits():
     class Foo(jst.DefaultHasTraits):
-        _default_trait = jst.DefaultTrait(T.Integer())
+        _default_trait = [T.Integer()]
         name = T.Unicode()
 
     f = Foo(name="Bob", age=40)

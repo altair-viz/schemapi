@@ -29,14 +29,6 @@ class UndefinedType(object):
 undefined = UndefinedType()
 
 
-class DefaultTrait(object):
-    def __init__(self, trait):
-        self.trait = trait
-
-    def __bool__(self):
-        return self.trait is not None
-
-
 class DefaultHasTraits(T.HasTraits):
     """A version of HasTraits supporting default member types
 
@@ -48,18 +40,25 @@ class DefaultHasTraits(T.HasTraits):
     -------
     >>> class Foo(DefaultHasTraits):
     ...     name = T.Unicode()
-    ...     _default_trait = DefaultTrait(T.Integer())
+    ...     _default_trait = [T.Integer()]
     >>> f = Foo(name="Guido", score=42)
     >>> f.set_trait('value', 100)
     >>> f.trait_names()
     ['name', 'score', 'value']
     """
-    _default_trait = DefaultTrait(T.Any())
+    # default trait must be wrapped in a list or tuple,
+    # otherwise it will be treated as a normal trait.
+    _default_trait = True
 
     def _get_default_trait(self):
-        if isinstance(self._default_trait, DefaultTrait):
-            return self._default_trait.trait
-        elif self._default_trait:
+        try:
+            default = self._default_trait[0]
+        except TypeError:
+            default = self._default_trait
+
+        if isinstance(default, T.TraitType):
+            return default
+        elif default:
             return T.Any()
         else:
             return None

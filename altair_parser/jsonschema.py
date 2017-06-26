@@ -210,7 +210,7 @@ class JSONSchema(object):
             return repr(self.additionalProperties)
         else:
             trait = self.make_child(self.additionalProperties)
-            return "jst.DefaultTrait({0})".format(trait.trait_code)
+            return "[{0}]".format(trait.trait_code)
 
     @property
     def import_statement(self):
