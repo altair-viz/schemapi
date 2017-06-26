@@ -1,5 +1,37 @@
 """Extractors for trait codes"""
+import jinja2
+
 from .utils import construct_function_call, Variable
+
+
+REF_TEMPLATE = '''
+class {{ cls.classname }}({{ cls.wrapped_ref().classname }}):
+    pass
+'''
+
+OBJECT_TEMPLATE = '''
+class {{ cls.classname }}({{ cls.baseclass }}):
+    """{{ cls.classname }} class
+
+    Attributes
+    ----------
+    {%- for (name, prop) in cls.wrapped_properties().items() %}
+    {{ name }} : {{ prop.type }}
+        {{ prop.description }}
+    {%- endfor %}
+    """
+    _default_trait = {{ cls.default_trait }}
+    {%- for (name, prop) in cls.wrapped_properties().items() %}
+    {{ name }} = {{ prop.trait_code }}
+    {%- endfor %}
+'''
+
+REFUNION_TEMPLATE = '''
+class {{ cls.classname }}({{ cls.baseclass }}, jst.HasTraitsUnion):
+    _classes = [{% for ref in cls.schema['anyOf'] -%}
+        "{{ cls.make_child(ref).full_classname }}",
+    {%- endfor %}]
+'''
 
 
 class ImportStatement(object):
@@ -41,7 +73,9 @@ class TraitCodeExtractor(object):
         raise NotImplementedError()
 
     def object_code(self, **kwargs):
-        raise NotImplementedError()
+        return ""
+        template = jinja2.Template(OBJECT_TEMPLATE)
+        return template.render(cls=self.schema)
 
     def trait_imports(self):
         raise NotImplementedError()
@@ -99,6 +133,22 @@ class CompoundTraitCode(TraitCodeExtractor):
                                            **kwargs)
 
 
+class HasTraitsUnionTraitCode(TraitCodeExtractor):
+    def check(self):
+        return ((self.schema.is_root or self.schema.name) and
+                'anyOf' in self.schema and
+                all(self.schema.make_child(schema).is_reference
+                    for schema in self.schema['anyOf']))
+
+    def trait_code(self, **kwargs):
+        return construct_function_call('jst.JSONInstance',
+                                       self.schema.full_classname,
+                                       **kwargs)
+
+    def object_code(self):
+        return jinja2.Template(REFUNION_TEMPLATE).render(cls=self.schema)
+
+
 class RefTraitCode(TraitCodeExtractor):
     def check(self):
         return '$ref' in self.schema
@@ -113,6 +163,10 @@ class RefTraitCode(TraitCodeExtractor):
             ref = ref.copy()  # TODO: maybe can remove this?
             ref.metadata = self.schema.metadata
             return ref.trait_code
+
+    def object_code(self):
+        template = jinja2.Template(REF_TEMPLATE)
+        return template.render(cls=self.schema)
 
     def trait_imports(self):
         ref = self.schema.wrapped_ref()
@@ -230,3 +284,7 @@ class ObjectTraitCode(TraitCodeExtractor):
                                        trait_codes)
         return construct_function_call('jst.JSONInstance', Variable(defn),
                                        **kwargs)
+
+    def object_code(self, **kwargs):
+        template = jinja2.Template(OBJECT_TEMPLATE)
+        return template.render(cls=self.schema)

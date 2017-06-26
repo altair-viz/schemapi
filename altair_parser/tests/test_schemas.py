@@ -27,8 +27,8 @@ def test_schema_jsonschema(schema):
 
 @pytest.mark.parametrize('schema', LOADED_SCHEMAS)
 def test_parse_schema(schema):
-    if schema == 'vega-lite-v2.0.0.json':
-        pytest.xfail("Code currently fails for Vega-Lite due to raw $ref")
+    if schema == 'vega-v3.0.0.json':
+        pytest.xfail("vega schema requires allOf to be implemented")
     schema = LOADED_SCHEMAS[schema]
     modulename = '_schema'
     traitlets_obj = JSONSchema(schema, module=modulename)

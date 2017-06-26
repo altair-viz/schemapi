@@ -13,31 +13,14 @@ OBJECT_TEMPLATE = '''# {{ cls.filename }}
 {{ import }}
 {%- endfor %}
 
-
+{#
 def Instance(classname, *args, **kwargs):
     """Convenience routine for an instance of a class in this file"""
     return jst.JSONInstance(__name__ + '.' + classname, *args, **kwargs)
+#}
 
 {% for cls in classes %}
-{% if cls.is_reference %}
-class {{ cls.classname }}({{ cls.wrapped_ref().classname }}):
-    pass
-{%- else -%}
-class {{ cls.classname }}({{ cls.baseclass }}):
-    """{{ cls.classname }} class
-
-    Attributes
-    ----------
-    {%- for (name, prop) in cls.wrapped_properties().items() %}
-    {{ name }} : {{ prop.type }}
-        {{ prop.description }}
-    {%- endfor %}
-    """
-    _default_trait = {{ cls.default_trait }}
-    {%- for (name, prop) in cls.wrapped_properties().items() %}
-    {{ name }} = {{ prop.trait_code }}
-    {%- endfor %}
-{%-endif %}
+{{ cls.object_code() }}
 {% endfor %}
 '''
 
@@ -63,7 +46,8 @@ class JSONSchema(object):
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
-    trait_extractors = [tx.RefTraitCode, tx.NotTraitCode, tx.AnyOfTraitCode,
+    trait_extractors = [tx.HasTraitsUnionTraitCode,
+                        tx.RefTraitCode, tx.NotTraitCode, tx.AnyOfTraitCode,
                         tx.AllOfTraitCode, tx.OneOfTraitCode, tx.EnumTraitCode,
                         tx.SimpleTraitCode, tx.ArrayTraitCode,
                         tx.CompoundTraitCode, tx.ObjectTraitCode, ]
@@ -273,19 +257,16 @@ class JSONSchema(object):
             raise ValueError("No recognized trait code for schema with "
                              "keys {0}".format(tuple(self.schema.keys())))
 
-    def object_code(self, **kwargs):
-        """Return code to define a traitlets.HasTraits object for this schema"""
-        if (self.is_reference and self.is_root) or self.is_object:
-            template = jinja2.Template(self.object_template)
+    def object_code(self):
+        """Return code to define an object for this schema"""
+        # TODO: handle multiple matches with an AllOf()
+        for TraitExtractor in self.trait_extractors:
+            trait_extractor = TraitExtractor(self)
+            if trait_extractor.check():
+                return trait_extractor.object_code()
         else:
-            raise ValueError("Cannot generate object code for non-object")
-        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        # dry run makes sure all anonymous classes are defined
-        # dry_run = template.render(cls=self, date=now, **kwargs)
-
-        # now we can return the result
-        return template.render(cls=self, date=now, **kwargs)
+            raise ValueError("No recognized object code for schema with "
+                             "keys {0}".format(tuple(self.schema.keys())))
 
     @property
     def trait_imports(self):
@@ -346,13 +327,13 @@ class JSONSchema(object):
         template = jinja2.Template(self.object_template)
 
         # Determine list of classes to generate
-        classes = [schema for schema in self.wrapped_definitions().values()
-                   if schema.is_object]
+        classes = [schema for schema in self.wrapped_definitions().values()]
         classes += [self]
         # Run through once to find all anonymous objects
         # template.render(cls=self, classes=classes)
         # classes += [schema for schema in self.anonymous_objects.values()
         #             if schema.is_object]
+        code = [cls.object_code() for cls in classes]
 
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         imports = self.basic_imports

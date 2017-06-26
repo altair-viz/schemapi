@@ -403,7 +403,7 @@ additionalProperties_test = {
 
 hastraitsunion_test = {
     'schema': {
-        'oneOf': [
+        'anyOf': [
             {'$ref': '#/definitions/Foo1'},
             {'$ref': '#/definitions/Foo2'}
         ],
