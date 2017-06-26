@@ -400,3 +400,31 @@ additionalProperties_test = {
         {'foo': 'blah'}
     ]
 }
+
+hastraitsunion_test = {
+    'schema': {
+        'oneOf': [
+            {'$ref': '#/definitions/Foo1'},
+            {'$ref': '#/definitions/Foo2'}
+        ],
+        'definitions': {
+            'Foo1': {
+                'properties': {
+                    'val': {'type': 'integer'}
+                }
+            },
+            'Foo2': {
+                'properties': {
+                    'val': {'type':'string'}
+                }
+            }
+        }
+    },
+    'valid': [
+        {'val': 42},
+        {'val': 'blah'}
+    ],
+    'invalid': [
+        {'val': None}
+    ]
+}
