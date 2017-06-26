@@ -4,11 +4,6 @@ import jinja2
 from .utils import construct_function_call, Variable
 
 
-REF_TEMPLATE = '''
-class {{ cls.classname }}(jst.HasTraitsUnion):
-    _classes = ["{{ cls.wrapped_ref().full_classname }}"]
-'''
-
 OBJECT_TEMPLATE = '''
 class {{ cls.classname }}({{ cls.baseclass }}):
     """{{ cls.classname }} class
@@ -28,9 +23,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
 
 REFUNION_TEMPLATE = '''
 class {{ cls.classname }}(jst.HasTraitsUnion):
-    _classes = [{% for ref in cls.schema['anyOf'] -%}
-        "{{ cls.make_child(ref).full_classname }}",
-    {%- endfor %}]
+    _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
 '''
 
 
@@ -146,7 +139,10 @@ class HasTraitsUnionTraitCode(TraitCodeExtractor):
                                        **kwargs)
 
     def object_code(self):
-        return jinja2.Template(REFUNION_TEMPLATE).render(cls=self.schema)
+        template = jinja2.Template(REFUNION_TEMPLATE)
+        return template.render(cls=self.schema,
+                               options=[self.schema.make_child(ref).full_classname
+                                        for ref in self.schema['anyOf']])
 
 
 class RefTraitCode(TraitCodeExtractor):
@@ -166,8 +162,10 @@ class RefTraitCode(TraitCodeExtractor):
 
     def object_code(self):
         ref = self.schema.wrapped_ref()
-        if ref.is_object:
-            return jinja2.Template(REF_TEMPLATE).render(cls=self.schema)
+        if ref.object_code():
+            template = jinja2.Template(REFUNION_TEMPLATE)
+            return template.render(cls=self.schema,
+                                   options=[self.schema.wrapped_ref().full_classname])
         else:
             return ""
 

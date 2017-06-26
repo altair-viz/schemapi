@@ -27,7 +27,7 @@ def test_schema_jsonschema(schema):
 
 @pytest.mark.parametrize('schema', LOADED_SCHEMAS)
 def test_parse_schema(schema):
-    if schema in ['vega-v3.0.0.json', 'vega-lite-v2.0.0.json']:
+    if schema in ['vega-v3.0.0.json']:
         pytest.xfail("vega schema requires allOf to be implemented")
     schema = LOADED_SCHEMAS[schema]
     modulename = '_schema'
