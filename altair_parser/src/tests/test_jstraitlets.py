@@ -88,8 +88,8 @@ def test_traits(trait, failcases, passcases):
             trait.validate(obj, failcase)
 
 
-def test_defaulthastraits():
-    class Foo(jst.DefaultHasTraits):
+def test_hastraits_defaults():
+    class Foo(jst.JSONHasTraits):
         _default_trait = [T.Integer()]
         name = T.Unicode()
 
@@ -105,11 +105,11 @@ def test_defaulthastraits():
 
 
 def test_hastraitsunion():
-    class Foo(T.HasTraits):
+    class Foo(jst.JSONHasTraits):
         intval = T.Integer()
         flag = T.Bool()
 
-    class Bar(T.HasTraits):
+    class Bar(jst.JSONHasTraits):
         strval = T.Unicode()
         flag = T.Bool()
 
@@ -128,3 +128,20 @@ def test_hastraitsunion():
         h = FooBar(intval='bad arg', flag=False)
     with pytest.raises(T.TraitError):
         h = FooBar(intval=42, flag='bad arg')
+
+    # Test from_dict
+    FooBar.from_dict({'strval': 'hello', 'flag': True})
+    FooBar.from_dict({'intval': 42, 'flag': False})
+
+class Bar(jst.JSONHasTraits):
+    val = T.Unicode()
+
+class Foo(jst.JSONHasTraits):
+    x = T.Integer()
+    y = T.Instance(Bar)
+
+def test_to_from_dict():
+    dct = {'x': 4, 'y': {'val': 'hello'}}
+    obj = Foo.from_dict(dct)
+    dct2 = obj.to_dict()
+    assert dct == dct2

@@ -14,7 +14,7 @@ from ..utils import load_dynamic_module
 SCHEMA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                           '..', 'schemas'))
 LOADED_SCHEMAS = {filename: json.load(open(os.path.join(SCHEMA_DIR, filename)))
-                  for filename in os.listdir(SCHEMA_DIR)}
+                  for filename in os.listdir(SCHEMA_DIR) if filename.endswith('.json')}
 
 
 @pytest.mark.parametrize('schema', LOADED_SCHEMAS)
@@ -27,7 +27,7 @@ def test_schema_jsonschema(schema):
 
 @pytest.mark.parametrize('schema', LOADED_SCHEMAS)
 def test_parse_schema(schema):
-    if schema == 'vega-v3.0.0.json':
+    if schema in ['vega-v3.0.0.json', 'vega-lite-v2.0.0.json']:
         pytest.xfail("vega schema requires allOf to be implemented")
     schema = LOADED_SCHEMAS[schema]
     modulename = '_schema'

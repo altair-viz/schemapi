@@ -9,6 +9,8 @@ Additionally, these traits support validation keywords related to those
 defined in the JSON Schema specification: http://json-schema.org.
 The code here targets jsonschema draft 04.
 """
+import copy
+
 import traitlets as T
 from traitlets.traitlets import class_of
 from traitlets.utils.importstring import import_item
@@ -29,26 +31,30 @@ class UndefinedType(object):
 undefined = UndefinedType()
 
 
-class DefaultHasTraits(T.HasTraits):
-    """A version of HasTraits supporting default member types
+class JSONHasTraits(T.HasTraits):
+    """A version of HasTraits with a few extra features:
 
-    This class operates just like T.HasTraits, except it allows
-    specification of a default trait type for any members that
-    are not explicitly specified in the class definition.
+    - supports default member types
+    - supports to_dict() method and from_dict() class method
 
     Example
     -------
-    >>> class Foo(DefaultHasTraits):
-    ...     name = T.Unicode()
+    >>> class Foo(JSONHasTraits):
     ...     _default_trait = [T.Integer()]
+    ...     name = T.Unicode()
     >>> f = Foo(name="Guido", score=42)
     >>> f.set_trait('value', 100)
     >>> f.trait_names()
     ['name', 'score', 'value']
     """
-    # default trait must be wrapped in a list or tuple,
-    # otherwise it will be treated as a normal trait.
     _default_trait = True
+
+    def __init__(self, *args, **kwargs):
+        default = self._get_default_trait()
+        if default:
+            self.add_traits(**{key: default for key in kwargs
+                               if key not in self.traits()})
+        super(JSONHasTraits, self).__init__(*args, **kwargs)
 
     def _get_default_trait(self):
         try:
@@ -63,18 +69,83 @@ class DefaultHasTraits(T.HasTraits):
         else:
             return None
 
-    def __init__(self, *args, **kwargs):
-        default = self._get_default_trait()
-        if default:
-            self.add_traits(**{key: default for key in kwargs
-                               if key not in self.traits()})
-        super(DefaultHasTraits, self).__init__(*args, **kwargs)
-
     def set_trait(self, name, value):
         default = self._get_default_trait()
         if default and name not in self.traits():
             self.add_traits(**{name: default})
-        super(DefaultHasTraits, self).set_trait(name, value)
+        super(JSONHasTraits, self).set_trait(name, value)
+
+    @classmethod
+    def from_dict(cls, dct):
+        """Initialize an instance from a (nested) dictionary"""
+        # TODO: make this gracefully handle default values as well
+        obj = cls()
+        if not isinstance(dct, dict):
+            raise T.TraitError("Argument to from_dict should be a dict, "
+                               "but got {0}".format(dct))
+        for key, val in dct.items():
+            if isinstance(val, dict):
+                trait = obj.traits()[key]
+                subtraits = trait.trait_types if isinstance(trait, T.Union) else [trait]
+                for subtrait in subtraits:
+                    if isinstance(subtrait, T.Instance) and issubclass(subtrait.klass, JSONHasTraits):
+                        val = subtrait.klass.from_dict(val)
+                        break
+            obj.set_trait(key, val)
+        return obj
+
+    def to_dict(self):
+        """Output a (nested) dict encoding the contents of this instance"""
+        dct = {}
+        for key in self.trait_names():
+            val = getattr(self, key)
+            if val is undefined:
+                continue
+            if isinstance(val, JSONHasTraits):
+                val = val.to_dict()
+            dct[key] = val
+        return dct
+
+
+class HasTraitsUnion(JSONHasTraits):
+    """A HasTraits class built from a union of other HasTraits objects"""
+    _classes = []
+    def __init__(self, *args, **kwargs):
+        for cls in self._classes:
+            if isinstance(cls, six.string_types):
+                cls = import_item(cls)
+            if all(key in cls.class_traits() for key in kwargs):
+                try:
+                    cls(*args, **kwargs)
+                except (T.TraitError, ValueError):
+                    pass
+                else:
+                    self.add_traits(**{key: copy.copy(val) for key, val
+                                       in cls.class_traits().items()})
+                    break
+        else:
+            raise T.TraitError("{cls}: initialization arguments not "
+                               "valid in any wrapped classes"
+                               "".format(cls=self.__class__.__name__))
+        super(HasTraitsUnion, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def from_dict(cls, dct):
+        for subcls in cls._classes:
+            if isinstance(subcls, six.string_types):
+                subcls = import_item(subcls)
+            if all(key in subcls.class_traits() for key in dct):
+                try:
+                    obj = subcls.from_dict(dct)
+                except (T.TraitError, ValueError):
+                    pass
+                else:
+                    return cls(**{name: getattr(obj, name)
+                                  for name in obj.trait_names()})
+        else:
+            raise T.TraitError("{cls}: dict representation not "
+                               "valid in any wrapped classes"
+                               "".format(cls=cls.__name__))
 
 
 def AnonymousMapping(**traits):
@@ -90,29 +161,7 @@ def AnonymousMapping(**traits):
     >>> type(f)
     <class 'traitlets.traitlets.AnonymousMapping'>
     """
-    return T.MetaHasTraits('AnonymousMapping', (DefaultHasTraits,), traits)
-
-
-class HasTraitsUnion(T.HasTraits):
-    """A HasTraits class built from a union of other HasTraits objects"""
-    _classes = []
-    def __init__(self, *args, **kwargs):
-        for cls in self._classes:
-            if not isinstance(cls, DefaultHasTraits) or all(key in cls.class_traits() for key in kwargs):
-                if isinstance(cls, six.string_types):
-                    cls = import_item(cls)
-                try:
-                    cls(*args, **kwargs)
-                except (T.TraitError, ValueError):
-                    pass
-                else:
-                    self.add_traits(**cls.class_traits())
-                    break
-        else:
-            raise T.TraitError("{cls}: initialization arguments not "
-                               "valid in any wrapped classes"
-                               "".format(cls=self.__class__.__name__))
-        super(HasTraitsUnion, self).__init__(*args, **kwargs)
+    return T.MetaHasTraits('AnonymousMapping', (JSONHasTraits,), traits)
 
 
 class JSONNull(T.TraitType):

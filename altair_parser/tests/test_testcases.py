@@ -45,7 +45,7 @@ def test_testcases_traitlets(testcase):
     traitlets_obj = JSONSchema(schema, module=modulename)
 
     for key, code in traitlets_obj.source_tree().items():
-        if key in ['jstraitlets.py', 'baseobject.py']:
+        if key in ['jstraitlets.py']:
             continue
         # Print code here... useful for debugging when errors happen
         print(70 * '#')
@@ -69,16 +69,17 @@ def test_dict_round_trip(testcase):
     traitlets_obj = JSONSchema(testcase['schema'], module=modulename)
 
     for key, code in traitlets_obj.source_tree().items():
-        if key in ['jstraitlets.py', 'baseobject.py']:
+        if key in ['jstraitlets.py']:
             continue
         # Print code here... useful for debugging when errors happen
         print(70 * '#')
         print(code)
         print()
-    
+
     schema = load_dynamic_module(modulename, traitlets_obj.source_tree(),
                                  reload_module=True)
+    from _schema import RootInstance
 
     for instance in testcase['valid']:
-        obj = schema.RootInstance.from_dict(instance)
+        obj = RootInstance.from_dict(instance)
         assert obj.to_dict() == instance

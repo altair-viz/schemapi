@@ -40,8 +40,7 @@ class JSONSchema(object):
                      'required': [],
                      'additionalProperties': True}
     basic_imports = ["import traitlets as T",
-                     "from . import jstraitlets as jst",
-                     "from .baseobject import BaseObject"]
+                     "from . import jstraitlets as jst"]
 
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
@@ -159,6 +158,13 @@ class JSONSchema(object):
         return '$ref' in self.schema
 
     @property
+    def is_named_object(self):
+        try:
+            return bool(self.classname)
+        except NotImplementedError:
+            return False
+
+    @property
     def classname(self):
         if self.name:
             return utils.regularize_name(self.name)
@@ -194,7 +200,7 @@ class JSONSchema(object):
 
     @property
     def baseclass(self):
-        return "BaseObject"
+        return "jst.JSONHasTraits"
 
     @property
     def default_trait(self):
@@ -341,8 +347,6 @@ class JSONSchema(object):
         modspec = {
             'jstraitlets.py': open(os.path.join(os.path.dirname(__file__),
                                    'src', 'jstraitlets.py')).read(),
-            'baseobject.py': open(os.path.join(os.path.dirname(__file__),
-                                  'src', 'baseobject.py')).read(),
             self.filename: template.render(cls=self, classes=classes, date=date)
         }
 

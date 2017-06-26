@@ -5,8 +5,8 @@ from .utils import construct_function_call, Variable
 
 
 REF_TEMPLATE = '''
-class {{ cls.classname }}({{ cls.wrapped_ref().classname }}):
-    pass
+class {{ cls.classname }}(jst.HasTraitsUnion):
+    _classes = ["{{ cls.wrapped_ref().full_classname }}"]
 '''
 
 OBJECT_TEMPLATE = '''
@@ -27,7 +27,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
 '''
 
 REFUNION_TEMPLATE = '''
-class {{ cls.classname }}({{ cls.baseclass }}, jst.HasTraitsUnion):
+class {{ cls.classname }}({{ cls.baseclass }}):
     _classes = [{% for ref in cls.schema['anyOf'] -%}
         "{{ cls.make_child(ref).full_classname }}",
     {%- endfor %}]
@@ -165,8 +165,11 @@ class RefTraitCode(TraitCodeExtractor):
             return ref.trait_code
 
     def object_code(self):
-        template = jinja2.Template(REF_TEMPLATE)
-        return template.render(cls=self.schema)
+        ref = self.schema.wrapped_ref()
+        if ref.is_object:
+            return jinja2.Template(REF_TEMPLATE).render(cls=self.schema)
+        else:
+            return ""
 
     def trait_imports(self):
         ref = self.schema.wrapped_ref()
