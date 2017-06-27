@@ -36,7 +36,7 @@ class ImportStatement(object):
         return "from {0} import {1}".format(self.path, ', '.join(self.names))
 
 
-class TraitCodeExtractor(object):
+class Extractor(object):
     """Base class for trait code extractors.
 
     An ordered list of these is passed to JSONSchema, and they are used to
@@ -78,7 +78,7 @@ class TraitCodeExtractor(object):
 ###############################################################################
 # Extractor classes, in the order of checks
 
-class HasTraitsUnionTraitCode(TraitCodeExtractor):
+class HasTraitsUnion(Extractor):
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'anyOf' in self.schema:
             return all(self.schema.make_child(schema).is_reference
@@ -98,7 +98,7 @@ class HasTraitsUnionTraitCode(TraitCodeExtractor):
                                         for ref in self.schema['anyOf']])
 
 
-class RefTraitCode(TraitCodeExtractor):
+class Ref(Extractor):
     def check(self):
         return '$ref' in self.schema
 
@@ -129,7 +129,7 @@ class RefTraitCode(TraitCodeExtractor):
             return [f'from .{ref.modulename} import {ref.classname}']
 
 
-class NotTraitCode(TraitCodeExtractor):
+class Not(Extractor):
     def check(self):
         return 'not' in self.schema
 
@@ -142,7 +142,7 @@ class NotTraitCode(TraitCodeExtractor):
         return self.schema.make_child(self.schema['not']).trait_imports
 
 
-class AnyOfTraitCode(TraitCodeExtractor):
+class AnyOf(Extractor):
     def check(self):
         return 'anyOf' in self.schema
 
@@ -157,7 +157,7 @@ class AnyOfTraitCode(TraitCodeExtractor):
                     for sub_schema in self.schema['anyOf']), [])
 
 
-class AllOfTraitCode(TraitCodeExtractor):
+class AllOf(Extractor):
     def check(self):
         return 'allOf' in self.schema
 
@@ -172,7 +172,7 @@ class AllOfTraitCode(TraitCodeExtractor):
                     for sub_schema in self.schema['allOf']), [])
 
 
-class OneOfTraitCode(TraitCodeExtractor):
+class OneOf(Extractor):
     def check(self):
         return 'oneOf' in self.schema
 
@@ -187,7 +187,7 @@ class OneOfTraitCode(TraitCodeExtractor):
                     for sub_schema in self.schema['oneOf']), [])
 
 
-class EnumTraitCode(TraitCodeExtractor):
+class Enum(Extractor):
     def check(self):
         return 'enum' in self.schema
 
@@ -197,7 +197,7 @@ class EnumTraitCode(TraitCodeExtractor):
                                        **kwargs)
 
 
-class SimpleTraitCode(TraitCodeExtractor):
+class SimpleType(Extractor):
     simple_types = ["boolean", "null", "number", "integer", "string"]
     classes = {'boolean': 'jst.JSONBoolean',
                'null': 'jst.JSONNull',
@@ -222,7 +222,31 @@ class SimpleTraitCode(TraitCodeExtractor):
         return construct_function_call(cls, **kwargs)
 
 
-class ArrayTraitCode(TraitCodeExtractor):
+class CompoundType(Extractor):
+    simple_types = SimpleType.simple_types
+
+    def check(self):
+        return (isinstance(self.typecode, list) and
+                all(typ in self.simple_types for typ in self.typecode))
+
+    def trait_code(self, **kwargs):
+        if 'null' in self.typecode:
+            kwargs['allow_none'] = True
+        typecode = [typ for typ in self.typecode if typ != 'null']
+
+        if len(typecode) == 1:
+            return SimpleType(self.schema,
+                              typecode[0]).trait_code(**kwargs)
+        else:
+            item_kwargs = {key: val for key, val in kwargs.items()
+                           if key not in ['allow_none', 'allow_undefined']}
+            arg = "[{0}]".format(', '.join(SimpleType(self.schema, typ).trait_code(**item_kwargs)
+                                           for typ in typecode))
+            return construct_function_call('jst.JSONUnion', Variable(arg),
+                                           **kwargs)
+
+
+class Array(Extractor):
     def check(self):
         return self.schema.type == 'array'
 
@@ -250,31 +274,7 @@ class ArrayTraitCode(TraitCodeExtractor):
             return self.schema.make_child(items).trait_imports
 
 
-class CompoundTraitCode(TraitCodeExtractor):
-    simple_types = SimpleTraitCode.simple_types
-
-    def check(self):
-        return (isinstance(self.typecode, list) and
-                all(typ in self.simple_types for typ in self.typecode))
-
-    def trait_code(self, **kwargs):
-        if 'null' in self.typecode:
-            kwargs['allow_none'] = True
-        typecode = [typ for typ in self.typecode if typ != 'null']
-
-        if len(typecode) == 1:
-            return SimpleTraitCode(self.schema,
-                                   typecode[0]).trait_code(**kwargs)
-        else:
-            item_kwargs = {key: val for key, val in kwargs.items()
-                           if key not in ['allow_none', 'allow_undefined']}
-            arg = "[{0}]".format(', '.join(SimpleTraitCode(self.schema, typ).trait_code(**item_kwargs)
-                                           for typ in typecode))
-            return construct_function_call('jst.JSONUnion', Variable(arg),
-                                           **kwargs)
-
-
-class ObjectTraitCode(TraitCodeExtractor):
+class Object(Extractor):
     def check(self):
         return self.typecode == 'object'
 

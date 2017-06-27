@@ -45,11 +45,10 @@ class JSONSchema(object):
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
-    trait_extractors = [tx.HasTraitsUnionTraitCode,
-                        tx.RefTraitCode, tx.NotTraitCode, tx.AnyOfTraitCode,
-                        tx.AllOfTraitCode, tx.OneOfTraitCode, tx.EnumTraitCode,
-                        tx.SimpleTraitCode, tx.ArrayTraitCode,
-                        tx.CompoundTraitCode, tx.ObjectTraitCode, ]
+    trait_extractors = [tx.HasTraitsUnion, tx.Ref,
+                        tx.Not, tx.AnyOf, tx.AllOf, tx.OneOf,
+                        tx.Enum, tx.SimpleType, tx.CompoundType,
+                        tx.Array, tx.Object, ]
 
     def __init__(self, schema, module=None, context=None,
                  parent=None, name=None, metadata=None):
