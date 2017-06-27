@@ -40,27 +40,27 @@ class JSONHasTraits(T.HasTraits):
     Example
     -------
     >>> class Foo(JSONHasTraits):
-    ...     _default_trait = [T.Integer()]
+    ...     _additional_traits = [T.Integer()]
     ...     name = T.Unicode()
     >>> f = Foo(name="Guido", score=42)
     >>> f.set_trait('value', 100)
     >>> f.trait_names()
     ['name', 'score', 'value']
     """
-    _default_trait = True
+    _additional_traits = True
 
     def __init__(self, *args, **kwargs):
-        default = self._get_default_trait()
+        default = self._get_additional_traits()
         if default:
             self.add_traits(**{key: default for key in kwargs
                                if key not in self.traits()})
         super(JSONHasTraits, self).__init__(*args, **kwargs)
 
-    def _get_default_trait(self):
+    def _get_additional_traits(self):
         try:
-            default = self._default_trait[0]
+            default = self._additional_traits[0]
         except TypeError:
-            default = self._default_trait
+            default = self._additional_traits
 
         if isinstance(default, T.TraitType):
             return default
@@ -70,7 +70,7 @@ class JSONHasTraits(T.HasTraits):
             return None
 
     def set_trait(self, name, value):
-        default = self._get_default_trait()
+        default = self._get_additional_traits()
         if default and name not in self.traits():
             self.add_traits(**{name: default})
         super(JSONHasTraits, self).set_trait(name, value)

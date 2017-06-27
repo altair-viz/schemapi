@@ -90,7 +90,7 @@ def test_traits(trait, failcases, passcases):
 
 def test_hastraits_defaults():
     class Foo(jst.JSONHasTraits):
-        _default_trait = [T.Integer()]
+        _additional_traits = [T.Integer()]
         name = T.Unicode()
 
     f = Foo(name="Bob", age=40)

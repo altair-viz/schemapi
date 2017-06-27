@@ -15,7 +15,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
         {{ prop.description }}
     {%- endfor %}
     """
-    _default_trait = {{ cls.default_trait }}
+    _additional_traits = {{ cls.default_trait }}
     {%- for (name, prop) in cls.wrapped_properties().items() %}
     {{ name }} = {{ prop.trait_code }}
     {%- endfor %}

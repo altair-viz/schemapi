@@ -19,7 +19,7 @@ def Instance(classname, *args, **kwargs):
     return jst.JSONInstance(__name__ + '.' + classname, *args, **kwargs)
 -#}
 
-{%- for cls in classes %}
+{% for cls in classes %}
 {{ cls.object_code() }}
 {% endfor %}
 '''
@@ -364,14 +364,15 @@ class JSONSchema(object):
 
         template = jinja2.Template(self.object_template)
 
+        classes = [self]
+
         # Determine list of classes to generate
-        classes = [schema for schema in self.wrapped_definitions().values()]
-        classes += [self]
+        classes += [schema for schema in self.wrapped_definitions().values()]
         # Run through once to find all anonymous objects
         # template.render(cls=self, classes=classes)
         # classes += [schema for schema in self.anonymous_objects.values()
         #             if schema.is_object]
-        code = [cls.object_code() for cls in classes]
+        # code = [cls.object_code() for cls in classes]
 
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         imports = self.basic_imports
