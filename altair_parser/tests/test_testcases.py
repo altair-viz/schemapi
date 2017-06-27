@@ -54,10 +54,10 @@ def test_testcases_traitlets(testcase):
                                  reload_module=True)
 
     for instance in valid:
-        schema.RootInstance.from_dict(instance)
+        schema.Root.from_dict(instance)
     for instance in invalid:
         with pytest.raises(T.TraitError):
-            schema.RootInstance.from_dict(instance)
+            schema.Root.from_dict(instance)
 
 
 @pytest.mark.parametrize('testcase', testcases.keys())
@@ -76,8 +76,8 @@ def test_dict_round_trip(testcase):
 
     schema = load_dynamic_module(modulename, traitlets_obj.source_tree(),
                                  reload_module=True)
-    from _schema import RootInstance
+    from _schema import Root
 
     for instance in testcase['valid']:
-        obj = RootInstance.from_dict(instance)
+        obj = Root.from_dict(instance)
         assert obj.to_dict() == instance

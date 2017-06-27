@@ -226,7 +226,7 @@ class JSONSchema(object):
         if self.name:
             return utils.regularize_name(self.name)
         elif self.is_root:
-            return "RootInstance"
+            return "Root"
         elif self.is_reference:
             return utils.regularize_name(self.schema['$ref'].split('/')[-1])
         # elif self.is_object:
