@@ -22,7 +22,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
 '''
 
 REFUNION_TEMPLATE = '''
-class {{ cls.classname }}(jst.HasTraitsUnion):
+class {{ cls.classname }}(jst.AnyOfObject):
     _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
 '''
 

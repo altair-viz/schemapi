@@ -104,7 +104,7 @@ def test_hastraits_defaults():
         f.set_trait('age', 'blah')
 
 
-def test_hastraitsunion():
+def test_AnyOfObject():
     class Foo(jst.JSONHasTraits):
         intval = T.Integer()
         flag = T.Bool()
@@ -113,7 +113,7 @@ def test_hastraitsunion():
         strval = T.Unicode()
         flag = T.Bool()
 
-    class FooBar(jst.HasTraitsUnion):
+    class FooBar(jst.AnyOfObject):
         _classes = [Foo, Bar]
         pass
 

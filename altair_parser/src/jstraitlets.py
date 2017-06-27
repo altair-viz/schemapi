@@ -107,7 +107,7 @@ class JSONHasTraits(T.HasTraits):
         return dct
 
 
-class HasTraitsUnion(JSONHasTraits):
+class AnyOfObject(JSONHasTraits):
     """A HasTraits class built from a union of other HasTraits objects"""
     _classes = []
     def __init__(self, *args, **kwargs):
@@ -127,7 +127,7 @@ class HasTraitsUnion(JSONHasTraits):
             raise T.TraitError("{cls}: initialization arguments not "
                                "valid in any wrapped classes"
                                "".format(cls=self.__class__.__name__))
-        super(HasTraitsUnion, self).__init__(*args, **kwargs)
+        super(AnyOfObject, self).__init__(*args, **kwargs)
 
     @classmethod
     def from_dict(cls, dct):
