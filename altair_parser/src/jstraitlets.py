@@ -114,6 +114,7 @@ class AnyOfObject(JSONHasTraits):
         for cls in self._classes:
             if isinstance(cls, six.string_types):
                 cls = import_item(cls)
+            # TODO: add a second pass where we allow additional properties?
             if all(key in cls.class_traits() for key in kwargs):
                 try:
                     cls(*args, **kwargs)
@@ -148,8 +149,15 @@ class AnyOfObject(JSONHasTraits):
                                "".format(cls=cls.__name__))
 
 
+class OneOfObject(AnyOfObject):
+    """A HasTraits class which selects any among a set of specified types"""
+    # TODO: should specialize this so that exactly one of the objects matches
+
+
 class AllOfObject(JSONHasTraits):
     """A HasTraits class which combines all properties of a set of specified types"""
+    # TODO: should we check whether additional traits pass additionalProperties
+    # for each? This is required for full parity with JSONSchema
     _classes = []
     def __init__(self, *args, **kwargs):
         all_traits = {}

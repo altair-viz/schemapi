@@ -33,11 +33,15 @@ def regularize_name(name):
     >>> regularize_name("9abc")
     '_9abc'
     """
+    if name == '$schema':
+        return 'schema'
+    elif name == '$id':
+        return 'id'
     name, subs = re.subn('[^_a-zA-Z0-9]+', '_', name)
     if name[0].isdigit():
         name = '_' + name
     if keyword.iskeyword(name):
-        name = '_' + name
+        name = name + '_'
     return name
 
 def make_ascii_compatible(s):

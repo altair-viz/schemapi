@@ -21,8 +21,13 @@ class {{ cls.classname }}({{ cls.baseclass }}):
     {%- endfor %}
 '''
 
-REFUNION_TEMPLATE = '''
+ANYOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.AnyOfObject):
+    _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
+'''
+
+ONEOF_TEMPLATE = '''
+class {{ cls.classname }}(jst.OneOfObject):
     _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
 '''
 
@@ -97,10 +102,31 @@ class AnyOfObject(Extractor):
                                        **kwargs)
 
     def object_code(self):
-        template = jinja2.Template(REFUNION_TEMPLATE)
+        template = jinja2.Template(ANYOF_TEMPLATE)
         return template.render(cls=self.schema,
                                options=[self.schema.make_child(ref).full_classname
                                         for ref in self.schema['anyOf']])
+
+
+class OneOfObject(Extractor):
+    def check(self):
+        if (self.schema.is_root or self.schema.name) and 'oneOf' in self.schema:
+            return all(self.schema.make_child(schema).is_reference
+                       for schema in self.schema['oneOf'])
+        else:
+            return False
+
+    def trait_code(self, **kwargs):
+        return construct_function_call('jst.JSONInstance',
+                                       self.schema.full_classname,
+                                       **kwargs)
+
+    def object_code(self):
+        template = jinja2.Template(ONEOF_TEMPLATE)
+        return template.render(cls=self.schema,
+                               options=[self.schema.make_child(ref).full_classname
+                                        for ref in self.schema['oneOf']])
+
 
 class AllOfObject(Extractor):
     def check(self):
@@ -134,7 +160,7 @@ class RefObject(Extractor):
 
     def object_code(self):
         ref = self.schema.wrapped_ref()
-        template = jinja2.Template(REFUNION_TEMPLATE)
+        template = jinja2.Template(ANYOF_TEMPLATE)
         return template.render(cls=self.schema,
                                options=[self.schema.wrapped_ref().full_classname])
 

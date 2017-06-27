@@ -45,14 +45,15 @@ class JSONSchema(object):
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
-    trait_extractors = [tx.AnyOfObject, tx.AllOfObject,
+    trait_extractors = [tx.AnyOfObject, tx.OneOfObject, tx.AllOfObject,
                         tx.RefObject, tx.RefTrait,
                         tx.Not, tx.AnyOf, tx.AllOf, tx.OneOf,
                         tx.Enum, tx.SimpleType, tx.CompoundType,
                         tx.Array, tx.Object, ]
 
     def __init__(self, schema, module=None, context=None,
-                 parent=None, name=None, metadata=None):
+                 parent=None, name=None, metadata=None,
+                 definition_tags=('definitions',)):
         if not isinstance(schema, dict):
             raise ValueError("schema should be supplied as a dict")
 
@@ -65,6 +66,7 @@ class JSONSchema(object):
         # if context is not given, then assume this is a root instance that
         # defines its own context
         self.context = context or self
+        self.definition_tags = definition_tags
         self._trait_extractor = None
 
         # Here is where we cache anonymous objects defined in the schema.
@@ -79,12 +81,19 @@ class JSONSchema(object):
     #     return self.context._anonymous_objects
 
     @classmethod
-    def from_json_file(cls, filename, module=None):
+    def from_json_file(cls, filename, **kwargs):
         """Instantiate a JSONSchema object from a JSON file"""
         import json
         with open(filename) as f:
             schema = json.load(f)
-        return cls(schema, module=module)
+        return cls(schema, **kwargs)
+
+    @property
+    def all_definitions(self):
+        defs = {}
+        for tag in self.definition_tags:
+            defs.update(self.schema.get(tag, {}))
+        return defs
 
     @property
     def trait_extractor(self):
@@ -275,7 +284,7 @@ class JSONSchema(object):
     def wrapped_definitions(self):
         """Return definition dictionary wrapped as JSONSchema objects"""
         return {name.lower(): self.make_child(schema, name=name)
-                for name, schema in self.definitions.items()}
+                for name, schema in self.all_definitions.items()}
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""

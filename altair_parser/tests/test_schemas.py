@@ -32,6 +32,7 @@ def test_parse_schema(schema):
         pytest.xfail("vega schema has unsupported elements")
     schema = LOADED_SCHEMAS[schema]
     modulename = '_schema'
-    traitlets_obj = JSONSchema(schema, module=modulename)
+    traitlets_obj = JSONSchema(schema, module=modulename,
+                               definition_tags=['refs', 'defs', 'definitions'])
     load_dynamic_module(modulename, traitlets_obj.source_tree(),
                         reload_module=True)
