@@ -65,6 +65,7 @@ class JSONSchema(object):
         # if context is not given, then assume this is a root instance that
         # defines its own context
         self.context = context or self
+        self._trait_extractor = None
 
         # Here is where we cache anonymous objects defined in the schema.
         # We store them by generating a unique hash of the schema definition,
@@ -84,6 +85,20 @@ class JSONSchema(object):
         with open(filename) as f:
             schema = json.load(f)
         return cls(schema, module=module)
+
+    @property
+    def trait_extractor(self):
+        if self._trait_extractor is None:
+            # TODO: handle multiple matches with an AllOf()
+            for TraitExtractor in self.trait_extractors:
+                trait_extractor = TraitExtractor(self)
+                if trait_extractor.check():
+                    self._trait_extractor = trait_extractor
+                    break
+            else:
+                raise ValueError("No recognized trait code for schema with "
+                                 "keys {0}".format(tuple(self.schema.keys())))
+        return self._trait_extractor
 
     def copy(self, **kwargs):
         """Make a copy, optionally overwriting any init arguments"""

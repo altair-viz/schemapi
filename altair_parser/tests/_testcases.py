@@ -428,3 +428,29 @@ hastraitsunion_test = {
         {'val': None}
     ]
 }
+
+
+enum_definitions = {
+    'schema': {
+        'definitions': {
+            'Mark': {
+                "enum": ["point", "circle", "line"],
+                "type": "string"
+            },
+            'TopLevel': {
+                "properties": {
+                    "mark": {"$ref": "#/definitions/Mark"}
+                }
+            }
+        },
+        "$ref": "#/definitions/TopLevel"
+    },
+    "valid": [
+        {"mark": "circle"},
+        {"mark": "line"},
+        {"mark": "point"}
+    ],
+    "invalid": [
+        {"mark": "square"}
+    ]
+}

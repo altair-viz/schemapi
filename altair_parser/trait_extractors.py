@@ -67,8 +67,6 @@ class TraitCodeExtractor(object):
 
     def object_code(self, **kwargs):
         return ""
-        template = jinja2.Template(OBJECT_TEMPLATE)
-        return template.render(cls=self.schema)
 
     def trait_imports(self):
         raise NotImplementedError()
@@ -151,30 +149,30 @@ class RefTraitCode(TraitCodeExtractor):
 
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
-        if ref.is_object:
-            return construct_function_call('jst.JSONInstance',
-                                           ref.full_classname,
-                                           **kwargs)
-        else:
+        if ref.is_trait:
             ref = ref.copy()  # TODO: maybe can remove this?
             ref.metadata = self.schema.metadata
             return ref.trait_code
+        else:
+            return construct_function_call('jst.JSONInstance',
+                                           ref.full_classname,
+                                           **kwargs)
 
     def object_code(self):
         ref = self.schema.wrapped_ref()
-        if ref.object_code():
+        if ref.is_trait:
+            return ""
+        else:
             template = jinja2.Template(REFUNION_TEMPLATE)
             return template.render(cls=self.schema,
                                    options=[self.schema.wrapped_ref().full_classname])
-        else:
-            return ""
 
     def trait_imports(self):
         ref = self.schema.wrapped_ref()
-        if ref.is_object:
-            return [f'from .{ref.modulename} import {ref.classname}']
-        else:
+        if ref.is_trait:
             return ref.trait_imports
+        else:
+            return [f'from .{ref.modulename} import {ref.classname}']
 
 
 class EnumTraitCode(TraitCodeExtractor):
