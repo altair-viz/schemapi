@@ -382,6 +382,26 @@ circular_reference = {
     'invalid': []
 }
 
+root_reference = {
+    'schema': {
+        'properties': {
+            'val': {'type': 'string'},
+            'foo': {'oneOf': [{'$ref': '#'}, {'type': 'null'}]}
+        }
+    },
+    'valid': [
+        {'val': 'first'},
+        {'val': 'first',
+         'foo': {'val': 'second'}},
+        {'val': 'first',
+         'foo': {'val': 'second',
+                 'foo': {'val': 'third'}}}
+    ],
+    'invalid': [
+        {'foo': {'val': 42}}
+    ]
+}
+
 additionalProperties_test = {
     'schema': {
         'type': 'object',

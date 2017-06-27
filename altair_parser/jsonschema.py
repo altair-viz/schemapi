@@ -290,10 +290,15 @@ class JSONSchema(object):
 
         Reference codes should look something like "#/definitions/MyDefinition"
         """
+        if not ref:
+            raise ValueError("empty reference")
+
         path = ref.split('/')
         name = path[-1]
         if path[0] != '#':
             raise ValueError(f"Unrecognized $ref format: '{ref}'")
+        elif len(path) == 1 or path[1] == '':
+            return self.context
         try:
             schema = self.context.schema
             for key in path[1:]:

@@ -292,6 +292,7 @@ class Object(Extractor):
     def trait_code(self, **kwargs):
         trait_codes = {name: Variable(prop.trait_code) for (name, prop)
                        in self.schema.wrapped_properties().items()}
+        trait_codes['_additional_traits'] = Variable(self.schema.additional_traits)
         defn = construct_function_call("T.MetaHasTraits", 'Mapping',
                                        (Variable(self.schema.baseclass),),
                                        trait_codes)
