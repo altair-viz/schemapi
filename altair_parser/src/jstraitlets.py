@@ -410,8 +410,8 @@ class JSONInstance(T.Instance):
         return super(JSONInstance, self).validate(obj, value)
 
     def make_dynamic_default(self):
-        if self.allow_undefined:
-            return undefined
+        if (self.default_args is None) and (self.default_kwargs is None):
+            return self.default_value
         else:
             return super(JSONInstance, self).make_dynamic_default()
 
