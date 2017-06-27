@@ -430,27 +430,35 @@ hastraitsunion_test = {
 }
 
 
-enum_definitions = {
+enum_refs = {
     'schema': {
         'definitions': {
             'Mark': {
                 "enum": ["point", "circle", "line"],
                 "type": "string"
             },
+            'MarkAlias': {
+                '$ref': '#/definitions/Mark'
+            },
+            'MarkAliasAlias': {
+                '$ref': '#/definitions/MarkAlias'
+            },
             'TopLevel': {
                 "properties": {
-                    "mark": {"$ref": "#/definitions/Mark"}
+                    "mark1": {"$ref": "#/definitions/Mark"},
+                    "mark2": {"$ref": "#/definitions/MarkAlias"},
+                    "mark3": {"$ref": "#/definitions/MarkAliasAlias"},
                 }
             }
         },
         "$ref": "#/definitions/TopLevel"
     },
     "valid": [
-        {"mark": "circle"},
-        {"mark": "line"},
-        {"mark": "point"}
+        {"mark1": "circle", "mark2": "line", "mark3": "point"}
     ],
     "invalid": [
-        {"mark": "square"}
+        {"mark1": "bad", "mark2": "line", "mark3": "point"},
+        {"mark1": "circle", "mark2": "bad", "mark3": "point"},
+        {"mark1": "circle", "mark2": "line", "mark3": "bad"}
     ]
 }

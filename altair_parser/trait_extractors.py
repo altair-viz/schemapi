@@ -80,10 +80,11 @@ class TraitCodeExtractor(object):
 
 class HasTraitsUnionTraitCode(TraitCodeExtractor):
     def check(self):
-        return ((self.schema.is_root or self.schema.name) and
-                'anyOf' in self.schema and
-                all(self.schema.make_child(schema).is_reference
-                    for schema in self.schema['anyOf']))
+        if (self.schema.is_root or self.schema.name) and 'anyOf' in self.schema:
+            return all(self.schema.make_child(schema).is_reference
+                       for schema in self.schema['anyOf'])
+        else:
+            return False
 
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONInstance',
@@ -103,8 +104,7 @@ class RefTraitCode(TraitCodeExtractor):
 
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
-        if ref.is_trait:
-            ref = ref.copy()  # TODO: maybe can remove this?
+        if ref.really_is_trait():
             ref.metadata = self.schema.metadata
             return ref.trait_code
         else:
@@ -114,7 +114,7 @@ class RefTraitCode(TraitCodeExtractor):
 
     def object_code(self):
         ref = self.schema.wrapped_ref()
-        if ref.is_trait:
+        if ref.really_is_trait():
             return ""
         else:
             template = jinja2.Template(REFUNION_TEMPLATE)
