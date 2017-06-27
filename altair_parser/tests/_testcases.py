@@ -386,7 +386,7 @@ root_reference = {
     'schema': {
         'properties': {
             'val': {'type': 'string'},
-            'foo': {'oneOf': [{'$ref': '#'}, {'type': 'null'}]}
+            'foo': {'$ref': '#'}
         }
     },
     'valid': [

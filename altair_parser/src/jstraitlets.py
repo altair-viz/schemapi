@@ -409,6 +409,11 @@ class JSONInstance(T.Instance):
             return value
         return super(JSONInstance, self).validate(obj, value)
 
+    def make_dynamic_default(self):
+        if self.allow_undefined:
+            return undefined
+        else:
+            return super(JSONInstance, self).make_dynamic_default()
 
 class JSONAnyOf(T.Union):
     allow_undefined = True
