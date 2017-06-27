@@ -45,7 +45,7 @@ class JSONSchema(object):
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
-    trait_extractors = [tx.HasTraitsUnion, tx.Ref,
+    trait_extractors = [tx.AnyOfObject, tx.RefObject, tx.RefTrait,
                         tx.Not, tx.AnyOf, tx.AllOf, tx.OneOf,
                         tx.Enum, tx.SimpleType, tx.CompoundType,
                         tx.Array, tx.Object, ]
@@ -163,6 +163,8 @@ class JSONSchema(object):
     def really_is_trait(self):
         if self.type != 'object':
             return True
+        elif 'properties' in self:
+            return False
         elif '$ref' in self:
             return self.wrapped_ref().really_is_trait()
         elif 'anyOf' in self:
@@ -173,6 +175,23 @@ class JSONSchema(object):
                        for spec in self['allOf'])
         elif 'oneOf' in self:
             return all(self.make_child(spec).really_is_trait()
+                       for spec in self['oneOf'])
+        else:
+            return False
+
+    def really_is_object(self):
+        if 'properties' in self:
+            return True
+        elif '$ref' in self:
+            return self.wrapped_ref().really_is_object()
+        elif 'anyOf' in self:
+            return all(self.make_child(spec).really_is_object()
+                       for spec in self['anyOf'])
+        elif 'allOf' in self:
+            return all(self.make_child(spec).really_is_object()
+                       for spec in self['allOf'])
+        elif 'oneOf' in self:
+            return all(self.make_child(spec).really_is_object()
                        for spec in self['oneOf'])
         else:
             return False

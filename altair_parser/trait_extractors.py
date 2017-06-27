@@ -78,7 +78,7 @@ class Extractor(object):
 ###############################################################################
 # Extractor classes, in the order of checks
 
-class HasTraitsUnion(Extractor):
+class AnyOfObject(Extractor):
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'anyOf' in self.schema:
             return all(self.schema.make_child(schema).is_reference
@@ -98,35 +98,42 @@ class HasTraitsUnion(Extractor):
                                         for ref in self.schema['anyOf']])
 
 
-class Ref(Extractor):
+class RefObject(Extractor):
     def check(self):
-        return '$ref' in self.schema
+        return '$ref' in self.schema and self.schema.really_is_object()
 
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
-        if ref.really_is_trait():
-            ref.metadata = self.schema.metadata
-            return ref.trait_code
-        else:
-            return construct_function_call('jst.JSONInstance',
-                                           ref.full_classname,
-                                           **kwargs)
+        return construct_function_call('jst.JSONInstance',
+                                       ref.full_classname,
+                                       **kwargs)
 
     def object_code(self):
         ref = self.schema.wrapped_ref()
-        if ref.really_is_trait():
-            return ""
-        else:
-            template = jinja2.Template(REFUNION_TEMPLATE)
-            return template.render(cls=self.schema,
-                                   options=[self.schema.wrapped_ref().full_classname])
+        template = jinja2.Template(REFUNION_TEMPLATE)
+        return template.render(cls=self.schema,
+                               options=[self.schema.wrapped_ref().full_classname])
 
     def trait_imports(self):
         ref = self.schema.wrapped_ref()
-        if ref.is_trait:
-            return ref.trait_imports
-        else:
-            return [f'from .{ref.modulename} import {ref.classname}']
+        return ['from .{ref.modulename} import {ref.classname}'.format(ref=ref)]
+
+
+class RefTrait(Extractor):
+    def check(self):
+        return '$ref' in self.schema and self.schema.really_is_trait()
+
+    def trait_code(self, **kwargs):
+        ref = self.schema.wrapped_ref()
+        ref.metadata = self.schema.metadata
+        return ref.trait_code
+
+    def object_code(self):
+        return ""
+
+    def trait_imports(self):
+        ref = self.schema.wrapped_ref()
+        return ref.trait_imports
 
 
 class Not(Extractor):
@@ -276,7 +283,7 @@ class Array(Extractor):
 
 class Object(Extractor):
     def check(self):
-        return self.typecode == 'object'
+        return not self.schema.really_is_trait()
 
     def trait_code(self, **kwargs):
         trait_codes = {name: Variable(prop.trait_code) for (name, prop)
