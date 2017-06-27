@@ -25,9 +25,11 @@ def test_schema_jsonschema(schema):
     jsonschema.validate(schema, metaschema)
 
 
-@pytest.mark.skip("full schema test not yet ready")
 @pytest.mark.parametrize('schema', LOADED_SCHEMAS)
 def test_parse_schema(schema):
+    """Test parsing the entire schema"""
+    if schema == 'vega-v3.0.0.json':
+        pytest.xfail("vega schema has unsupported elements")
     schema = LOADED_SCHEMAS[schema]
     modulename = '_schema'
     traitlets_obj = JSONSchema(schema, module=modulename)

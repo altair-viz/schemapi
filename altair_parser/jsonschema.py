@@ -99,6 +99,10 @@ class JSONSchema(object):
                                  "keys {0}".format(tuple(self.schema.keys())))
         return self._trait_extractor
 
+    def indented_description(self, indent_level=2):
+        return utils.format_description(self.description,
+                                        indent=4 * indent_level)
+
     def copy(self, **kwargs):
         """Make a copy, optionally overwriting any init arguments"""
         kwds = dict(schema=self.schema, module=self.module,
@@ -125,6 +129,9 @@ class JSONSchema(object):
             return self.schema.get(attr, self.attr_defaults[attr])
         raise AttributeError(f"'{self.__class__.__name__}' object "
                              f"has no attribute '{attr}'")
+
+    def get(self, *args):
+        return self.schema.get(*args)
 
     # def as_anonymous_object(self):
     #     """Obtain a copy of self as an anonymous object
@@ -253,7 +260,7 @@ class JSONSchema(object):
         return "jst.JSONHasTraits"
 
     @property
-    def default_trait(self):
+    def additional_traits(self):
         if self.additionalProperties in [True, False]:
             return repr(self.additionalProperties)
         else:

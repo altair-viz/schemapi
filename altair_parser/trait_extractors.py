@@ -12,10 +12,10 @@ class {{ cls.classname }}({{ cls.baseclass }}):
     ----------
     {%- for (name, prop) in cls.wrapped_properties().items() %}
     {{ name }} : {{ prop.type }}
-        {{ prop.description }}
+        {{ prop.indented_description() }}
     {%- endfor %}
     """
-    _additional_traits = {{ cls.default_trait }}
+    _additional_traits = {{ cls.additional_traits }}
     {%- for (name, prop) in cls.wrapped_properties().items() %}
     {{ name }} = {{ prop.trait_code }}
     {%- endfor %}
@@ -259,14 +259,18 @@ class Array(Extractor):
 
     def trait_code(self, **kwargs):
         # TODO: implement items as list and additionalItems
-        items = self.schema['items']
+
         if 'minItems' in self.schema:
             kwargs['minlen'] = self.schema['minItems']
         if 'maxItems' in self.schema:
             kwargs['maxlen'] = self.schema['maxItems']
         if 'uniqueItems' in self.schema:
             kwargs['uniqueItems'] = self.schema['uniqueItems']
-        if isinstance(items, list):
+
+        items = self.schema.get('items', None)
+        if items is None:
+            itemtype = "T.Any()"
+        elif isinstance(items, list):
             raise NotImplementedError("'items' keyword as list")
         else:
             itemtype = self.schema.make_child(items).trait_code

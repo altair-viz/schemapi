@@ -1,5 +1,7 @@
 import re
 import keyword
+import textwrap
+
 
 def hash_schema(schema, hashfunc=hash):
     """Compute a unique hash for a (nested) schema
@@ -53,13 +55,13 @@ def format_description(content, width=70, indent=8, indent_first=False):
     # TODO: document, test, and use
     lines = content.splitlines()
     def format_line(line):
-        line.replace("__Default value:__", "default value:")
+        line = line.replace("__Default value:__", "Default:")
         if line.startswith('-'):
             return textwrap.indent(textwrap.fill(line, width - indent - 2),
                                    (indent + 2) * ' ')[2:]
         else:
             return textwrap.indent(textwrap.fill(line, width - indent), indent * ' ')
-    result = '\n'.join(map(format_line, lines))
+    result = '\n'.join(format_line(line) for line in lines if line)
     if not indent_first:
         result = result.lstrip()
     return result
