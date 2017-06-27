@@ -26,6 +26,11 @@ class {{ cls.classname }}(jst.AnyOfObject):
     _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
 '''
 
+ALLOF_TEMPLATE = '''
+class {{ cls.classname }}(jst.AllOfObject):
+    _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
+'''
+
 
 class ImportStatement(object):
     def __init__(self, path, names):
@@ -96,6 +101,25 @@ class AnyOfObject(Extractor):
         return template.render(cls=self.schema,
                                options=[self.schema.make_child(ref).full_classname
                                         for ref in self.schema['anyOf']])
+
+class AllOfObject(Extractor):
+    def check(self):
+        if (self.schema.is_root or self.schema.name) and 'allOf' in self.schema:
+            return all(self.schema.make_child(schema).is_reference
+                       for schema in self.schema['allOf'])
+        else:
+            return False
+
+    def trait_code(self, **kwargs):
+        return construct_function_call('jst.JSONInstance',
+                                       self.schema.full_classname,
+                                       **kwargs)
+
+    def object_code(self):
+        template = jinja2.Template(ALLOF_TEMPLATE)
+        return template.render(cls=self.schema,
+                               options=[self.schema.make_child(ref).full_classname
+                                        for ref in self.schema['allOf']])
 
 
 class RefObject(Extractor):

@@ -108,7 +108,7 @@ class JSONHasTraits(T.HasTraits):
 
 
 class AnyOfObject(JSONHasTraits):
-    """A HasTraits class built from a union of other HasTraits objects"""
+    """A HasTraits class which selects any among a set of specified types"""
     _classes = []
     def __init__(self, *args, **kwargs):
         for cls in self._classes:
@@ -146,6 +146,20 @@ class AnyOfObject(JSONHasTraits):
             raise T.TraitError("{cls}: dict representation not "
                                "valid in any wrapped classes"
                                "".format(cls=cls.__name__))
+
+
+class AllOfObject(JSONHasTraits):
+    """A HasTraits class which combines all properties of a set of specified types"""
+    _classes = []
+    def __init__(self, *args, **kwargs):
+        all_traits = {}
+        for cls in self._classes:
+            if isinstance(cls, six.string_types):
+                cls = import_item(cls)
+            all_traits.update(cls.class_traits())
+        self.add_traits(**{name: copy.copy(trait) for name, trait
+                           in all_traits.items()})
+        super(AllOfObject, self).__init__(*args, **kwargs)
 
 
 def AnonymousMapping(**traits):

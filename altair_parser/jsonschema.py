@@ -45,7 +45,8 @@ class JSONSchema(object):
     # an ordered list of trait extractor classes.
     # these will be checked in-order, and return a trait_code when
     # a match is found.
-    trait_extractors = [tx.AnyOfObject, tx.RefObject, tx.RefTrait,
+    trait_extractors = [tx.AnyOfObject, tx.AllOfObject,
+                        tx.RefObject, tx.RefTrait,
                         tx.Not, tx.AnyOf, tx.AllOf, tx.OneOf,
                         tx.Enum, tx.SimpleType, tx.CompoundType,
                         tx.Array, tx.Object, ]

@@ -421,7 +421,7 @@ additionalProperties_test = {
     ]
 }
 
-hastraitsunion_test = {
+anyofobject_test = {
     'schema': {
         'anyOf': [
             {'$ref': '#/definitions/Foo1'},
@@ -446,6 +446,35 @@ hastraitsunion_test = {
     ],
     'invalid': [
         {'val': None}
+    ]
+}
+
+
+allofobject_test = {
+    'schema': {
+        'allOf': [
+            {'$ref': '#/definitions/Foo1'},
+            {'$ref': '#/definitions/Foo2'}
+        ],
+        'definitions': {
+            'Foo1': {
+                'properties': {
+                    'score': {'type': 'integer'},
+                }
+            },
+            'Foo2': {
+                'properties': {
+                    'name': {'type':'string'}
+                }
+            }
+        }
+    },
+    'valid': [
+        {'score': 42, 'name': 'hello'},
+    ],
+    'invalid': [
+        {'score': 'blah'},
+        {'name': 100}
     ]
 }
 
