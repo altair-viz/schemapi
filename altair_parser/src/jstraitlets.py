@@ -136,7 +136,7 @@ class JSONHasTraits(T.HasTraits):
     def from_json(cls, json_string):
         """Instantiate object from a JSON string"""
         import json
-        return return cls.from_dict(json.loads(json_string))
+        return cls.from_dict(json.loads(json_string))
 
     def to_json(self):
         """Output the object's representation to a JSON string"""
