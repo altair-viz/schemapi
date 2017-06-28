@@ -13,11 +13,8 @@ OBJECT_TEMPLATE = '''# {{ cls.filename }}
 {{ import }}
 {%- endfor %}
 
-{#-
-def Instance(classname, *args, **kwargs):
-    """Convenience routine for an instance of a class in this file"""
-    return jst.JSONInstance(__name__ + '.' + classname, *args, **kwargs)
--#}
+def _class(classname):
+    return "{mod}.{classname}".format(mod=__name__, classname=classname)
 
 {% for cls in classes %}
 {{ cls.object_code() }}

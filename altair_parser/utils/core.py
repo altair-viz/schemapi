@@ -27,7 +27,7 @@ def regularize_name(name):
     Examples
     --------
     >>> regularize_name("classname<(string|int)>")
-    'classname_string_int_'
+    'classname_string_int'
     >>> regularize_name("foo.bar")
     'foo_bar'
     >>> regularize_name("9abc")
@@ -38,6 +38,7 @@ def regularize_name(name):
     elif name == '$id':
         return 'id'
     name, subs = re.subn('[^_a-zA-Z0-9]+', '_', name)
+    name = name.strip('_')
     if name[0].isdigit():
         name = '_' + name
     if keyword.iskeyword(name):
