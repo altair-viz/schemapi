@@ -178,7 +178,7 @@ class RefObject(Extractor):
     requires_import = True
 
     def check(self):
-        return '$ref' in self.schema and self.schema.really_is_object()
+        return '$ref' in self.schema and self.schema.is_object
 
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
@@ -201,7 +201,7 @@ class RefTrait(Extractor):
     requires_import = False
 
     def check(self):
-        return '$ref' in self.schema and self.schema.really_is_trait()
+        return '$ref' in self.schema
 
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()

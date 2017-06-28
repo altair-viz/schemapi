@@ -157,29 +157,23 @@ class JSONSchema(object):
         else:
             return False
 
-    def really_is_object(self):
+    @property
+    def is_object(self):
         if 'properties' in self:
             return True
         elif '$ref' in self:
-            return self.wrapped_ref().really_is_object()
+            return self.wrapped_ref().is_object
         elif 'anyOf' in self:
-            return all(self.make_child(spec).really_is_object()
+            return all(self.make_child(spec).is_object
                        for spec in self['anyOf'])
         elif 'allOf' in self:
-            return all(self.make_child(spec).really_is_object()
+            return all(self.make_child(spec).is_object
                        for spec in self['allOf'])
         elif 'oneOf' in self:
-            return all(self.make_child(spec).really_is_object()
+            return all(self.make_child(spec).is_object
                        for spec in self['oneOf'])
         else:
             return False
-
-    @property
-    def is_object(self):
-        if 'anyOf' in self or 'allOf' in self or 'oneOf' in self:
-            return False
-        else:
-            return self.type == 'object' and not self.is_reference
 
     @property
     def is_reference(self):
