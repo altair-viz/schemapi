@@ -438,6 +438,14 @@ class JSONArray(T.List):
                     name=self.name, klass=class_of(obj)))
         return value
 
+    # Need to bypass the dynamic default in T.Container() in the case that
+    # the trait is undefined
+    def make_dynamic_default(self):
+        if self.allow_undefined and self.default_value is undefined:
+            return undefined
+        else:
+            return super(JSONArray, self).make_dynamic_default()
+
 
 class JSONEnum(T.Enum):
     allow_undefined = True
