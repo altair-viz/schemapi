@@ -65,6 +65,8 @@ class Extractor(object):
     trait_imports :
         return a list of import statements required for defining the trait
     """
+    requires_import = False
+
     def __init__(self, schema, typecode=None):
         self.schema = schema
         self.typecode = typecode or schema.type
@@ -84,11 +86,20 @@ class Extractor(object):
     def object_imports(self):
         raise NotImplementedError()
 
+    def import_statement(self):
+        if self.requires_import:
+            return ("from .{schema.modulename} import {schema.classname}"
+                    "".format(schema=self.schema))
+        else:
+            return ""
+
 
 ###############################################################################
 # Extractor classes, in the order of checks
 
 class AnyOfObject(Extractor):
+    requires_import = True
+
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'anyOf' in self.schema:
             return all(self.schema.make_child(schema).is_reference
@@ -109,6 +120,8 @@ class AnyOfObject(Extractor):
 
 
 class OneOfObject(Extractor):
+    requires_import = True
+
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'oneOf' in self.schema:
             return all(self.schema.make_child(schema).is_reference
@@ -129,6 +142,8 @@ class OneOfObject(Extractor):
 
 
 class AllOfObject(Extractor):
+    requires_import = True
+
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'allOf' in self.schema:
             return all(self.schema.make_child(schema).is_reference
@@ -149,6 +164,8 @@ class AllOfObject(Extractor):
 
 
 class RefObject(Extractor):
+    requires_import = True
+
     def check(self):
         return '$ref' in self.schema and self.schema.really_is_object()
 
@@ -170,6 +187,8 @@ class RefObject(Extractor):
 
 
 class RefTrait(Extractor):
+    requires_import = False
+
     def check(self):
         return '$ref' in self.schema and self.schema.really_is_trait()
 
@@ -178,15 +197,14 @@ class RefTrait(Extractor):
         ref.metadata = self.schema.metadata
         return ref.trait_code
 
-    def object_code(self):
-        return ""
-
     def trait_imports(self):
         ref = self.schema.wrapped_ref()
         return ref.trait_imports
 
 
 class Not(Extractor):
+    requires_import = False
+
     def check(self):
         return 'not' in self.schema
 
@@ -200,6 +218,8 @@ class Not(Extractor):
 
 
 class AnyOf(Extractor):
+    requires_import = False
+
     def check(self):
         return 'anyOf' in self.schema
 
@@ -215,6 +235,8 @@ class AnyOf(Extractor):
 
 
 class AllOf(Extractor):
+    requires_import = False
+
     def check(self):
         return 'allOf' in self.schema
 
@@ -230,6 +252,8 @@ class AllOf(Extractor):
 
 
 class OneOf(Extractor):
+    requires_import = False
+
     def check(self):
         return 'oneOf' in self.schema
 
@@ -245,6 +269,8 @@ class OneOf(Extractor):
 
 
 class Enum(Extractor):
+    requires_import = False
+
     def check(self):
         return 'enum' in self.schema
 
@@ -255,6 +281,7 @@ class Enum(Extractor):
 
 
 class SimpleType(Extractor):
+    requires_import = False
     simple_types = ["boolean", "null", "number", "integer", "string"]
     classes = {'boolean': 'jst.JSONBoolean',
                'null': 'jst.JSONNull',
@@ -280,6 +307,7 @@ class SimpleType(Extractor):
 
 
 class CompoundType(Extractor):
+    requires_import = False
     simple_types = SimpleType.simple_types
 
     def check(self):
@@ -304,6 +332,8 @@ class CompoundType(Extractor):
 
 
 class Array(Extractor):
+    requires_import = False
+
     def check(self):
         return self.schema.type == 'array'
 
@@ -336,6 +366,8 @@ class Array(Extractor):
 
 
 class Object(Extractor):
+    requires_import = True
+
     def check(self):
         return not self.schema.really_is_trait()
 
