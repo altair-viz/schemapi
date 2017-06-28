@@ -133,26 +133,22 @@ class JSONSchema(object):
 
     @property
     def is_trait(self):
-        if 'anyOf' in self or 'allOf' in self or 'oneOf' in self:
-            return True
-        else:
-            return self.type != 'object' and not self.is_reference
-
-    def really_is_trait(self):
-        if self.type != 'object':
-            return True
-        elif 'properties' in self:
+        if 'properties' in self:
             return False
+        elif self.type != 'object':
+            return True
+        elif 'enum' in self:
+            return True
         elif '$ref' in self:
-            return self.wrapped_ref().really_is_trait()
+            return self.wrapped_ref().is_trait
         elif 'anyOf' in self:
-            return all(self.make_child(spec).really_is_trait()
+            return any(self.make_child(spec).is_trait
                        for spec in self['anyOf'])
         elif 'allOf' in self:
-            return all(self.make_child(spec).really_is_trait()
+            return any(self.make_child(spec).is_trait
                        for spec in self['allOf'])
         elif 'oneOf' in self:
-            return all(self.make_child(spec).really_is_trait()
+            return any(self.make_child(spec).is_trait
                        for spec in self['oneOf'])
         else:
             return False
@@ -193,7 +189,7 @@ class JSONSchema(object):
         elif self.is_root:
             return "Root"
         elif self.is_reference:
-            return utils.regularize_name(self.schema['$ref'].split('/')[-1])
+            return self.wrapped_ref().classname
         else:
             raise NotImplementedError("class name for schema with keys "
                                       "{0}".format(tuple(self.schema.keys())))

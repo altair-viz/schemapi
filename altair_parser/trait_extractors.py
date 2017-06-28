@@ -109,14 +109,16 @@ class Extractor(object):
 # Extractor classes, in the order of checks
 
 class AnyOfObject(Extractor):
+    """
+    Extractor for a named schema with a "anyOf" clause
+    consisting entirely of object definitions or references
+    """
     requires_import = True
 
     def check(self):
-        if (self.schema.is_root or self.schema.name) and 'anyOf' in self.schema:
-            return all(self.schema.make_child(schema).is_reference
-                       for schema in self.schema['anyOf'])
-        else:
-            return False
+        return (self.schema.is_named_object and 'anyOf' in self.schema and
+                all(self.schema.make_child(schema).is_object
+                    for schema in self.schema['anyOf']))
 
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONInstance',
@@ -131,14 +133,16 @@ class AnyOfObject(Extractor):
 
 
 class OneOfObject(Extractor):
+    """
+    Extractor for a named schema with a "oneOf" clause
+    consisting entirely of object definitions or references
+    """
     requires_import = True
 
     def check(self):
-        if (self.schema.is_root or self.schema.name) and 'oneOf' in self.schema:
-            return all(self.schema.make_child(schema).is_reference
-                       for schema in self.schema['oneOf'])
-        else:
-            return False
+        return (self.schema.is_named_object and 'oneOf' in self.schema and
+                all(self.schema.make_child(schema).is_object
+                    for schema in self.schema['oneOf']))
 
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONInstance',
@@ -153,11 +157,15 @@ class OneOfObject(Extractor):
 
 
 class AllOfObject(Extractor):
+    """
+    Extractor for a named schema with a "allOf" clause
+    consisting entirely of object definitions or references
+    """
     requires_import = True
 
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'allOf' in self.schema:
-            return all(self.schema.make_child(schema).is_reference
+            return all(self.schema.make_child(schema).is_object
                        for schema in self.schema['allOf'])
         else:
             return False
@@ -380,7 +388,7 @@ class Object(Extractor):
     requires_import = True
 
     def check(self):
-        return not self.schema.really_is_trait()
+        return not self.schema.is_trait
 
     def trait_code(self, **kwargs):
         trait_codes = {name: Variable(prop.trait_code) for (name, prop)
