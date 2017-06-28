@@ -143,9 +143,11 @@ def test_AnyOfObject():
     FooBar.from_dict({'intval': 42, 'flag': False})
 
 class Bar(jst.JSONHasTraits):
+    _additional_traits = [T.Unicode()]
     val = T.Unicode()
 
 class Foo(jst.JSONHasTraits):
+    _additional_traits = False
     x = T.Integer()
     y = T.Instance(Bar)
 
@@ -154,3 +156,13 @@ def test_to_from_dict():
     obj = Foo.from_dict(dct)
     dct2 = obj.to_dict()
     assert dct == dct2
+
+def test_to_from_dict_with_defaults():
+    dct = {'x': 4, 'y': {'val': 'hello', 'other_val': 'hello 2'}}
+    obj = Foo.from_dict(dct)
+    dct2 = obj.to_dict()
+    assert dct == dct2
+
+    dct = {'x': 4, 'z': 'blah', 'y': {'val': 'hello'}}
+    with pytest.raises(T.TraitError):
+        Foo.from_dict(dct)
