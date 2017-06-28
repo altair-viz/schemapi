@@ -4,9 +4,12 @@ import jinja2
 from .utils import construct_function_call, Variable
 
 
+# TODO: handle required arguments differently?
 OBJECT_TEMPLATE = '''
 class {{ cls.classname }}({{ cls.baseclass }}):
     """{{ cls.classname }} class
+
+    {{ cls.indented_description(1) }}
 
     Attributes
     ----------
@@ -16,9 +19,17 @@ class {{ cls.classname }}({{ cls.baseclass }}):
     {%- endfor %}
     """
     _additional_traits = {{ cls.additional_traits }}
+
     {%- for (name, prop) in cls.wrapped_properties().items() %}
     {{ name }} = {{ prop.trait_code }}
     {%- endfor %}
+
+    {%- set comma = joiner(", ") %}
+
+    def __init__(self, {% for name in cls.wrapped_properties() %}{{ name }}=jst.undefined, {% endfor %}**kwargs):
+        kwds = dict({% for name in cls.wrapped_properties() %}{{ comma() }}{{ name }}={{ name }}{% endfor %})
+        kwargs.update({k:v for k, v in kwds.items() if v is not jst.undefined})
+        super({{ cls.classname }}, self).__init__(**kwargs)
 '''
 
 ANYOF_TEMPLATE = '''
