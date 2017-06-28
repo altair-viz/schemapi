@@ -67,11 +67,12 @@ class JSONHasTraits(T.HasTraits):
 
         super(JSONHasTraits, self).__init__(**kwargs)
 
-    def _get_additional_traits(self):
+    @classmethod
+    def _get_additional_traits(cls):
         try:
-            default = self._additional_traits[0]
+            default = cls._additional_traits[0]
         except TypeError:
-            default = self._additional_traits
+            default = cls._additional_traits
 
         if isinstance(default, T.TraitType):
             return default
@@ -89,21 +90,35 @@ class JSONHasTraits(T.HasTraits):
     @classmethod
     def from_dict(cls, dct):
         """Initialize an instance from a (nested) dictionary"""
-        # TODO: make this gracefully handle default values as well
-        obj = cls()
         if not isinstance(dct, dict):
             raise T.TraitError("Argument to from_dict should be a dict, "
                                "but got {0}".format(dct))
-        for key, val in dct.items():
+
+        traits = cls.class_traits()
+        default = cls._get_additional_traits()
+
+        instantiated_dct = {}
+        for name, val in dct.items():
             if isinstance(val, dict):
-                trait = obj.traits()[key]
+                trait = traits.get(name, default)
+                if not trait:
+                    raise T.TraitError("Invalid trait: {0}. Options for this "
+                                       "class: {1}".format(name, traits.keys()))
                 subtraits = trait.trait_types if isinstance(trait, T.Union) else [trait]
                 for subtrait in subtraits:
-                    if isinstance(subtrait, T.Instance) and issubclass(subtrait.klass, JSONHasTraits):
-                        val = subtrait.klass.from_dict(val)
-                        break
-            obj.set_trait(key, val)
-        return obj
+                    if isinstance(subtrait, T.Instance):
+                        klass = subtrait.klass
+                        if isinstance(klass, six.string_types):
+                            klass = import_item(klass)
+                        if issubclass(klass, JSONHasTraits):
+                            try:
+                                val = klass.from_dict(val)
+                            except T.TraitError:
+                                continue
+                            else:
+                                break
+            instantiated_dct[name] = val
+        return cls(**instantiated_dct)
 
     def to_dict(self):
         """Output a (nested) dict encoding the contents of this instance"""

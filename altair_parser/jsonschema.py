@@ -13,9 +13,6 @@ OBJECT_TEMPLATE = '''# {{ cls.filename }}
 {{ import }}
 {%- endfor %}
 
-def _class(classname):
-    return "{mod}.{classname}".format(mod=__name__, classname=classname)
-
 {% for cls in classes %}
 {{ cls.object_code() }}
 {% endfor %}
