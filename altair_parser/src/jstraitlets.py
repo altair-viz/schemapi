@@ -132,6 +132,17 @@ class JSONHasTraits(T.HasTraits):
             dct[key] = val
         return dct
 
+    @classmethod
+    def from_json(cls, json_string):
+        """Instantiate object from a JSON string"""
+        import json
+        return return cls.from_dict(json.loads(json_string))
+
+    def to_json(self):
+        """Output the object's representation to a JSON string"""
+        import json
+        return json.dumps(self.to_dict())
+
 
 class AnyOfObject(JSONHasTraits):
     """A HasTraits class which selects any among a set of specified types"""
