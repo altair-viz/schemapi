@@ -166,3 +166,10 @@ def test_to_from_dict_with_defaults():
     dct = {'x': 4, 'z': 'blah', 'y': {'val': 'hello'}}
     with pytest.raises(T.TraitError):
         Foo.from_dict(dct)
+
+
+def test_defaults():
+    class Foo(jst.JSONHasTraits):
+        arr = jst.JSONArray(jst.JSONString())
+        val = jst.JSONInstance(dict)
+    assert Foo().to_dict() == {}
