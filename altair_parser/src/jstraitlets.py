@@ -19,6 +19,7 @@ import six
 __jsonschema_draft__ = 4
 
 
+
 class UndefinedType(object):
     """A Singleton type to mark undefined traits"""
     __instance = None
@@ -49,12 +50,22 @@ class JSONHasTraits(T.HasTraits):
     """
     _additional_traits = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        # Add default traits if needed
         default = self._get_additional_traits()
         if default:
+            all_traits = self.traits()
             self.add_traits(**{key: default for key in kwargs
-                               if key not in self.traits()})
-        super(JSONHasTraits, self).__init__(*args, **kwargs)
+                               if key not in all_traits})
+
+        # Validate keywords to make sure they are valid traits
+        all_traits = list(self.traits())
+        for k in kwargs:
+            if k not in all_traits:
+                raise T.TraitError("Invalid trait: {0}. Options for "
+                                   "this class: {1}".format(k, all_traits))
+
+        super(JSONHasTraits, self).__init__(**kwargs)
 
     def _get_additional_traits(self):
         try:

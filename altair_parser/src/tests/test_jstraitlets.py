@@ -104,6 +104,15 @@ def test_hastraits_defaults():
         f.set_trait('age', 'blah')
 
 
+def test_no_defaults():
+    class Foo(jst.JSONHasTraits):
+        _additional_traits = False
+        name = T.Unicode()
+
+    with pytest.raises(T.TraitError) as err:
+        f = Foo(name="Sarah", year=2000)
+
+
 def test_AnyOfObject():
     class Foo(jst.JSONHasTraits):
         intval = T.Integer()
