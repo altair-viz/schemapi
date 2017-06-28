@@ -1,5 +1,6 @@
 import jinja2
 import os
+import textwrap
 from datetime import datetime
 
 from . import trait_extractors as tx
@@ -278,10 +279,11 @@ class JSONSchema(object):
     @property
     def trait_code(self):
         """Create the trait code for the given schema"""
+        kwargs = {}
         if self.metadata.get('required', False):
-            kwargs = {'allow_undefined': False}
-        else:
-            kwargs = {}
+            kwargs['allow_undefined'] = False
+        if self.description:
+            kwargs['help'] = textwrap.shorten(self.description, 70)
 
         # TODO: handle multiple matches with an AllOf()
         for TraitExtractor in self.trait_extractors:

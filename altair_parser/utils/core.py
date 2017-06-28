@@ -60,7 +60,6 @@ def format_description(content, width=70, indent=8, indent_first=False):
     # TODO: document, test, and use
     lines = content.splitlines()
     def format_line(line):
-        line = line.replace("__Default value:__", "Default:")
         if line.startswith('-'):
             return textwrap.indent(textwrap.fill(line, width - indent - 2),
                                    (indent + 2) * ' ')[2:]
