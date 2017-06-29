@@ -124,7 +124,10 @@ class JSONHasTraits(T.HasTraits):
         """Output a (nested) dict encoding the contents of this instance"""
         dct = {}
         for key in self.trait_names():
-            val = getattr(self, key)
+            try:
+                val = getattr(self, key)
+            except T.TraitError:
+                val = undefined
             if val is undefined:
                 continue
             if isinstance(val, JSONHasTraits):
@@ -477,8 +480,8 @@ class JSONInstance(T.Instance):
         return super(JSONInstance, self).validate(obj, value)
 
     def make_dynamic_default(self):
-        if (self.default_args is None) and (self.default_kwargs is None):
-            return self.default_value
+        if self.allow_undefined and self.default_value is undefined:
+            return undefined
         else:
             return super(JSONInstance, self).make_dynamic_default()
 
