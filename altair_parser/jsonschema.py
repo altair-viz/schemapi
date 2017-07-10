@@ -14,6 +14,11 @@ OBJECT_TEMPLATE = '''# {{ cls.filename }}
 {{ import }}
 {%- endfor %}
 
+
+def _localname(name):
+    """Construct an object name relative to the local module"""
+    return "{0}.{1}".format(__name__, name)
+
 {% for cls in classes %}
 {{ cls.object_code() }}
 {% endfor %}
@@ -196,10 +201,7 @@ class JSONSchema(object):
 
     @property
     def full_classname(self):
-        if not self.module:
-            return self.classname
-        else:
-            return self.module + '.' + self.classname
+        return "_localname('{0}')".format(self.classname)
 
     @property
     def schema_hash(self):

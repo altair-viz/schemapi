@@ -34,17 +34,17 @@ class {{ cls.classname }}({{ cls.baseclass }}):
 
 ANYOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.AnyOfObject):
-    _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
+    _classes = ({% for name in options %}{{ name }}, {%- endfor %})
 '''
 
 ONEOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.OneOfObject):
-    _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
+    _classes = ({% for name in options %}{{ name }}, {%- endfor %})
 '''
 
 ALLOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.AllOfObject):
-    _classes = ({% for name in options %}"{{ name }}", {%- endfor %})
+    _classes = ({% for name in options %}{{ name }}, {%- endfor %})
 '''
 
 
@@ -122,7 +122,7 @@ class AnyOfObject(Extractor):
 
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONInstance',
-                                       self.schema.full_classname,
+                                       Variable(self.schema.full_classname),
                                        **kwargs)
 
     def object_code(self):
@@ -146,7 +146,7 @@ class OneOfObject(Extractor):
 
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONInstance',
-                                       self.schema.full_classname,
+                                       Variable(self.schema.full_classname),
                                        **kwargs)
 
     def object_code(self):
@@ -172,7 +172,7 @@ class AllOfObject(Extractor):
 
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONInstance',
-                                       self.schema.full_classname,
+                                       Variable(self.schema.full_classname),
                                        **kwargs)
 
     def object_code(self):
@@ -191,7 +191,7 @@ class RefObject(Extractor):
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
         return construct_function_call('jst.JSONInstance',
-                                       ref.full_classname,
+                                       Variable(ref.full_classname),
                                        **kwargs)
 
     def object_code(self):

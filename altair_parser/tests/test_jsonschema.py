@@ -66,6 +66,11 @@ def test_required_keyword():
     load_dynamic_module('_schema', js.source_tree(), reload_module=True)
     from _schema import jstraitlets as jst
     from _schema import twoNumbers
+
+    # Required for the eval-based tests below
+    def _localname(name):
+        return "{0}.{1}".format(__name__, name)
+        
     for name, obj in js.wrapped_properties().items():
         trait = eval(obj.trait_code)
         required = name in schema['required']
