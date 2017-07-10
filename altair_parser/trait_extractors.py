@@ -343,7 +343,7 @@ class CompoundType(Extractor):
                               typecode[0]).trait_code(**kwargs)
         else:
             item_kwargs = {key: val for key, val in kwargs.items()
-                           if key not in ['allow_none', 'allow_undefined']}
+                           if key not in ['allow_none', 'allow_undefined', 'help']}
             arg = "[{0}]".format(', '.join(SimpleType(self.schema, typ).trait_code(**item_kwargs)
                                            for typ in typecode))
             return construct_function_call('jst.JSONUnion', Variable(arg),
