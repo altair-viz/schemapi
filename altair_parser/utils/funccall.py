@@ -26,4 +26,6 @@ def construct_function_call(funcname, *args, **kwargs):
     if args and kwargs:
         args += ', '
     kwargs = ', '.join(key + '=' + repr(val) for key, val in kwargs.items())
-    return f"{funcname}({args}{kwargs})"
+    return "{funcname}({args}{kwargs})".format(funcname=funcname,
+                                               args=args,
+                                               kwargs=kwargs)

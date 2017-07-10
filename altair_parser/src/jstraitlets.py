@@ -45,7 +45,7 @@ class JSONHasTraits(T.HasTraits):
     ...     name = T.Unicode()
     >>> f = Foo(name="Guido", score=42)
     >>> f.set_trait('value', 100)
-    >>> f.trait_names()
+    >>> sorted(f.trait_names())
     ['name', 'score', 'value']
     """
     _additional_traits = True

@@ -86,7 +86,7 @@ def test_get_reference():
 
     js = JSONSchema(schema)
     for name, definition in schema['definitions'].items():
-        definition_code = f'#/definitions/{name}'
+        definition_code = '#/definitions/{name}'.format(name=name)
 
         obj1 = js.get_reference(definition_code)
         obj2 = JSONSchema(definition)

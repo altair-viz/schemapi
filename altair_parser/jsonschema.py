@@ -121,8 +121,8 @@ class JSONSchema(object):
     def __getattr__(self, attr):
         if attr in self.attr_defaults:
             return self.schema.get(attr, self.attr_defaults[attr])
-        raise AttributeError(f"'{self.__class__.__name__}' object "
-                             f"has no attribute '{attr}'")
+        raise AttributeError("'{0}' object has no attribute '{1}'"
+                             "".format(self.__class__.__name__, attr))
 
     def get(self, *args):
         return self.schema.get(*args)
@@ -254,7 +254,7 @@ class JSONSchema(object):
         path = ref.split('/')
         name = path[-1]
         if path[0] != '#':
-            raise ValueError(f"Unrecognized $ref format: '{ref}'")
+            raise ValueError("Unrecognized $ref format: '{0}'".format(ref))
         elif len(path) == 1 or path[1] == '':
             return self.context
         try:
@@ -262,7 +262,7 @@ class JSONSchema(object):
             for key in path[1:]:
                 schema = schema[key]
         except KeyError:
-            raise ValueError(f"$ref='{ref}' not present in the schema")
+            raise ValueError("$ref='{0}' not present in the schema".format(ref))
 
         return self.make_child(schema, name=name)
 

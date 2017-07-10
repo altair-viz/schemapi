@@ -19,7 +19,7 @@ def save_module(spec, name, location):
         The path to the resulting module
     """
     if not os.path.isdir(location):
-        raise ValueError(f"{location} is not a valid directory")
+        raise ValueError("{0} is not a valid directory".format(location))
 
     module_path = os.path.join(location, name)
     os.mkdir(module_path)
@@ -31,5 +31,5 @@ def save_module(spec, name, location):
             save_module(contents, name=filename, location=module_path)
         else:
             raise ValueError("spec values should be either string or dict; "
-                             f"got {type(contents)}")
+                             "got {0}".format(type(contents)))
     return module_path
