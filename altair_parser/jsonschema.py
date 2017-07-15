@@ -49,7 +49,8 @@ class JSONSchema(object):
     trait_extractors = [tx.AnyOfObject, tx.OneOfObject, tx.AllOfObject,
                         tx.RefObject, tx.RefTrait,
                         tx.Not, tx.AnyOf, tx.AllOf, tx.OneOf,
-                        tx.Enum, tx.SimpleType, tx.CompoundType,
+                        tx.NamedEnum, tx.Enum,
+                        tx.SimpleType, tx.CompoundType,
                         tx.Array, tx.Object, ]
 
     def __init__(self, schema, module=None, context=None,
@@ -345,6 +346,7 @@ class JSONSchema(object):
 
         # Determine list of classes to generate
         classes += [schema for schema in self.wrapped_definitions().values()]
+        classes = sorted(classes, key=lambda obj: (obj.trait_extractor.priority, obj.classname))
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         modspec = {

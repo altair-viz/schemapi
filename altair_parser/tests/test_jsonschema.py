@@ -16,8 +16,6 @@ from ..utils import load_dynamic_module
                              'jst.JSONUnion([jst.JSONString(), jst.JSONNumber()], allow_none=True)'),
                           ({'type': 'array', 'items': {'type': 'string'}},
                            'jst.JSONArray(jst.JSONString())'),
-                          ({'enum': [None, 42, "hello"]},
-                           "jst.JSONEnum([None, 42, 'hello'])"),
                           ({'anyOf': [{'type': 'integer'}, {'type': 'string'}]},
                            "jst.JSONAnyOf([jst.JSONInteger(), jst.JSONString()])"),
                           ({'allOf': [{'type': 'integer'}, {'type': 'string'}]},

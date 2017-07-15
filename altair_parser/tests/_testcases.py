@@ -525,17 +525,24 @@ enum_refs = {
                     "mark1": {"$ref": "#/definitions/Mark"},
                     "mark2": {"$ref": "#/definitions/MarkAlias"},
                     "mark3": {"$ref": "#/definitions/MarkAliasAlias"},
+                    "mark4": {"enum": ["box-plot", "error-bar"]},
                 }
             }
         },
         "$ref": "#/definitions/TopLevel"
     },
     "valid": [
-        {"mark1": "circle", "mark2": "line", "mark3": "point"}
+        {"mark1": "circle", "mark2": "line",
+         "mark3": "point", "mark4": "box-plot"}
     ],
     "invalid": [
-        {"mark1": "bad", "mark2": "line", "mark3": "point"},
-        {"mark1": "circle", "mark2": "bad", "mark3": "point"},
-        {"mark1": "circle", "mark2": "line", "mark3": "bad"}
+        {"mark1": "bad", "mark2": "line",
+         "mark3": "point", "mark4": "box-plot"},
+        {"mark1": "circle", "mark2": "bad",
+         "mark3": "point", "mark4": "box-plot"},
+        {"mark1": "circle", "mark2": "line",
+         "mark3": "bad", "mark4": "box-plot"},
+        {"mark1": "circle", "mark2": "line",
+         "mark3": "point", "mark4": "bad"}
     ]
 }

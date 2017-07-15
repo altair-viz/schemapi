@@ -32,6 +32,16 @@ class {{ cls.classname }}({{ cls.baseclass }}):
         super({{ cls.classname }}, self).__init__(**kwargs)
 '''
 
+ENUM_TEMPLATE = '''
+class {{ cls.classname}}(jst.JSONEnum):
+    """
+    One of {{ enum_values }}
+    """
+    values = {{ enum_values }}
+    def __init__(self, **kwargs):
+        super({{ cls.classname }}, self).__init__(self.values, **kwargs)
+'''
+
 ANYOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.AnyOfObject):
     _classes = ({% for name in options %}{{ name }}, {%- endfor %})
@@ -46,15 +56,6 @@ ALLOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.AllOfObject):
     _classes = ({% for name in options %}{{ name }}, {%- endfor %})
 '''
-
-
-class ImportStatement(object):
-    def __init__(self, path, names):
-        self.path = path
-        self.names = names
-
-    def __repr__(self):
-        return "from {0} import {1}".format(self.path, ', '.join(self.names))
 
 
 class Extractor(object):
@@ -77,6 +78,7 @@ class Extractor(object):
         return a list of import statements required for defining the trait
     """
     requires_import = False
+    priority = 10
 
     def __init__(self, schema, typecode=None):
         self.schema = schema
@@ -114,6 +116,7 @@ class AnyOfObject(Extractor):
     consisting entirely of object definitions or references
     """
     requires_import = True
+    priority = 3
 
     def check(self):
         return (self.schema.is_named_object and 'anyOf' in self.schema and
@@ -138,6 +141,7 @@ class OneOfObject(Extractor):
     consisting entirely of object definitions or references
     """
     requires_import = True
+    priority = 3
 
     def check(self):
         return (self.schema.is_named_object and 'oneOf' in self.schema and
@@ -162,6 +166,7 @@ class AllOfObject(Extractor):
     consisting entirely of object definitions or references
     """
     requires_import = True
+    priority = 3
 
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'allOf' in self.schema:
@@ -184,6 +189,7 @@ class AllOfObject(Extractor):
 
 class RefObject(Extractor):
     requires_import = True
+    priority = 2
 
     def check(self):
         return '$ref' in self.schema and self.schema.is_object
@@ -287,6 +293,21 @@ class OneOf(Extractor):
                     for sub_schema in self.schema['oneOf']), [])
 
 
+class NamedEnum(Extractor):
+    requires_import = True
+    priority = 1
+
+    def check(self):
+        return self.schema.is_named_object and 'enum' in self.schema
+
+    def trait_code(self, **kwargs):
+        return construct_function_call(self.schema.classname, **kwargs)
+
+    def object_code(self, **kwargs):
+        template = jinja2.Template(ENUM_TEMPLATE)
+        return template.render(cls=self.schema, enum_values=self.schema['enum'])
+
+
 class Enum(Extractor):
     requires_import = False
 
@@ -386,6 +407,7 @@ class Array(Extractor):
 
 class Object(Extractor):
     requires_import = True
+    priority = 5
 
     def check(self):
         return not self.schema.is_trait
