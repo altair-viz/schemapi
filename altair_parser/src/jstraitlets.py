@@ -120,7 +120,7 @@ class JSONHasTraits(T.HasTraits):
             instantiated_dct[name] = val
         return cls(**instantiated_dct)
 
-    def to_dict(self):
+    def to_dict(self, **kwargs):
         """Output a (nested) dict encoding the contents of this instance"""
         dct = {}
         for key in self.trait_names():
@@ -131,7 +131,7 @@ class JSONHasTraits(T.HasTraits):
             if val is undefined:
                 continue
             if isinstance(val, JSONHasTraits):
-                val = val.to_dict()
+                val = val.to_dict(**kwargs)
             dct[key] = val
         return dct
 
