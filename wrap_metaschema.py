@@ -5,7 +5,7 @@ import os
 
 from jsonschema._utils import load_schema
 from altair_parser import JSONSchema
-from altair_parser.utils.save_module import save_module
+from altair_parser.utils import save_module
 
 schema = load_schema('draft4')
 module = '_metaschema'

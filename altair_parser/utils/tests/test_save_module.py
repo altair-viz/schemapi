@@ -4,7 +4,7 @@ import contextlib
 
 import pytest
 
-from ..save_module import save_module
+from .. import save_module
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@ Wrap the altair schema and save to a source tree
 """
 import os
 from altair_parser import JSONSchema
-from altair_parser.utils.save_module import save_module
+from altair_parser.utils import save_module
 
 schemafile = 'altair_parser/schemas/vega-lite-v2.0.0.json'
 module = '_vegalite_schema'
