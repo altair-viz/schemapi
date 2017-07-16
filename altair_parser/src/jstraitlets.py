@@ -8,6 +8,9 @@ and an "undefined" marker, while Python uses "None" for both.
 Additionally, these traits support validation keywords related to those
 defined in the JSON Schema specification: http://json-schema.org.
 The code here targets jsonschema draft 04.
+
+Also provided are ``to_dict()`` and ``from_dict()`` methods, so that class
+instances can be instantiated from and serialized to dictionaries of values.
 """
 import copy
 import json
@@ -20,16 +23,18 @@ from traitlets.utils.importstring import import_item
 __jsonschema_draft__ = 4
 
 
-
 class UndefinedType(object):
     """A Singleton type to mark undefined traits"""
     __instance = None
+
     def __new__(cls, *args, **kwargs):
         if not isinstance(cls.__instance, cls):
             cls.__instance = object.__new__(cls, *args, **kwargs)
         return cls.__instance
+
     def __repr__(self):
         return "undefined"
+
 undefined = UndefinedType()
 
 
@@ -110,6 +115,7 @@ class JSONHasTraits(T.HasTraits):
 class AnyOfObject(JSONHasTraits):
     """A HasTraits class which selects any among a set of specified types"""
     _classes = []
+
     def __init__(self, *args, **kwargs):
         for cls in self._classes:
             if isinstance(cls, six.string_types):
@@ -144,6 +150,7 @@ class AllOfObject(JSONHasTraits):
     # TODO: should we check whether additional traits pass additionalProperties
     # for each? This is required for full parity with JSONSchema
     _classes = []
+
     def __init__(self, *args, **kwargs):
         all_traits = {}
         for cls in self._classes:
@@ -172,6 +179,7 @@ def AnonymousMapping(**traits):
 
 
 class JSONNull(T.TraitType):
+    """A trait whose value can only be None"""
     allow_undefined = True
     default_value = undefined
     info_text = 'a JSON null value'
@@ -229,6 +237,7 @@ def _validate_numeric(trait, obj, value,
 
 
 class JSONNumber(T.Float):
+    """A trait whose value is a JSON Number"""
     allow_undefined = True
     default_value = undefined
     info_text = "a JSON number"
@@ -250,6 +259,7 @@ class JSONNumber(T.Float):
 
 
 class JSONInteger(T.Integer):
+    """A trait whose value is a JSON Integer"""
     allow_undefined = True
     default_value = undefined
     info_text = "a JSON integer"
@@ -271,6 +281,7 @@ class JSONInteger(T.Integer):
 
 
 class JSONString(T.Unicode):
+    """A trait whose value is a JSON string"""
     allow_undefined = True
     default_value = undefined
     info_text = "a JSON string"
@@ -308,6 +319,7 @@ class JSONString(T.Unicode):
 
 
 class JSONBoolean(T.Bool):
+    """A trait whose value is a JSON boolean value"""
     allow_undefined = True
     default_value = undefined
     info_text = "a JSON boolean"
@@ -323,6 +335,7 @@ class JSONBoolean(T.Bool):
 
 
 class JSONUnion(T.Union):
+    """A trait whose value matches one of a list of trait types"""
     allow_undefined = True
     default_value = undefined
 
@@ -362,11 +375,13 @@ def _has_unique_elements(L):
 
 
 class JSONArray(T.List):
+    """A trait whose value is an array of typed items"""
     allow_undefined = True
     default_value = undefined
     info_text = "an Array of values"
 
-    def __init__(self, trait, allow_undefined=True, uniqueItems=False, **kwargs):
+    def __init__(self, trait, allow_undefined=True,
+                 uniqueItems=False, **kwargs):
         self.allow_undefined = allow_undefined
         self.uniqueItems = uniqueItems
         if 'minItems' in kwargs:
@@ -396,6 +411,7 @@ class JSONArray(T.List):
 
 
 class JSONEnum(T.Enum):
+    """A trait whose value is one of a specified list of options"""
     allow_undefined = True
     default_value = undefined
     info_text = "an enum of values"
@@ -411,6 +427,7 @@ class JSONEnum(T.Enum):
 
 
 class JSONInstance(T.Instance):
+    """A trait whose value is an instance of a class"""
     allow_undefined = True
     default_value = undefined
     info_text = "an instance of an object"
@@ -430,14 +447,17 @@ class JSONInstance(T.Instance):
         else:
             return super(JSONInstance, self).make_dynamic_default()
 
+
 class JSONAnyOf(T.Union):
+    """A trait whose value matches any of a list of traits"""
     allow_undefined = True
     default_value = undefined
 
     def __init__(self, trait_types, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
         super(JSONAnyOf, self).__init__(trait_types, **kwargs)
-        self.info_text = "AnyOf({0})".format(", ".join(tt.info() for tt in self.trait_types))
+        self.info_text = "AnyOf({0})".format(", ".join(
+            tt.info() for tt in self.trait_types))
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
@@ -446,13 +466,15 @@ class JSONAnyOf(T.Union):
 
 
 class JSONOneOf(T.Union):
+    """A trait whose value matches exactly one of a list of traits"""
     allow_undefined = True
     default_value = undefined
 
     def __init__(self, trait_types, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
         super(JSONOneOf, self).__init__(trait_types, **kwargs)
-        self.info_text = "OneOf({0})".format(", ".join(tt.info() for tt in self.trait_types))
+        self.info_text = "OneOf({0})".format(", ".join(
+            tt.info() for tt in self.trait_types))
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
@@ -470,19 +492,22 @@ class JSONOneOf(T.Union):
             if valid_count == 1:
                 # In the case of an element trait, the name is None
                 if self.name is not None:
-                    setattr(obj, '_' + self.name + '_metadata', trait_type.metadata)
+                    setattr(obj, '_' + self.name + '_metadata',
+                            trait_type.metadata)
                 return v
         self.error(obj, value)
 
 
 class JSONAllOf(T.Union):
+    """A trait whose value matches all traits in a specified list"""
     allow_undefined = True
     default_value = undefined
 
     def __init__(self, trait_types, allow_undefined=True, **kwargs):
         self.allow_undefined = allow_undefined
         super(JSONAllOf, self).__init__(trait_types, **kwargs)
-        self.info_text = "AllOf({0})".format(", ".join(tt.info() for tt in self.trait_types))
+        self.info_text = "AllOf({0})".format(", ".join(
+            tt.info() for tt in self.trait_types))
 
     def validate(self, obj, value):
         if self.allow_undefined and value is undefined:
@@ -499,6 +524,7 @@ class JSONAllOf(T.Union):
 
 
 class JSONNot(T.TraitType):
+    """A trait whose value does not match the specified type"""
     allow_undefined = True
     default_value = undefined
 
@@ -520,7 +546,10 @@ class JSONNot(T.TraitType):
 
 
 ##########################################################################
-# implementation of to_dict() and from_dict() via External Visitor Pattern
+# Visitor Pattern
+#
+# This implements to_dict() and from_dict() using an External Visitor Pattern
+# built for the above classes.
 
 class Visitor(object):
     """Class implementing the external visitor pattern"""
@@ -540,7 +569,8 @@ class Visitor(object):
         raise NotImplementedError("visitor for {0}".format(obj))
 
     def generic_clsvisit(self, obj, *args, **kwargs):
-        raise NotImplementedError("class visitor for {0}".format(obj.__class__))
+        raise NotImplementedError("class visitor for {0}"
+                                  "".format(obj.__class__))
 
 
 class ToDict(Visitor):
