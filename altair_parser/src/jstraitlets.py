@@ -10,11 +10,12 @@ defined in the JSON Schema specification: http://json-schema.org.
 The code here targets jsonschema draft 04.
 """
 import copy
+import json
 
+import six
 import traitlets as T
 from traitlets.traitlets import class_of
 from traitlets.utils.importstring import import_item
-import six
 
 __jsonschema_draft__ = 4
 
@@ -88,62 +89,21 @@ class JSONHasTraits(T.HasTraits):
         super(JSONHasTraits, self).set_trait(name, value)
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct, **kwargs):
         """Initialize an instance from a (nested) dictionary"""
-        if not isinstance(dct, dict):
-            raise T.TraitError("Argument to from_dict should be a dict, "
-                               "but got {0}".format(dct))
-
-        traits = cls.class_traits()
-        default = cls._get_additional_traits()
-
-        instantiated_dct = {}
-        for name, val in dct.items():
-            if isinstance(val, dict):
-                trait = traits.get(name, default)
-                if not trait:
-                    raise T.TraitError("Invalid trait: {0}. Options for this "
-                                       "class: {1}".format(name, traits.keys()))
-                subtraits = trait.trait_types if isinstance(trait, T.Union) else [trait]
-                for subtrait in subtraits:
-                    if isinstance(subtrait, T.Instance):
-                        klass = subtrait.klass
-                        if isinstance(klass, six.string_types):
-                            klass = import_item(klass)
-                        if issubclass(klass, JSONHasTraits):
-                            try:
-                                val = klass.from_dict(val)
-                            except T.TraitError:
-                                continue
-                            else:
-                                break
-            instantiated_dct[name] = val
-        return cls(**instantiated_dct)
+        return FromDict().clsvisit(cls, dct, **kwargs)
 
     def to_dict(self, **kwargs):
         """Output a (nested) dict encoding the contents of this instance"""
-        dct = {}
-        for key in self.trait_names():
-            try:
-                val = getattr(self, key)
-            except T.TraitError:
-                val = undefined
-            if val is undefined:
-                continue
-            if isinstance(val, JSONHasTraits):
-                val = val.to_dict(**kwargs)
-            dct[key] = val
-        return dct
+        return ToDict().visit(self, **kwargs)
 
     @classmethod
     def from_json(cls, json_string):
         """Instantiate object from a JSON string"""
-        import json
         return cls.from_dict(json.loads(json_string))
 
     def to_json(self):
         """Output the object's representation to a JSON string"""
-        import json
         return json.dumps(self.to_dict())
 
 
@@ -170,32 +130,17 @@ class AnyOfObject(JSONHasTraits):
                                "".format(cls=self.__class__.__name__))
         super(AnyOfObject, self).__init__(*args, **kwargs)
 
-    @classmethod
-    def from_dict(cls, dct):
-        for subcls in cls._classes:
-            if isinstance(subcls, six.string_types):
-                subcls = import_item(subcls)
-            if all(key in subcls.class_traits() for key in dct):
-                try:
-                    obj = subcls.from_dict(dct)
-                except (T.TraitError, ValueError):
-                    pass
-                else:
-                    return cls(**{name: getattr(obj, name)
-                                  for name in obj.trait_names()})
-        else:
-            raise T.TraitError("{cls}: dict representation not "
-                               "valid in any wrapped classes"
-                               "".format(cls=cls.__name__))
-
 
 class OneOfObject(AnyOfObject):
     """A HasTraits class which selects any among a set of specified types"""
     # TODO: should specialize this so that exactly one of the objects matches
+    pass
 
 
 class AllOfObject(JSONHasTraits):
-    """A HasTraits class which combines all properties of a set of specified types"""
+    """
+    A HasTraits class which combines all properties of a set of specified types
+    """
     # TODO: should we check whether additional traits pass additionalProperties
     # for each? This is required for full parity with JSONSchema
     _classes = []
@@ -572,3 +517,124 @@ class JSONNot(T.TraitType):
             return value
         else:
             self.error(obj, value)
+
+
+##########################################################################
+# implementation of to_dict() and from_dict() via External Visitor Pattern
+
+class Visitor(object):
+    """Class implementing the external visitor pattern"""
+    def visit(self, obj, *args, **kwargs):
+        methods = (getattr(self, 'visit_' + cls.__name__, None)
+                   for cls in obj.__class__.__mro__)
+        method = next((m for m in methods if m), self.generic_visit)
+        return method(obj, *args, **kwargs)
+
+    def clsvisit(self, obj, *args, **kwargs):
+        methods = (getattr(self, 'clsvisit_' + cls.__name__, None)
+                   for cls in obj.__mro__)
+        method = next((m for m in methods if m), self.generic_clsvisit)
+        return method(obj, *args, **kwargs)
+
+    def generic_visit(self, obj, *args, **kwargs):
+        raise NotImplementedError("visitor for {0}".format(obj))
+
+    def generic_clsvisit(self, obj, *args, **kwargs):
+        raise NotImplementedError("class visitor for {0}".format(obj.__class__))
+
+
+class ToDict(Visitor):
+    """Crawl object structure to output dictionary"""
+    def generic_visit(self, obj, *args, **kwargs):
+        return obj
+
+    def visit_list(self, obj, *args, **kwargs):
+        return [self.visit(o, *args, **kwargs) for o in obj]
+
+    def visit_HasTraits(self, obj, *args, **kwargs):
+        dct = {}
+        for key in obj.trait_names():
+            val = getattr(obj, key, undefined)
+            if val is not undefined:
+                dct[key] = self.visit(val, *args, **kwargs)
+        return dct
+
+
+class FromDict(Visitor):
+    """Crawl object structure to construct object from a Dictionary"""
+    def generic_visit(self, trait, dct, *args, **kwargs):
+        # pass-through simple types
+        if dct is None or dct is undefined:
+            return dct
+        if isinstance(dct, (six.integer_types, six.string_types, bool, float)):
+            return dct
+        else:
+            raise T.TraitError('cannot set {0} to {1}'.format(trait, dct))
+
+    def clsvisit_HasTraits(self, cls, dct, *args, **kwargs):
+        try:
+            obj = cls()
+        except TypeError:  # Argument missing
+            obj = cls('')
+
+        for prop, val in dct.items():
+            subtrait = obj.traits()[prop]
+            obj.set_trait(prop, self.visit(subtrait, val, *args, **kwargs))
+        return obj
+
+    def clsvisit_JSONHasTraits(self, cls, dct, *args, **kwargs):
+        try:
+            obj = cls()
+        except TypeError:  # Argument missing
+            obj = cls('')
+        additional_traits = cls._get_additional_traits()
+
+        for prop, val in dct.items():
+            subtrait = obj.traits().get(prop, additional_traits)
+            if not subtrait:
+                raise T.TraitError("trait {0} not valid in class {1}"
+                                   "".format(prop, cls))
+            obj.set_trait(prop, self.visit(subtrait, val, *args, **kwargs))
+        return obj
+
+    def visit_Instance(self, trait, dct, *args, **kwargs):
+        try:
+            return self.generic_visit(trait, dct)
+        except T.TraitError:
+            return self.clsvisit(trait.klass, dct)
+
+    def visit_List(self, trait, dct, *args, **kwargs):
+        return [self.visit(trait._trait, item, *args, **kwargs)
+                for item in dct]
+
+    def visit_Union(self, trait, dct, *args, **kwargs):
+        try:
+            return self.generic_visit(trait, dct)
+        except T.TraitError:
+            for subtrait in trait.trait_types:
+                try:
+                    return self.visit(subtrait, dct)
+                except T.TraitError:
+                    pass
+            raise  # no valid trait found
+
+    def visit_JSONNot(self, trait, dct, *args, **kwargs):
+        return dct
+
+    def clsvisit_AnyOfObject(self, trait, dct, *args, **kwargs):
+        # TODO: match additional_traits as well?
+        for subcls in trait._classes:
+            if isinstance(subcls, six.string_types):
+                subcls = import_item(subcls)
+            if all(key in subcls.class_traits() for key in dct):
+                try:
+                    obj = self.clsvisit(subcls, dct)
+                except (T.TraitError, ValueError):
+                    pass
+                else:
+                    return trait(**{name: getattr(obj, name)
+                                    for name in obj.trait_names()})
+        else:
+            raise T.TraitError("{cls}: dict representation not "
+                               "valid in any wrapped classes"
+                               "".format(cls=trait.__name__))
