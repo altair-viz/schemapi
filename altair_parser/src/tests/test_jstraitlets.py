@@ -11,6 +11,9 @@ def test_undefined_singleton():
 
 def generate_test_cases():
     """yield tuples of (trait, failcases, passcases)"""
+    # Anys
+    yield (T.Any(), [], [1, "hello", {'a':2}, [1, 2, 3], None, undefined])
+
     # Nulls
     yield (jst.JSONNull(), [0, "None"], [None, undefined])
     yield (jst.JSONNull(allow_undefined=False), [undefined], [])
@@ -81,11 +84,11 @@ def test_traits(trait, failcases, passcases):
     obj = T.HasTraits()  # needed to pass to validate()
 
     for passcase in passcases:
-        trait.validate(obj, passcase)
+        trait._validate(obj, passcase)
 
     for failcase in failcases:
         with pytest.raises(T.TraitError) as err:
-            trait.validate(obj, failcase)
+            trait._validate(obj, failcase)
 
 
 def test_hastraits_defaults():
@@ -142,20 +145,24 @@ def test_AnyOfObject():
     FooBar.from_dict({'strval': 'hello', 'flag': True})
     FooBar.from_dict({'intval': 42, 'flag': False})
 
+
 class Bar(jst.JSONHasTraits):
     _additional_traits = [T.Unicode()]
     val = T.Unicode()
+
 
 class Foo(jst.JSONHasTraits):
     _additional_traits = False
     x = T.Integer()
     y = T.Instance(Bar)
 
+
 def test_to_from_dict():
     dct = {'x': 4, 'y': {'val': 'hello'}}
     obj = Foo.from_dict(dct)
     dct2 = obj.to_dict()
     assert dct == dct2
+
 
 def test_to_from_dict_with_defaults():
     dct = {'x': 4, 'y': {'val': 'hello', 'other_val': 'hello 2'}}

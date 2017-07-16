@@ -593,13 +593,15 @@ class ToDict(Visitor):
 class FromDict(Visitor):
     """Crawl object structure to construct object from a Dictionary"""
     def generic_visit(self, trait, dct, *args, **kwargs):
-        # pass-through simple types
         if dct is None or dct is undefined:
             return dct
         if isinstance(dct, (six.integer_types, six.string_types, bool, float)):
             return dct
         else:
             raise T.TraitError('cannot set {0} to {1}'.format(trait, dct))
+
+    def clsvisit_Any(self, cls, dct, *args, **kwargs):
+        return dct
 
     def clsvisit_HasTraits(self, cls, dct, *args, **kwargs):
         try:
