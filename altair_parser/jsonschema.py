@@ -347,6 +347,8 @@ class JSONSchema(object):
 
         This can be passed to ``altair_parser.utils.load_dynamic_module``
         or to ``altair_parser.utils.save_module``
+
+        See also the ``write_module()`` method.
         """
         assert self.is_root
 
@@ -375,6 +377,15 @@ class JSONSchema(object):
         for plugin in self.plugins:
             tree.update(plugin.code_files(self))
         return tree
+
+    def write_module(self, module, path=None, quiet=False):
+        from .utils import save_module
+        if path is None:
+            path = os.path.abspath(os.getcwd())
+        print("saving to {module} at {path}".format(module=module, path=path))
+        save_module(self.source_tree(), module, path)
+        
+        
 
 
 class JSONSchemaPlugin(object):
