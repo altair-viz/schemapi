@@ -68,12 +68,16 @@ class JSONSchema(object):
         self.parent = parent
         self.name = name
         self.metadata = metadata or {}
+        self.plugins = []
 
         # if context is not given, then assume this is a root instance that
         # defines its own context
         self.context = context or self
         self.definition_tags = definition_tags
         self._trait_extractor = None
+
+    def add_plugins(self, *plugins):
+        self.plugins.extend(list(plugins))
 
     @classmethod
     def from_json_file(cls, filename, **kwargs):
@@ -334,6 +338,8 @@ class JSONSchema(object):
         imports = [self.import_statement]
         for obj in self.wrapped_definitions().values():
             imports.append(obj.import_statement)
+        for plugin in self.plugins:
+            imports.extend(plugin.module_imports(self))
         return [i for i in imports if i]
 
     def source_tree(self):
@@ -361,8 +367,28 @@ class JSONSchema(object):
                                    'src', 'jstraitlets.py')).read()
         init_content = '\n'.join(self.module_imports)
 
-        return {
+        tree = {
             'jstraitlets.py': header_content + '\n\n' + jstraitlets_content,
             self.filename: header_content + '\n\n' + schema_content,
             '__init__.py': header_content + '\n\n' + init_content
         }
+        for plugin in self.plugins:
+            tree.update(plugin.code_files(self))
+        return tree
+
+
+class JSONSchemaPlugin(object):
+    """Abstract base class for JSONSchema plugins.
+
+    Plugins can be used to add additional outputs to the schema wrapper
+    """
+    def module_imports(self, schema):
+        """Return a list of top-level imports to add at the module level"""
+        raise NotImplementedError()
+
+    def code_files(self, schema):
+        """
+        Return a dictionary of {filename: content} pairs
+        that will be added to the module
+        """
+        raise NotImplementedError()
