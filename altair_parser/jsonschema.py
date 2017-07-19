@@ -1,7 +1,9 @@
 import jinja2
 import os
 import textwrap
+import copy
 from datetime import datetime
+
 
 from . import trait_extractors as tx
 from . import utils, version
@@ -112,10 +114,18 @@ class JSONSchema(object):
         return utils.format_description(self.description,
                                         indent=4 * indent_level)
 
-    def copy(self, **kwargs):
+    def copy(self, deepcopy=False, **kwargs):
         """Make a copy, optionally overwriting any init arguments"""
-        kwds = dict(schema=self.schema, module=self.module,
-                    context=self.context, parent=self.parent,
+        if self.is_root:
+            context = None
+        else:
+            context = self.context
+        if deepcopy:
+            schema = copy.deepcopy(self.schema)
+        else:
+            schema = self.schema
+        kwds = dict(schema=schema, context=context,
+                    module=self.module, parent=self.parent,
                     name=self.name, metadata=self.metadata)
         kwds.update(kwargs)
         return self.__class__(**kwds)
@@ -384,8 +394,8 @@ class JSONSchema(object):
             path = os.path.abspath(os.getcwd())
         print("saving to {module} at {path}".format(module=module, path=path))
         save_module(self.source_tree(), module, path)
-        
-        
+
+
 
 
 class JSONSchemaPlugin(object):
