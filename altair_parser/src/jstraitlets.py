@@ -56,6 +56,7 @@ class JSONHasTraits(T.HasTraits):
     """
     _additional_traits = True
     skip = []  # traits to skip when exporting to dictionary
+    _visitor_classes = {}  # visitor classes to use for to_dict, from_dict
 
     def __init__(self, **kwargs):
         # Add default traits if needed
@@ -88,6 +89,10 @@ class JSONHasTraits(T.HasTraits):
         else:
             return None
 
+    @classmethod
+    def set_visitor_class(cls, **kwargs):
+        cls._visitor_classes.update(kwargs)
+
     def set_trait(self, name, value):
         default = self._get_additional_traits()
         if default and name not in self.traits():
@@ -97,12 +102,14 @@ class JSONHasTraits(T.HasTraits):
     @classmethod
     def from_dict(cls, dct, **kwargs):
         """Initialize an instance from a (nested) dictionary"""
-        return FromDict().clsvisit(cls, dct, **kwargs)
+        Visitor = cls._visitor_classes.get('from_dict', FromDict)
+        return Visitor().clsvisit(cls, dct, **kwargs)
 
     def to_dict(self, **kwargs):
         """Output a (nested) dict encoding the contents of this instance"""
         self._finalize(**kwargs)
-        return ToDict().visit(self, **kwargs)
+        Visitor = self._visitor_classes.get('to_dict', ToDict)
+        return Visitor().visit(self, **kwargs)
 
     @classmethod
     def from_json(cls, json_string):
