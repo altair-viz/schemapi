@@ -101,6 +101,7 @@ class JSONHasTraits(T.HasTraits):
 
     def to_dict(self, **kwargs):
         """Output a (nested) dict encoding the contents of this instance"""
+        self._finalize(**kwargs)
         return ToDict().visit(self, **kwargs)
 
     @classmethod
@@ -108,9 +109,27 @@ class JSONHasTraits(T.HasTraits):
         """Instantiate object from a JSON string"""
         return cls.from_dict(json.loads(json_string))
 
-    def to_json(self):
+    def to_json(self, **kwargs):
         """Output the object's representation to a JSON string"""
-        return json.dumps(self.to_dict())
+        return json.dumps(self.to_dict(**kwargs))
+
+    def _finalize(self, *args, **kwargs):
+        """Finalize the object, and all contained objects, for export."""
+        def finalize_obj(obj):
+            if hasattr(obj, '_finalize'):
+                obj._finalize(*args, **kwargs)
+            else:
+                try:
+                    obj = iter(obj)
+                except TypeError:
+                    pass  # Not iterable
+                else:
+                    for item in obj:
+                        finalize_obj(obj)
+
+        for name in self.traits():
+            value = getattr(self, name)
+            finalize_obj(value)
 
 
 class AnyOfObject(JSONHasTraits):

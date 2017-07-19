@@ -189,3 +189,14 @@ def test_skip():
         skip = ['baz']
     f = Foo(bar=1, baz=2)
     assert f.to_dict() == {'bar': 1}
+
+
+def test_finalize():
+    class Foo(jst.JSONHasTraits):
+        bar = jst.JSONNumber()
+        bar_times_2 = jst.JSONNumber()
+        def _finalize(self):
+            self.bar_times_2 = 2 * self.bar
+            super(Foo, self)._finalize()
+    f = Foo(bar=4)
+    assert f.to_dict() == {'bar': 4, 'bar_times_2': 8}
