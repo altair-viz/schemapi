@@ -55,6 +55,7 @@ class JSONHasTraits(T.HasTraits):
     ['name', 'score', 'value']
     """
     _additional_traits = True
+    skip = []  # traits to skip when exporting to dictionary
 
     def __init__(self, **kwargs):
         # Add default traits if needed
@@ -584,6 +585,16 @@ class ToDict(Visitor):
     def visit_HasTraits(self, obj, *args, **kwargs):
         dct = {}
         for key in obj.trait_names():
+            val = getattr(obj, key, undefined)
+            if val is not undefined:
+                dct[key] = self.visit(val, *args, **kwargs)
+        return dct
+
+    def visit_JSONHasTraits(self, obj, *args, **kwargs):
+        dct = {}
+        for key in obj.trait_names():
+            if key in obj.skip:
+                continue
             val = getattr(obj, key, undefined)
             if val is not undefined:
                 dct[key] = self.visit(val, *args, **kwargs)

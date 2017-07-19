@@ -180,3 +180,12 @@ def test_defaults():
         arr = jst.JSONArray(jst.JSONString())
         val = jst.JSONInstance(dict)
     assert Foo().to_dict() == {}
+
+
+def test_skip():
+    class Foo(jst.JSONHasTraits):
+        bar = jst.JSONNumber()
+        baz = jst.JSONNumber()
+        skip = ['baz']
+    f = Foo(bar=1, baz=2)
+    assert f.to_dict() == {'bar': 1}
