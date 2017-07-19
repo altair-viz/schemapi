@@ -113,6 +113,12 @@ class JSONHasTraits(T.HasTraits):
         """Output the object's representation to a JSON string"""
         return json.dumps(self.to_dict(**kwargs))
 
+    def __dir__(self):
+        """Customize tab completed attributes."""
+        return [t for t in self.traits()
+                if t not in self.skip] + ['to_dict', 'from_dict',
+                                          'to_json', 'from_json']
+
     def _finalize(self, *args, **kwargs):
         """Finalize the object, and all contained objects, for export."""
         def finalize_obj(obj):
