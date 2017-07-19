@@ -90,7 +90,7 @@ class JSONHasTraits(T.HasTraits):
             return None
 
     @classmethod
-    def register_coverters(cls, **kwargs):
+    def register_converters(cls, **kwargs):
         cls._converter_registry.update(kwargs)
 
     def set_trait(self, name, value):
