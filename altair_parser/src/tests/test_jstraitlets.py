@@ -200,3 +200,14 @@ def test_finalize():
             super(Foo, self)._finalize()
     f = Foo(bar=4)
     assert f.to_dict() == {'bar': 4, 'bar_times_2': 8}
+
+
+def test_contains():
+    class Foo(jst.JSONHasTraits):
+        a = jst.JSONNumber()
+        b = jst.JSONString()
+
+    f = Foo(a=4)
+    assert 'a' in f
+    assert 'b' not in f
+    assert 'c' not in f

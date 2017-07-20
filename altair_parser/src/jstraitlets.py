@@ -75,6 +75,10 @@ class JSONHasTraits(T.HasTraits):
 
         super(JSONHasTraits, self).__init__(**kwargs)
 
+    def __contains__(self, key):
+        return (key in self.traits() and
+                getattr(self, key, undefined) is not undefined)
+
     @classmethod
     def _get_additional_traits(cls):
         try:
