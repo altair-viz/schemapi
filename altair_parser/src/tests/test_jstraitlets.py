@@ -12,7 +12,7 @@ def test_undefined_singleton():
 def generate_test_cases():
     """yield tuples of (trait, failcases, passcases)"""
     # Anys
-    yield (T.Any(), [], [1, "hello", {'a':2}, [1, 2, 3], None, undefined])
+    yield (jst.JSONAny(), [], [1, "hello", {'a':2}, [1, 2, 3], None, undefined])
 
     # Nulls
     yield (jst.JSONNull(), [0, "None"], [None, undefined])

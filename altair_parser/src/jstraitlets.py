@@ -231,6 +231,22 @@ class JSONNull(T.TraitType):
             self.error(obj, value)
 
 
+class JSONAny(T.Any):
+    allow_undefined = True
+    default_value = undefined
+    info_text = 'any value'
+
+    def __init__(self, allow_undefined=True, **kwargs):
+        self.allow_undefined = allow_undefined
+        super(JSONAny, self).__init__(**kwargs)
+
+    def validate(self, obj, value):
+        if value is undefined and not self.allow_undefined:
+            self.error(obj, value)
+        else:
+            return value
+
+
 def _validate_numeric(trait, obj, value,
                       minimum=undefined, maximum=undefined,
                       exclusiveMinimum=undefined, exclusiveMaximum=undefined,
