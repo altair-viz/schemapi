@@ -405,6 +405,14 @@ class Array(Extractor):
             return self.schema.make_child(items).trait_imports
 
 
+class EmptySchema(Extractor):
+    def check(self):
+        return self.schema.schema == {}
+
+    def trait_code(self, **kwargs):
+        return construct_function_call('jst.JSONAny', **kwargs)
+
+
 class Object(Extractor):
     requires_import = True
     priority = 5

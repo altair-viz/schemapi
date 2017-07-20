@@ -57,7 +57,7 @@ class JSONSchema(object):
                         tx.Not, tx.AnyOf, tx.AllOf, tx.OneOf,
                         tx.NamedEnum, tx.Enum,
                         tx.SimpleType, tx.CompoundType,
-                        tx.Array, tx.Object, ]
+                        tx.Array, tx.EmptySchema, tx.Object]
 
     def __init__(self, schema, module=None, context=None,
                  parent=None, name=None, metadata=None,
