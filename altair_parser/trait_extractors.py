@@ -19,6 +19,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
     {%- endfor %}
     """
     _additional_traits = {{ cls.additional_traits }}
+    _required_traits = {{ cls.required }}
 
     {%- for (name, prop) in cls.wrapped_properties().items() %}
     {{ name }} = {{ prop.trait_code }}

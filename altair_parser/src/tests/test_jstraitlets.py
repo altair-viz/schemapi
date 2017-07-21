@@ -107,6 +107,23 @@ def test_hastraits_defaults():
         f.set_trait('age', 'blah')
 
 
+def test_hastraits_required():
+    class Foo(jst.JSONHasTraits):
+        _required_traits = ['name']
+        name = jst.JSONString()
+        age = jst.JSONNumber()
+
+    f1 = Foo(name="Sue", age=32)
+    f2 = Foo(age=32)
+
+    # contains all required pieces
+    D = f1.to_dict()
+
+    with pytest.raises(T.TraitError) as err:
+        f2.to_dict()
+    assert err.match("Required trait 'name' is undefined")
+
+
 def test_no_defaults():
     class Foo(jst.JSONHasTraits):
         _additional_traits = False
@@ -184,9 +201,9 @@ def test_defaults():
 
 def test_skip():
     class Foo(jst.JSONHasTraits):
+        _skip_on_export = ['baz']
         bar = jst.JSONNumber()
         baz = jst.JSONNumber()
-        skip = ['baz']
     f = Foo(bar=1, baz=2)
     assert f.to_dict() == {'bar': 1}
 

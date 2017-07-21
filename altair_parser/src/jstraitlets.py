@@ -54,13 +54,16 @@ class JSONHasTraits(T.HasTraits):
     >>> sorted(f.trait_names())
     ['name', 'score', 'value']
     """
-    _additional_traits = True
-    skip = []  # traits to skip when exporting to dictionary
+    _additional_traits = True  # boolean, or list of
+    _skip_on_export = []  # traits to skip when exporting to dictionary
+    _required_traits = []  # traits required at export. If undefined, a traiterror will be raised
     _converter_registry = {}  # converter classes to use for to_dict, from_dict
 
     def __init__(self, **kwargs):
         # Add default traits if needed
         default = self._get_additional_traits()
+        # TODO: protect against overwriting class attributes defined above.
+        #       perhaps use double underscores?
         if default:
             all_traits = self.traits()
             self.add_traits(**{key: default for key in kwargs
@@ -126,9 +129,8 @@ class JSONHasTraits(T.HasTraits):
 
     def __dir__(self):
         """Customize tab completed attributes."""
-        return [t for t in self.traits()
-                if t not in self.skip] + ['to_dict', 'from_dict',
-                                          'to_json', 'from_json']
+        traits = [t for t in self.traits() if t not in self._skip_on_export]
+        return traits + ['to_dict', 'from_dict', 'to_json', 'from_json']
 
     def _finalize(self, *args, **kwargs):
         """Finalize the object, and all contained objects, for export."""
@@ -645,11 +647,14 @@ class ToDict(Visitor):
     def visit_JSONHasTraits(self, obj, *args, **kwargs):
         dct = {}
         for key in obj.trait_names():
-            if key in obj.skip:
+            if key in obj._skip_on_export:
                 continue
             val = getattr(obj, key, undefined)
             if val is not undefined:
                 dct[key] = self.visit(val, *args, **kwargs)
+            elif key in obj._required_traits:
+                raise T.TraitError("Required trait '{0}' is undefined'"
+                                   "".format(key))
         return dct
 
 

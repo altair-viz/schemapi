@@ -1,4 +1,7 @@
 import pytest
+
+import traitlets as T
+
 from .. import JSONSchema
 from ..utils import load_dynamic_module
 
@@ -61,18 +64,21 @@ def test_required_keyword():
                      'traitref1', 'objref1', 'typelist1']
     }
     js = JSONSchema(schema)
+
     load_dynamic_module('_schema', js.source_tree(), reload_module=True)
     from _schema import jstraitlets as jst
-    from _schema import twoNumbers
+    from _schema import Root
 
     # Required for the eval-based tests below
     def _localname(name):
         return "{0}.{1}".format(__name__, name)
-        
-    for name, obj in js.wrapped_properties().items():
-        trait = eval(obj.trait_code)
-        required = name in schema['required']
-        assert required == (not trait.allow_undefined)
+
+    assert Root()._required_traits == js.required
+
+    r = Root()
+    with pytest.raises(T.TraitError) as err:
+        r.to_dict()
+    assert err.match("Required trait '[a-z]+1' is undefined")
 
 
 def test_get_reference():

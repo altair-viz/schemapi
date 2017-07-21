@@ -258,7 +258,7 @@ class JSONSchema(object):
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
-        return {utils.regularize_name(name): self.make_child(val, metadata={'required': name in self.required})
+        return {utils.regularize_name(name): self.make_child(val)
                 for name, val in self.properties.items()}
 
     def wrapped_ref(self):
@@ -292,8 +292,6 @@ class JSONSchema(object):
     def trait_code(self):
         """Create the trait code for the given schema"""
         kwargs = {}
-        if self.metadata.get('required', False):
-            kwargs['allow_undefined'] = False
         if self.description:
             kwargs['help'] = textwrap.shorten(self.description, 70)
 
