@@ -212,11 +212,12 @@ def test_finalize():
     class Foo(jst.JSONHasTraits):
         bar = jst.JSONNumber()
         bar_times_2 = jst.JSONNumber()
+        L = jst.JSONArray(jst.JSONString())
         def _finalize(self):
             self.bar_times_2 = 2 * self.bar
             super(Foo, self)._finalize()
-    f = Foo(bar=4)
-    assert f.to_dict() == {'bar': 4, 'bar_times_2': 8}
+    f = Foo(bar=4, L=['a', 'b', 'c'])
+    assert f.to_dict() == {'bar': 4, 'bar_times_2': 8, 'L':['a', 'b', 'c']}
 
 
 def test_contains():
