@@ -119,13 +119,15 @@ class JSONHasTraits(T.HasTraits):
         return Visitor().visit(self, **kwargs)
 
     @classmethod
-    def from_json(cls, json_string):
+    def from_json(cls, json_string, json_kwds=None, **kwargs):
         """Instantiate object from a JSON string"""
-        return cls.from_dict(json.loads(json_string))
+        dct = json.loads(json_string, **(json_kwds or {}))
+        return cls.from_dict(dct, **kwargs)
 
-    def to_json(self, **kwargs):
+    def to_json(self, json_kwds=None, **kwargs):
         """Output the object's representation to a JSON string"""
-        return json.dumps(self.to_dict(**kwargs))
+        dct = self.to_dict(**kwargs)
+        return json.dumps(dct, **(json_kwds or {}))
 
     def __dir__(self):
         """Customize tab completed attributes."""
