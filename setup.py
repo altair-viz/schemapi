@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import subprocess
+import imp
 
 from setuptools import setup, find_packages
 
@@ -72,11 +73,12 @@ def get_version_info():
     FULLVERSION = VERSION
     if os.path.exists('.git'):
         GIT_REVISION = git_version()
-    elif os.path.exists('scipy/version.py'):
+    elif os.path.exists('altair_parser/version.py'):
         # must be a source distribution, use existing version file
-        # load it as a separate module to not load scipy/__init__.py
+        # load it as a separate module to not load altair_parser/__init__.py
         import imp
-        version = imp.load_source('scipy.version', 'scipy/version.py')
+        version = imp.load_source('altair_parser.version',
+                                  'altair_parser/version.py')
         GIT_REVISION = version.git_revision
     else:
         GIT_REVISION = "Unknown"
@@ -100,16 +102,12 @@ if not release:
     version = full_version
 '''
     FULLVERSION, GIT_REVISION = get_version_info()
-
-    a = open(filename, 'w')
-    try:
-        a.write(cnt.format(long_description=LONG_DESCRIPTION,
+    with open(filename, 'w') as f:
+        f.write(cnt.format(long_description=LONG_DESCRIPTION,
                            version=VERSION,
                            full_version=FULLVERSION,
                            git_revision=GIT_REVISION,
                            isrelease=str(ISRELEASED)))
-    finally:
-        a.close()
 
 # End of code adapted from SciPy
 ###############################################################################
