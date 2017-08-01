@@ -132,7 +132,9 @@ class JSONHasTraits(T.HasTraits):
 
     def to_python(self, **kwargs):
         Visitor = self._converter_registry.get('to_python', ToPython)
-        return Visitor().visit(self, **kwargs)
+        # Explicitly convert to str() for the sake of derived classes
+        # which return a more complicated code representation object.
+        return str(Visitor().visit(self, **kwargs))
 
     def __dir__(self):
         """Customize tab completed attributes."""
