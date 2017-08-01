@@ -1,3 +1,4 @@
+from .version import version as __version__
+from .version import long_description as __doc__
 from .jsonschema import JSONSchema, JSONSchemaPlugin
-from .version import __version__, long_description
-__doc__ = long_description
+
