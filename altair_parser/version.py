@@ -9,10 +9,10 @@ See more information in the README_.
 
 .. _README: https://github.com/altair-viz/altair_parser/blob/master/README.md
 """
-short_version = '0.1.0'
-version = '0.1.0'
-full_version = '0.1.0'
-git_revision = '30d22413f6cc67c5276ce8e008c5add0d673122a'
-release = True
+short_version = '0.2.0'
+version = '0.2.0'
+full_version = '0.2.0.dev0+89423fa'
+git_revision = '89423fab0f2f1cdeacf8f172c0cbbd35786f3dd7'
+release = False
 if not release:
     version = full_version
