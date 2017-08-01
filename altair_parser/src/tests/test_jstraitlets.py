@@ -233,6 +233,7 @@ def test_contains():
 
 def test_to_python():
     class Foo(jst.JSONHasTraits):
+        _required_traits = ['a', 'b']
         a = jst.JSONNumber()
         b = jst.JSONString()
 
@@ -246,3 +247,8 @@ def test_to_python():
     obj = Bar.from_dict(D)
     obj2 = eval(obj.to_python())
     assert obj2.to_dict() == obj.to_dict() == D
+
+    # Make sure there is an error if required traits are missing
+    foo = Foo(a=4)
+    with pytest.raises(T.TraitError) as err:
+        foo.to_python()

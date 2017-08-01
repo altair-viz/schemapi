@@ -760,6 +760,10 @@ class ToPython(Visitor):
                 if k not in obj._skip_on_export and
                 getattr(obj, k, undefined) is not undefined}
         kwds = {k: self.visit(v) for k, v in kwds.items()}
+
+        missing = set(obj._required_traits) - set(kwds)
+        if missing:
+            raise T.TraitError("Required traits {0} missing".format(missing))
         arglist = '\n'.join('{0}={1},'.format(*item)
                             for item in sorted(kwds.items())).rstrip(',')
         return "{0}(\n{1}\n)".format(obj.__class__.__name__,
