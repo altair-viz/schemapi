@@ -3,6 +3,7 @@ import os
 import textwrap
 import copy
 from datetime import datetime
+from collections import OrderedDict
 
 
 from . import trait_extractors as tx
@@ -94,7 +95,7 @@ class JSONSchema(object):
         defs = {}
         for tag in self.definition_tags:
             defs.update(self.schema.get(tag, {}))
-        return defs
+        return OrderedDict(sorted(defs.items()))
 
     @property
     def trait_extractor(self):
@@ -253,13 +254,14 @@ class JSONSchema(object):
 
     def wrapped_definitions(self):
         """Return definition dictionary wrapped as JSONSchema objects"""
-        return {name.lower(): self.make_child(schema, name=name)
-                for name, schema in self.all_definitions.items()}
+        return OrderedDict((name.lower(), self.make_child(schema, name=name))
+                           for name, schema in
+                           sorted(self.all_definitions.items()))
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
-        return {utils.regularize_name(name): self.make_child(val)
-                for name, val in self.properties.items()}
+        return OrderedDict((utils.regularize_name(name), self.make_child(val))
+                           for name, val in sorted(self.properties.items()))
 
     def wrapped_ref(self):
         return self.get_reference(self.schema['$ref'])
@@ -348,7 +350,7 @@ class JSONSchema(object):
             imports.append(obj.import_statement)
         for plugin in self.plugins:
             imports.extend(plugin.module_imports(self))
-        return [i for i in imports if i]
+        return sorted(set([i for i in imports if i]))
 
     def source_tree(self):
         """Return the JSON specification of the module source tree
