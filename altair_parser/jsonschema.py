@@ -381,14 +381,25 @@ class JSONSchema(object):
         header_content = header.render(date=date,
                                        version=__version__)
         schema_content = template.render(cls=self, classes=classes)
-        jstraitlets_content = open(os.path.join(os.path.dirname(__file__),
-                                   'src', 'jstraitlets.py')).read()
+
+        def localfile(path):
+            return os.path.join(os.path.dirname(__file__), path)
+
+        jstraitlets_content = open(localfile('src/jstraitlets.py')).read()
+        test_content = open(localfile('src/tests/test_jstraitlets.py')).read()
         init_content = '\n'.join(self.module_imports)
 
+        def add_header(content):
+            return '{0}\n\n{1}'.format(header_content, content)
+
         tree = {
-            'jstraitlets.py': header_content + '\n\n' + jstraitlets_content,
-            self.filename: header_content + '\n\n' + schema_content,
-            '__init__.py': header_content + '\n\n' + init_content
+            'jstraitlets.py': add_header(jstraitlets_content),
+            self.filename: add_header(schema_content),
+            '__init__.py': add_header(init_content),
+            'tests': {
+                '__init__.py': add_header(""),
+                'test_jstraitlets.py': add_header(test_content),
+            }
         }
         for plugin in self.plugins:
             tree.update(plugin.code_files(self))
