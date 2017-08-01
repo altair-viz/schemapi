@@ -14,6 +14,7 @@ instances can be instantiated from and serialized to dictionaries of values.
 """
 import copy
 import json
+import textwrap
 
 import six
 import traitlets as T
@@ -128,6 +129,10 @@ class JSONHasTraits(T.HasTraits):
         """Output the object's representation to a JSON string"""
         dct = self.to_dict(**kwargs)
         return json.dumps(dct, **(json_kwds or {}))
+
+    def to_python(self, **kwargs):
+        Visitor = self._converter_registry.get('to_python', ToPython)
+        return Visitor().visit(self, **kwargs)
 
     def __dir__(self):
         """Customize tab completed attributes."""
@@ -735,3 +740,25 @@ class FromDict(Visitor):
             raise T.TraitError("{cls}: dict representation not "
                                "valid in any wrapped classes"
                                "".format(cls=trait.__name__))
+
+
+class ToPython(Visitor):
+    """Crawl object structure to output Python code"""
+    def generic_visit(self, obj, *args, **kwargs):
+        return repr(obj)
+
+    def visit_list(self, obj, *args, **kwargs):
+        # TODO: make more compact for simple args?
+        arglist = ',\n'.join(self.visit(item) for item in obj)
+        return "[\n{0}\n]".format(textwrap.indent(arglist, 4 * ' '))
+
+    def visit_JSONHasTraits(self, obj, *args, **kwargs):
+        # TODO: make more compact for simple args?
+        kwds = {k: getattr(obj, k) for k in obj.traits()
+                if k not in obj._skip_on_export and
+                getattr(obj, k, undefined) is not undefined}
+        kwds = {k: self.visit(v) for k, v in kwds.items()}
+        arglist = '\n'.join('{0}={1},'.format(*item)
+                            for item in sorted(kwds.items())).rstrip(',')
+        return "{0}(\n{1}\n)".format(obj.__class__.__name__,
+                                     textwrap.indent(arglist, 4 * " "))

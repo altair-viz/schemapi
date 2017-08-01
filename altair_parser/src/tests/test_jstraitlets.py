@@ -229,3 +229,20 @@ def test_contains():
     assert 'a' in f
     assert 'b' not in f
     assert 'c' not in f
+
+
+def test_to_python():
+    class Foo(jst.JSONHasTraits):
+        a = jst.JSONNumber()
+        b = jst.JSONString()
+
+    class Bar(jst.JSONHasTraits):
+        c = jst.JSONArray(jst.JSONNumber())
+        d = jst.JSONInstance(Foo)
+        e = jst.JSONArray(jst.JSONInstance(Foo))
+
+    D = {'c': [1, 2, 3], 'd': {'a': 5, 'b': 'blah'},
+         'e':[{'a': 3, 'b': 'foo'}, {'a': 4, 'b': 'bar'}]}
+    obj = Bar.from_dict(D)
+    obj2 = eval(obj.to_python())
+    assert obj2.to_dict() == obj.to_dict() == D
