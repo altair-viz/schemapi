@@ -346,11 +346,17 @@ class JSONSchema(object):
     def module_imports(self):
         """List of imports of all definitions for the root module"""
         imports = [self.import_statement]
+
+        # Add imports for all defined objects
+        defn_imports = []
         for obj in self.wrapped_definitions().values():
-            imports.append(obj.import_statement)
+            defn_imports.append(obj.import_statement)
+        imports.extend(sorted(defn_imports))
+
+        # Add imports from plugins
         for plugin in self.plugins:
-            imports.extend(plugin.module_imports(self))
-        return sorted(set([i for i in imports if i]))
+            imports.extend(sorted(plugin.module_imports(self)))
+        return imports
 
     def source_tree(self):
         """Return the JSON specification of the module source tree
