@@ -14,7 +14,7 @@ class {{ cls.classname }}({{ cls.baseclass }}):
     Attributes
     ----------
     {%- for (name, prop) in cls.wrapped_properties().items() %}
-    {{ name }} : {{ prop.type }}
+    {{ name }} : {{ prop.type_description }}
         {{ prop.indented_description() }}
     {%- endfor %}
     """
@@ -87,6 +87,9 @@ class Extractor(object):
 
     def check(self):
         raise NotImplementedError()
+
+    def type_description(self, **kwargs):
+        return self.typecode
 
     def trait_code(self, **kwargs):
         raise NotImplementedError()
@@ -195,6 +198,10 @@ class RefObject(Extractor):
     def check(self):
         return '$ref' in self.schema and self.schema.is_object
 
+    def type_description(self, **kwargs):
+        ref = self.schema.wrapped_ref()
+        return ref.classname
+
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
         return construct_function_call('jst.JSONInstance',
@@ -218,6 +225,10 @@ class RefTrait(Extractor):
     def check(self):
         return '$ref' in self.schema
 
+    def type_description(self, **kwargs):
+        ref = self.schema.wrapped_ref()
+        return ref.type_description
+
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
         ref.metadata = self.schema.metadata
@@ -234,6 +245,10 @@ class Not(Extractor):
     def check(self):
         return 'not' in self.schema
 
+    def type_description(self, **kwargs):
+        not_this = self.schema.make_child(self.schema['not']).type_description
+        return "Not({0})".format(not_this)
+
     def trait_code(self, **kwargs):
         not_this = self.schema.make_child(self.schema['not']).trait_code
         return construct_function_call('jst.JSONNot', Variable(not_this),
@@ -248,6 +263,12 @@ class AnyOf(Extractor):
 
     def check(self):
         return 'anyOf' in self.schema
+
+    def type_description(self, **kwargs):
+        children = [Variable(self.schema.make_child(
+                                        sub_schema).type_description)
+                    for sub_schema in self.schema['anyOf']]
+        return "AnyOf({0})".format(children)
 
     def trait_code(self, **kwargs):
         children = [Variable(self.schema.make_child(sub_schema).trait_code)
@@ -266,6 +287,12 @@ class AllOf(Extractor):
     def check(self):
         return 'allOf' in self.schema
 
+    def type_description(self, **kwargs):
+        children = [Variable(self.schema.make_child(
+                                        sub_schema).type_description)
+                    for sub_schema in self.schema['allOf']]
+        return "AnyOf({0})".format(children)
+
     def trait_code(self, **kwargs):
         children = [Variable(self.schema.make_child(sub_schema).trait_code)
                     for sub_schema in self.schema['allOf']]
@@ -282,6 +309,12 @@ class OneOf(Extractor):
 
     def check(self):
         return 'oneOf' in self.schema
+
+    def type_description(self, **kwargs):
+        children = [Variable(self.schema.make_child(
+                                        sub_schema).type_description)
+                    for sub_schema in self.schema['oneOf']]
+        return "AnyOf({0})".format(children)
 
     def trait_code(self, **kwargs):
         children = [Variable(self.schema.make_child(sub_schema).trait_code)
@@ -301,6 +334,10 @@ class NamedEnum(Extractor):
     def check(self):
         return self.schema.is_named_object and 'enum' in self.schema
 
+    def trait_description(self, **kwargs):
+        return '{{0}}'.format('|'.join(repr(val)
+                                       for val in self.schema['enum']))
+
     def trait_code(self, **kwargs):
         return construct_function_call(self.schema.classname, **kwargs)
 
@@ -315,6 +352,9 @@ class Enum(Extractor):
     def check(self):
         return 'enum' in self.schema
 
+    def trait_description(self, **kwargs):
+        return '{{0}}'.format('|'.join(repr(val)
+                                       for val in self.schema['enum']))
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONEnum',
                                        self.schema["enum"],
@@ -378,6 +418,16 @@ class Array(Extractor):
     def check(self):
         return self.schema.type == 'array'
 
+    def type_description(self, **kwargs):
+        items = self.schema.get('items', None)
+        if items is None:
+            itemtype = "T.Any()"
+        elif isinstance(items, list):
+            raise NotImplementedError("'items' keyword as list")
+        else:
+            itemtype = self.schema.make_child(items).type_description
+        return "Array({0})".format(itemtype)
+
     def trait_code(self, **kwargs):
         # TODO: implement items as list and additionalItems
 
@@ -410,6 +460,9 @@ class EmptySchema(Extractor):
     def check(self):
         return self.schema.schema == {}
 
+    def type_description(self, **kwargs):
+        return "any_object"
+
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONAny', **kwargs)
 
@@ -420,6 +473,9 @@ class Object(Extractor):
 
     def check(self):
         return not self.schema.is_trait
+
+    def type_description(self, **kwargs):
+        return "Mapping"
 
     def trait_code(self, **kwargs):
         trait_codes = {name: Variable(prop.trait_code) for (name, prop)

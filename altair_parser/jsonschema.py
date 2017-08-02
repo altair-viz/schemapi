@@ -210,6 +210,10 @@ class JSONSchema(object):
             return False
 
     @property
+    def type_description(self):
+        return self.trait_extractor.type_description()
+
+    @property
     def classname(self):
         if self.name:
             return utils.regularize_name(self.name)
