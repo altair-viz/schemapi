@@ -192,6 +192,15 @@ def test_to_from_dict_with_defaults():
         Foo.from_dict(dct)
 
 
+def test_to_dict_explicit_null():
+    class MyClass(jst.JSONHasTraits):
+        bar = jst.JSONString(allow_none=True, allow_undefined=True)
+
+    assert MyClass().to_dict() == {}
+    assert MyClass(bar=None).to_dict() == {'bar': None}
+    assert MyClass(bar='val').to_dict() == {'bar': 'val'}
+
+
 def test_defaults():
     class Foo(jst.JSONHasTraits):
         arr = jst.JSONArray(jst.JSONString())
