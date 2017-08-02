@@ -411,12 +411,12 @@ class JSONSchema(object):
             tree.update(plugin.code_files(self))
         return tree
 
-    def write_module(self, module, path=None, quiet=False):
+    def write_module(self, module, path=None, quiet=True):
         from .utils import save_module
         if path is None:
             path = os.path.abspath(os.getcwd())
         print("saving to {module} at {path}".format(module=module, path=path))
-        save_module(self.source_tree(), module, path)
+        save_module(self.source_tree(), module, path, quiet=quiet)
 
 
 

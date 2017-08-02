@@ -1,6 +1,6 @@
 import os
 
-def save_module(spec, name, location):
+def save_module(spec, name, location, quiet=True):
     """Create a module on the file system from a spec
 
     Parameters
@@ -12,6 +12,8 @@ def save_module(spec, name, location):
         created at ``location``.
     location : string
         A valid file path at which the module source tree will be saved.
+    quiet : boolean
+        If True, then suppress printed output
 
     Returns
     -------
@@ -25,10 +27,13 @@ def save_module(spec, name, location):
     os.mkdir(module_path)
     for filename, contents in spec.items():
         if isinstance(contents, str):
+            if not quiet:
+                print("> {0}".format(os.path.join(module_path, filename)))
             with open(os.path.join(module_path, filename), 'w') as f:
                 f.write(contents)
         elif isinstance(contents, dict):
-            save_module(contents, name=filename, location=module_path)
+            save_module(contents, name=filename, location=module_path,
+                        quiet=quiet)
         else:
             raise ValueError("spec values should be either string or dict; "
                              "got {0}".format(type(contents)))
