@@ -11,8 +11,10 @@ Releasing a New Version
    
    to generate schemapi/version.py
 
-4. Tag the release; e.g.
+4. Commit the changes and tag the release; e.g.
 
+       git add . -u
+       git commit -m "MAINT: release version 0.1"
        git tag -a v0.1 -m "version 0.1 release"
 
    and push tag to origin
