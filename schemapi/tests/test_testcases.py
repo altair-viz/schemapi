@@ -1,6 +1,6 @@
 """
 These tests iterate through the examples defined in _testcases.py and make
-sure each passes with both jsonschema_apigen and jsonschema
+sure each passes with both schemapi and jsonschema
 """
 
 import traitlets as T

@@ -2,10 +2,10 @@
 Wrap the vega schema and save to a source tree
 """
 import os
-from jsonschema_apigen import JSONSchema
-from jsonschema_apigen.utils import save_module
+from schemapi import JSONSchema
+from schemapi.utils import save_module
 
-schemafile = 'jsonschema_apigen/schemas/vega-v3.0.0.json'
+schemafile = 'schemapi/schemas/vega-v3.0.0.json'
 module = '_vega_schema'
 
 if os.path.exists(module):

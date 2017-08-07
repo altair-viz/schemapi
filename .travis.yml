@@ -20,4 +20,4 @@ install:
 script:
 - mkdir for_test
 - cd for_test
-- py.test --pyargs jsonschema_apigen --doctest-module --cov-report term-missing --cov=jsonschema_apigen
+- py.test --pyargs schemapi --doctest-module --cov-report term-missing --cov=schemapi

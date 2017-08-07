@@ -4,8 +4,8 @@ Wrap the draft-4 metaschema and save the source tree
 import os
 
 from jsonschema._utils import load_schema
-from jsonschema_apigen import JSONSchema
-from jsonschema_apigen.utils import save_module
+from schemapi import JSONSchema
+from schemapi.utils import save_module
 
 schema = load_schema('draft4')
 module = '_metaschema'

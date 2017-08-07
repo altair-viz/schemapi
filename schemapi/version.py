@@ -3,17 +3,17 @@
 long_description = """
 JSONSchema API Generator
 ========================
-The jsonschema_apigen_ package provides tools for auto-generation of Python
+The schemapi_ package provides tools for auto-generation of Python
 APIs rom JSONSchema_ specifications. It makes use of the traitlets_ package
 to generate object hierarchies that are equivalent to a given JSONSchema
 specification.
 
 See more information in the README_.
 
-.. _README: https://github.com/altair-viz/jsonschema_apigen/blob/master/README.md
+.. _README: https://github.com/altair-viz/schemapi/blob/master/README.md
 .. _JSONSchema: http://json-schema.org/
 .. _traitlets: https://traitlets.readthedocs.io
-.. _jsonschema_apigen: https://github.com/altair-viz/jsonschema_apigen
+.. _schemapi: https://github.com/altair-viz/schemapi
 """
 short_version = '0.2.0'
 version = '0.2.0'

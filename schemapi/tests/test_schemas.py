@@ -1,4 +1,4 @@
-"""Test ability to wrap schemas in the jsonschema_apigen/schemas directory"""
+"""Test ability to wrap schemas in the schemapi/schemas directory"""
 
 import os
 import pytest
