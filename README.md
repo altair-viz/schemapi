@@ -134,9 +134,12 @@ TraitError: The 'age' trait of a Root instance must be a JSON integer, but a val
 TraitError: The 'age' trait of a Root instance must be a JSON integer, but a value of 'old' <class 'str'> was specified.
 ```
 
-By utilizing JSONSchema definitions, much more complicated object hierarchies
+By utilizing JSONSchema
+[definitions and references](https://cswr.github.io/JsonSchema/spec/definitions_references/), much more complicated object hierarchies
 are possible, and the generated classes can be subclassed in order to create
-domain-specific APIs for specifying data that can be serialized to and from JSON.
+domain-specific APIs for specifying data that can be serialized to and from
+JSON. For a more complicated example of this in action, see the 
+[Altair](http://altair-viz.github.io) project.
 
 ## Installation
 
@@ -150,3 +153,19 @@ repository and installing locally:
     $ git clone https://github.com/altair-viz/schemapi.git
     $ cd schemapi
     $ pip install .
+
+## Testing
+
+To run the test suite you must have [py.test](http://pytest.org/latest/) installed.
+To run the tests, use
+
+```
+py.test --pyargs schemapi
+```
+(you can omit the `--pyargs` flag if you are running the tests from a source checkout).
+
+
+## Feedback and Contribution
+
+We welcome any input, feedback, bug reports, and contributions via [schemapi's
+GitHub Repository](http://github.com/altair-viz/schemapi/).
