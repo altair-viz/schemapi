@@ -546,3 +546,17 @@ enum_refs = {
          "mark3": "point", "mark4": "bad"}
     ]
 }
+
+
+explicit_null = {
+    'schema': {
+        'definitions': {
+            'NullableInt': {'type': ['integer', 'null']}
+        },
+        'properties': {
+            'a': {'$ref': '#/definitions/NullableInt'},
+            'b': {'$ref': '#/definitions/NullableInt'}
+        }
+    },
+    'valid': [{'a': 42, 'b': None}, {'a': None, 'b': 42}],
+}

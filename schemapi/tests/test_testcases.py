@@ -21,7 +21,7 @@ def test_testcases_jsonschema(testcase):
     testcase = testcases[testcase]
 
     schema = testcase['schema']
-    valid = testcase['valid']
+    valid = testcase.get('valid', [])
     invalid = testcase.get('invalid', [])
 
     for instance in valid:
@@ -37,7 +37,7 @@ def test_testcases_traitlets(testcase):
     modulename = '_schema'
 
     schema = testcase['schema']
-    valid = testcase['valid']
+    valid = testcase.get('valid', [])
     invalid = testcase.get('invalid', [])
 
     traitlets_obj = JSONSchema(schema, module=modulename)
@@ -64,7 +64,11 @@ def test_testcases_traitlets(testcase):
 def test_dict_round_trip(testcase):
     testcase = testcases[testcase]
     modulename = '_schema'
-    traitlets_obj = JSONSchema(testcase['schema'], module=modulename)
+
+    schema = testcase['schema']
+    valid = testcase.get('valid', [])
+
+    traitlets_obj = JSONSchema(schema, module=modulename)
 
     for key, code in traitlets_obj.source_tree().items():
         if key in ['jstraitlets.py']:
@@ -78,6 +82,6 @@ def test_dict_round_trip(testcase):
                                  reload_module=True)
     from _schema import Root
 
-    for instance in testcase['valid']:
+    for instance in valid:
         obj = Root.from_dict(instance)
         assert obj.to_dict() == instance
