@@ -1,6 +1,6 @@
 """
 These tests iterate through the examples defined in _testcases.py and make
-sure each passes with both altair_parser and jsonschema
+sure each passes with both jsonschema_apigen and jsonschema
 """
 
 import traitlets as T

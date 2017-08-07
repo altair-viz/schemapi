@@ -1,11 +1,11 @@
 """
-Wrap the altair schema and save to a source tree
+Wrap the vega schema and save to a source tree
 """
 import os
-from altair_parser import JSONSchema
-from altair_parser.utils import save_module
+from jsonschema_apigen import JSONSchema
+from jsonschema_apigen.utils import save_module
 
-schemafile = 'altair_parser/schemas/vega-v3.0.0.json'
+schemafile = 'jsonschema_apigen/schemas/vega-v3.0.0.json'
 module = '_vega_schema'
 
 if os.path.exists(module):

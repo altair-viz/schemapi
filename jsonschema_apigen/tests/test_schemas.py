@@ -1,4 +1,4 @@
-"""Test ability to wrap schemas in the altair_parser/schemas directory"""
+"""Test ability to wrap schemas in the jsonschema_apigen/schemas directory"""
 
 import os
 import pytest
