@@ -7,12 +7,11 @@ Auto-generate Python APIs from JSON schema specifications
 ## About
 
 [JSON Schema](http://json-schema.org/) is a vocabulary that allows you to
-annotate and validate JSON documents, and this kind of validation can be
-performed using the [jsonschema](https://pypi.python.org/pypi/jsonschema)
-Python package.
+annotate and validate JSON documents.
 
-``schemapi`` is a package with a slightly different aim: given a JSON schema
-specification, ``schemapi`` can generate a
+``schemapi`` is a package that lets you auto-generate simple Python object-based
+APIs given a valid JSON schema specification.
+The generated code is essentially a 
 [traitlets](http://traitlets.readthedocs.io/)-based
 Python object hierarchy designed to allow validated JSON documents to be
 created with Python code.
@@ -24,7 +23,7 @@ and the bulk of the Altair package is generated automatically using ``schemapi``
 
 ## Simple Example
 
-As a very simple example, imagine you have the following simple schema,
+As a very simple example, imagine you have the following simple JSON schema,
 defined as a Python dictionary:
 
 ```python
@@ -36,37 +35,34 @@ defined as a Python dictionary:
 ... }
 ```
 
-### Validation with ``jsonschema``
-
-You can use the ``jsonschema`` package to validate any data objects against this schema. For example, this data passes:
+This schema specifies that a data instance is valid if it has a key "name" that
+maps to a string, and a key "age" that maps to an integer.
+So, for example, this dictionary would be valid:
 
 ```python
->>> data = {'name': 'suzie', 'age': 32}
->>> jsonschema.validate(data, schema)
+>>> valid = {'name': 'suzie', 'age': 32}
 ```
 
-While this data fails:
+while this dictionary would not:
 
 ```python
->>> data = {'name': 'suzie', 'age': 'old'}
->>> jsonschema.validate(data, schema)
----------------------------------------------------------------------------
-ValidationError                           Traceback (most recent call last)
-<ipython-input-18-9b2b505e753e> in <module>()
-----> 1 jsonschema.validate(data, schema)
+>>> invalid = {'name': 'suzie', 'age': 'old'}
+```
 
-/Users/jakevdp/anaconda/envs/altair-dev-3.5/lib/python3.5/site-packages/jsonschema/validators.py in validate(instance, schema, cls, *args, **kwargs)
-    476         cls = validator_for(schema)
-    477     cls.check_schema(schema)
---> 478     cls(schema, *args, **kwargs).validate(instance)
 
-/Users/jakevdp/anaconda/envs/altair-dev-3.5/lib/python3.5/site-packages/jsonschema/validators.py in validate(self, *args, **kwargs)
-    121         def validate(self, *args, **kwargs):
-    122             for error in self.iter_errors(*args, **kwargs):
---> 123                 raise error
-    124
-    125         def is_type(self, instance, type):
+### Validation with ``jsonschema``
 
+
+In Python, you can use the ``jsonschema`` package to validate any data objects against this schema. For example, this data passes:
+
+```python
+>>> jsonschema.validate(valid, schema)
+```
+
+While this data fails, as indicated by the ``ValidationError``:
+
+```python
+>>> jsonschema.validate(invalid, schema)
 ValidationError: 'old' is not of type 'integer'
 ```
 
@@ -135,10 +131,10 @@ TraitError: The 'age' trait of a Root instance must be a JSON integer, but a val
 ```
 
 By utilizing JSONSchema
-[definitions and references](https://cswr.github.io/JsonSchema/spec/definitions_references/), much more complicated object hierarchies
+[definitions and references](https://cswr.github.io/JsonSchema/spec/definitions_references/), much more complicated nested object hierarchies
 are possible, and the generated classes can be subclassed in order to create
 domain-specific APIs for specifying data that can be serialized to and from
-JSON. For a more complicated example of this in action, see the 
+JSON. For an example of a much more complicated schema in action, see the 
 [Altair](http://altair-viz.github.io) project.
 
 ## Installation
@@ -165,7 +161,12 @@ py.test --pyargs schemapi
 (you can omit the `--pyargs` flag if you are running the tests from a source checkout).
 
 
+## License
+
+``schemapi`` is released under a [3-Clause BSD License](LICENSE).
+
+
 ## Feedback and Contribution
 
-We welcome any input, feedback, bug reports, and contributions via [schemapi's
-GitHub Repository](http://github.com/altair-viz/schemapi/).
+We welcome any input, feedback, bug reports, and contributions via schemapi's
+[GitHub repository](http://github.com/altair-viz/schemapi/).
