@@ -31,6 +31,5 @@ def test_parse_schema(schema):
         pytest.xfail("vega schema has unsupported elements")
     schema = LOADED_SCHEMAS[schema]
     modulename = '_schema'
-    obj = JSONSchema(schema, module=modulename,
-                     definition_tags=['refs', 'defs', 'definitions'])
+    obj = JSONSchema(schema, definition_tags=['refs', 'defs', 'definitions'])
     obj.load_module(modulename, reload_module=True)

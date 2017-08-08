@@ -34,7 +34,27 @@ def _localname(name):
 
 
 class JSONSchema(object):
-    """A class to wrap JSON Schema objects and reason about their contents"""
+    """A class to wrap JSON Schema objects and reason about their contents
+
+    Parameters
+    ----------
+    schema : dict
+        The JSONSchema dictionary from which to build the schema interface
+    root_name : string (optional)
+        The name of the root object. If not specified, the default is 'Root'.
+    definition_tags : tuple (optional)
+        The list of keys under which definitions will be found in the case of
+        non-conforming schema definitions. Default is ('definitions',).
+
+    Additional Parameters (Internal Use)
+    ------------------------------------
+    context : object (optional)
+        reference to the top-level object in the tree
+    parent : object (optional)
+        reference to the parent of this object
+    metadata : dict (optional)
+        dictionary of metadata for defining objects
+    """
     object_template = OBJECT_TEMPLATE
     file_header = FILE_HEADER
     __draft__ = 4
@@ -61,16 +81,16 @@ class JSONSchema(object):
                         tx.SimpleType, tx.CompoundType,
                         tx.Array, tx.EmptySchema, tx.Object]
 
-    def __init__(self, schema, module=None, context=None,
-                 parent=None, name=None, metadata=None,
-                 definition_tags=('definitions',)):
+    def __init__(self, schema, root_name='Root',
+                 definition_tags=('definitions',),
+                 context=None, parent=None, name=None, metadata=None):
         if not isinstance(schema, dict):
             raise ValueError("schema should be supplied as a dict")
 
         self.schema = schema
-        self.module = module
         self.parent = parent
         self.name = name
+        self.root_name = root_name
         self.metadata = metadata or {}
         self.plugins = []
 
@@ -126,8 +146,7 @@ class JSONSchema(object):
             schema = copy.deepcopy(self.schema)
         else:
             schema = self.schema
-        kwds = dict(schema=schema, context=context,
-                    module=self.module, parent=self.parent,
+        kwds = dict(schema=schema, context=context, parent=self.parent,
                     name=self.name, metadata=self.metadata)
         kwds.update(kwargs)
         return self.__class__(**kwds)
@@ -136,8 +155,8 @@ class JSONSchema(object):
         """
         Make a child instance, appropriately defining the parent and context
         """
-        return self.__class__(schema, module=self.module, context=self.context,
-                              parent=self, name=name, metadata=metadata)
+        return self.__class__(schema, context=self.context, parent=self,
+                              name=name, metadata=metadata)
 
     def __getitem__(self, key):
         return self.schema[key]
@@ -218,7 +237,7 @@ class JSONSchema(object):
         if self.name:
             return utils.regularize_name(self.name)
         elif self.is_root:
-            return "Root"
+            return self.root_name
         elif self.is_reference:
             return self.wrapped_ref().classname
         else:

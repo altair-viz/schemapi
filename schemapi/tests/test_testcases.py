@@ -39,7 +39,7 @@ def test_testcases_traitlets(testcase):
     valid = testcase.get('valid', [])
     invalid = testcase.get('invalid', [])
 
-    traitlets_obj = JSONSchema(schema, module=modulename)
+    traitlets_obj = JSONSchema(schema)
 
     for key, code in traitlets_obj.source_tree().items():
         if key in ['jstraitlets.py']:
@@ -66,7 +66,7 @@ def test_dict_round_trip(testcase):
     schema = testcase['schema']
     valid = testcase.get('valid', [])
 
-    traitlets_obj = JSONSchema(schema, module=modulename)
+    traitlets_obj = JSONSchema(schema)
 
     for key, code in traitlets_obj.source_tree().items():
         if key in ['jstraitlets.py']:
