@@ -52,8 +52,8 @@ class JSONSchema(object):
         reference to the top-level object in the tree
     parent : object (optional)
         reference to the parent of this object
-    metadata : dict (optional)
-        dictionary of metadata for defining objects
+    name : string (optional)
+        the name of the object defined by the schema
     """
     object_template = OBJECT_TEMPLATE
     file_header = FILE_HEADER
@@ -83,7 +83,7 @@ class JSONSchema(object):
 
     def __init__(self, schema, root_name='Root',
                  definition_tags=('definitions',),
-                 context=None, parent=None, name=None, metadata=None):
+                 context=None, parent=None, name=None):
         if not isinstance(schema, dict):
             raise ValueError("schema should be supplied as a dict")
 
@@ -91,7 +91,6 @@ class JSONSchema(object):
         self.parent = parent
         self.name = name
         self.root_name = root_name
-        self.metadata = metadata or {}
         self.plugins = []
 
         # if context is not given, then assume this is a root instance that
@@ -146,17 +145,17 @@ class JSONSchema(object):
             schema = copy.deepcopy(self.schema)
         else:
             schema = self.schema
-        kwds = dict(schema=schema, context=context, parent=self.parent,
-                    name=self.name, metadata=self.metadata)
+        kwds = dict(schema=schema, root_name=root_name,
+                    context=context, parent=self.parent, name=self.name)
         kwds.update(kwargs)
         return self.__class__(**kwds)
 
-    def make_child(self, schema, name=None, metadata=None):
+    def make_child(self, schema, name=None):
         """
         Make a child instance, appropriately defining the parent and context
         """
         return self.__class__(schema, context=self.context, parent=self,
-                              name=name, metadata=metadata)
+                              name=name)
 
     def __getitem__(self, key):
         return self.schema[key]

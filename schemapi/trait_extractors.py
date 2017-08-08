@@ -231,7 +231,6 @@ class RefTrait(Extractor):
 
     def trait_code(self, **kwargs):
         ref = self.schema.wrapped_ref()
-        ref.metadata = self.schema.metadata
         return ref.trait_code
 
     def trait_imports(self):
