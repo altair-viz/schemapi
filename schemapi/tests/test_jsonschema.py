@@ -99,3 +99,15 @@ def test_get_reference():
         obj1 = js.get_reference(definition_code)
         obj2 = JSONSchema(definition)
         assert obj1.trait_code == obj2.trait_code
+
+
+def test_copy():
+    schema = {'properties': {'i': {'type': 'integer'}}}
+
+    js = JSONSchema(schema, root_name='RootInstance',
+                    definition_tags=('defs',))
+    js2 = js.copy()
+
+    assert js.schema == js2.schema
+    assert js.root_name == js2.root_name
+    assert js.definition_tags == js2.definition_tags

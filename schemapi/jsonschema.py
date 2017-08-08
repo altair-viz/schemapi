@@ -145,7 +145,8 @@ class JSONSchema(object):
             schema = copy.deepcopy(self.schema)
         else:
             schema = self.schema
-        kwds = dict(schema=schema, root_name=root_name,
+        kwds = dict(schema=schema, root_name=self.root_name,
+                    definition_tags=self.definition_tags,
                     context=context, parent=self.parent, name=self.name)
         kwds.update(kwargs)
         return self.__class__(**kwds)
