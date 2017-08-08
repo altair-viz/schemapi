@@ -3,7 +3,6 @@ import pytest
 import traitlets as T
 
 from .. import JSONSchema
-from ..utils import load_dynamic_module
 
 
 @pytest.mark.parametrize('spec,output',
@@ -65,7 +64,7 @@ def test_required_keyword():
     }
     js = JSONSchema(schema)
 
-    load_dynamic_module('_schema', js.source_tree(), reload_module=True)
+    js.load_module('_schema', reload_module=True)
     from _schema import jstraitlets as jst
     from _schema import Root
 

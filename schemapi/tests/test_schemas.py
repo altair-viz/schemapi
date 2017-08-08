@@ -8,7 +8,6 @@ import jsonschema
 from jsonschema._utils import load_schema
 
 from .. import JSONSchema
-from ..utils import load_dynamic_module
 
 
 SCHEMA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -32,7 +31,6 @@ def test_parse_schema(schema):
         pytest.xfail("vega schema has unsupported elements")
     schema = LOADED_SCHEMAS[schema]
     modulename = '_schema'
-    traitlets_obj = JSONSchema(schema, module=modulename,
-                               definition_tags=['refs', 'defs', 'definitions'])
-    load_dynamic_module(modulename, traitlets_obj.source_tree(),
-                        reload_module=True)
+    obj = JSONSchema(schema, module=modulename,
+                     definition_tags=['refs', 'defs', 'definitions'])
+    obj.load_module(modulename, reload_module=True)

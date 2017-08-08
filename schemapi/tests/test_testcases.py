@@ -8,7 +8,6 @@ import jsonschema
 import pytest
 
 from .. import JSONSchema
-from ..utils import load_dynamic_module
 from . import _testcases
 
 testcases = {key: getattr(_testcases, key)
@@ -50,8 +49,7 @@ def test_testcases_traitlets(testcase):
         print(code)
         print()
 
-    schema = load_dynamic_module(modulename, traitlets_obj.source_tree(),
-                                 reload_module=True)
+    schema = traitlets_obj.load_module(modulename, reload_module=True)
 
     for instance in valid:
         schema.Root.from_dict(instance)
@@ -78,10 +76,8 @@ def test_dict_round_trip(testcase):
         print(code)
         print()
 
-    schema = load_dynamic_module(modulename, traitlets_obj.source_tree(),
-                                 reload_module=True)
-    from _schema import Root
+    schema = traitlets_obj.load_module(modulename, reload_module=True)
 
     for instance in valid:
-        obj = Root.from_dict(instance)
+        obj = schema.Root.from_dict(instance)
         assert obj.to_dict() == instance

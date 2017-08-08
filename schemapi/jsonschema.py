@@ -369,7 +369,7 @@ class JSONSchema(object):
         This can be passed to ``schemapi.utils.load_dynamic_module``
         or to ``schemapi.utils.save_module``
 
-        See also the ``write_module()`` method.
+        See also the ``write_module()`` and ``load_module()`` methods.
         """
         assert self.is_root
 
@@ -411,12 +411,57 @@ class JSONSchema(object):
             tree.update(plugin.code_files(self))
         return tree
 
-    def write_module(self, module, path=None, quiet=True):
-        from .utils import save_module
-        if path is None:
-            path = os.path.abspath(os.getcwd())
-        print("saving to {module} at {path}".format(module=module, path=path))
-        save_module(self.source_tree(), module, path, quiet=quiet)
+    def write_module(self, modulename, location=None, quiet=True):
+        """Write the module to disk
+
+        Parameters
+        ----------
+        modulename : string
+            The name of the module to create on disk
+        location : string (optional)
+            The path at which to save the module. The default is the current
+            working directory.
+        quiet : boolean (optional, default=True)
+            if True, then silence printed output.
+
+        Returns
+        -------
+        module_path : string
+            The path to the resulting module
+
+        Notes
+        -----
+        if you specify modulename='modulename' and location='/path/to/dir/',
+        the module will be created at '/path/to/dir/modulename'.
+        If this directory already exists, an error will be raised.
+        """
+        if location is None:
+            location = os.path.abspath(os.getcwd())
+        if not quiet:
+            print("saving to {0} at {1}".format(modulename, location))
+        return utils.save_module(spec=self.source_tree(),
+                                 name=modulename,
+                                 location=location,
+                                 quiet=quiet)
+
+    def load_module(self, modulename, reload_module=False):
+        """Dynamically load the module into memory
+
+        Parameters
+        ----------
+        modulename : string
+            The name of the module to create on disk
+        reload_module : boolean
+            If True, then remove any previous version of the package
+
+        Returns
+        -------
+        mod : ModuleType
+            The dynamically loaded module
+        """
+        return utils.load_dynamic_module(name=modulename,
+                                         specification=self.source_tree(),
+                                         reload_module=reload_module)
 
 
 
