@@ -285,8 +285,14 @@ def test_metadata():
            'bar': 4}
     metadata = {key:val for key, val in dct.items()
                 if key.startswith('$')}
+    original_metadata = Foo._metadata.copy()
 
+    # Make sure metadata is properly added
     f = Foo.from_dict(dct)
     assert f._metadata == metadata
 
+    # Make sure metadata is properly exported
     assert f.to_dict() == dct
+
+    # Make sure above doesn't change Foo's internal class dict
+    assert Foo._metadata == original_metadata

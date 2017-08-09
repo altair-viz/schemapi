@@ -66,6 +66,9 @@ class JSONHasTraits(T.HasTraits):
     _metadata = {'$schema': undefined, '$id': undefined}
 
     def __init__(self, **kwargs):
+        # make a copy of the _metadata so we can modify locally
+        self._metadata = self._metadata.copy()
+
         # Add default traits if needed
         default = self._get_additional_traits()
         # TODO: protect against overwriting class attributes defined above.
@@ -702,12 +705,14 @@ class FromDict(Visitor):
         additional_traits = cls._get_additional_traits()
 
         # Extract metadata, if it exists
-        dct = dct.copy()
-        for key in obj._metadata:
-            obj._metadata[key] = dct.pop(key, undefined)
+        obj._metadata.update({prop: dct[prop]
+                              for prop in obj._metadata
+                              if prop in dct})
 
         # Extract all other items, assigning to appropriate trait
         for prop, val in dct.items():
+            if prop in obj._metadata:
+                continue
             subtrait = obj.traits().get(prop, additional_traits)
             if not subtrait:
                 raise T.TraitError("trait {0} not valid in class {1}"
