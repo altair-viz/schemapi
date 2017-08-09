@@ -274,3 +274,19 @@ def test_to_python():
     foo = Foo(a=4)
     with pytest.raises(T.TraitError):
         foo.to_python()
+
+
+def test_metadata():
+    class Foo(jst.JSONHasTraits):
+        bar = jst.JSONInteger()
+
+    dct = {'$schema': 'http://myschema.com/schema.json',
+           '$id': '#/my/context/',
+           'bar': 4}
+    metadata = {key:val for key, val in dct.items()
+                if key.startswith('$')}
+
+    f = Foo.from_dict(dct)
+    assert f._metadata == metadata
+
+    assert f.to_dict() == dct

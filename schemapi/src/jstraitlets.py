@@ -61,6 +61,10 @@ class JSONHasTraits(T.HasTraits):
     _required_traits = []  # traits required at export. If undefined, a traiterror will be raised
     _converter_registry = {}  # converter classes to use for to_dict, from_dict
 
+    # Metadata is meant to hold top-level metadata keys used in JSON Schema,
+    # for example '$schema' and/or '$id'
+    _metadata = {'$schema': undefined, '$id': undefined}
+
     def __init__(self, **kwargs):
         # Add default traits if needed
         default = self._get_additional_traits()
@@ -660,6 +664,9 @@ class ToDict(Visitor):
             elif key in obj._required_traits:
                 raise T.TraitError("Required trait '{0}' is undefined'"
                                    "".format(key))
+        for key, val in obj._metadata.items():
+            if val is not undefined:
+                dct[key] = val
         return dct
 
 
@@ -694,12 +701,19 @@ class FromDict(Visitor):
             obj = cls('')
         additional_traits = cls._get_additional_traits()
 
+        # Extract metadata, if it exists
+        dct = dct.copy()
+        for key in obj._metadata:
+            obj._metadata[key] = dct.pop(key, undefined)
+
+        # Extract all other items, assigning to appropriate trait
         for prop, val in dct.items():
             subtrait = obj.traits().get(prop, additional_traits)
             if not subtrait:
                 raise T.TraitError("trait {0} not valid in class {1}"
                                    "".format(prop, cls))
             obj.set_trait(prop, self.visit(subtrait, val, *args, **kwargs))
+
         return obj
 
     def visit_Instance(self, trait, dct, *args, **kwargs):
