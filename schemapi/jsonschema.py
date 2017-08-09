@@ -483,8 +483,6 @@ class JSONSchema(object):
                                          reload_module=reload_module)
 
 
-
-
 class JSONSchemaPlugin(object):
     """Abstract base class for JSONSchema plugins.
 

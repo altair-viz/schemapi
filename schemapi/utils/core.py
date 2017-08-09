@@ -9,6 +9,7 @@ def hash_schema(schema, hashfunc=hash):
     Unlike the built-in hash() function, this handles
     dicts, lists, and sets in addition to tuples.
     """
+
     def make_hashable(val):
         if isinstance(val, list):
             return tuple(make_hashable(v) for v in val)
@@ -18,6 +19,7 @@ def hash_schema(schema, hashfunc=hash):
             return frozenset((k, make_hashable(v)) for k, v in val.items())
         else:
             return val
+
     return hashfunc(make_hashable(schema))
 
 
@@ -50,12 +52,15 @@ def format_description(content, width=70, indent=8, indent_first=False):
     """Format documentation description"""
     # TODO: document, test, and use
     lines = content.splitlines()
+
     def format_line(line):
         if line.startswith('-'):
             return textwrap.indent(textwrap.fill(line, width - indent - 2),
                                    (indent + 2) * ' ')[2:]
         else:
-            return textwrap.indent(textwrap.fill(line, width - indent), indent * ' ')
+            return textwrap.indent(textwrap.fill(line, width - indent),
+                                   indent * ' ')
+
     result = '\n'.join(format_line(line) for line in lines if line)
     if not indent_first:
         result = result.lstrip()

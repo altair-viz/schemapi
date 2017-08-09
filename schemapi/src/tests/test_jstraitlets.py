@@ -12,7 +12,8 @@ def test_undefined_singleton():
 def generate_test_cases():
     """yield tuples of (trait, failcases, passcases)"""
     # Anys
-    yield (jst.JSONAny(), [], [1, "hello", {'a':2}, [1, 2, 3], None, undefined])
+    yield (jst.JSONAny(), [],
+           [1, "hello", {'a': 2}, [1, 2, 3], None, undefined])
 
     # Nulls
     yield (jst.JSONNull(), [0, "None"], [None, undefined])
@@ -64,7 +65,7 @@ def generate_test_cases():
     yield (jst.JSONEnum([1, "2", None], allow_undefined=False), [undefined], [])
 
     # Instances
-    yield (jst.JSONInstance(dict), [{1}, (1,), [1]], [{1:2}, undefined])
+    yield (jst.JSONInstance(dict), [{1}, (1,), [1]], [{1: 2}, undefined])
     yield (jst.JSONInstance(dict, allow_undefined=False), [undefined], [])
 
     # Unions and other collections
@@ -87,11 +88,12 @@ def test_traits(trait, failcases, passcases):
         trait._validate(obj, passcase)
 
     for failcase in failcases:
-        with pytest.raises(T.TraitError) as err:
+        with pytest.raises(T.TraitError):
             trait._validate(obj, failcase)
 
 
 def test_hastraits_defaults():
+
     class Foo(jst.JSONHasTraits):
         _additional_traits = [T.Integer()]
         name = T.Unicode()
@@ -100,14 +102,15 @@ def test_hastraits_defaults():
     f.set_trait('year', 2000)
     assert set(f.trait_names()) == {'name', 'age', 'year'}
 
-    with pytest.raises(T.TraitError) as err:
+    with pytest.raises(T.TraitError):
         f.set_trait('foo', 'abc')
 
-    with pytest.raises(T.TraitError) as err:
+    with pytest.raises(T.TraitError):
         f.set_trait('age', 'blah')
 
 
 def test_hastraits_required():
+
     class Foo(jst.JSONHasTraits):
         _required_traits = ['name']
         name = jst.JSONString()
@@ -117,7 +120,7 @@ def test_hastraits_required():
     f2 = Foo(age=32)
 
     # contains all required pieces
-    D = f1.to_dict()
+    f1.to_dict()
 
     with pytest.raises(T.TraitError) as err:
         f2.to_dict()
@@ -125,15 +128,17 @@ def test_hastraits_required():
 
 
 def test_no_defaults():
+
     class Foo(jst.JSONHasTraits):
         _additional_traits = False
         name = T.Unicode()
 
-    with pytest.raises(T.TraitError) as err:
-        f = Foo(name="Sarah", year=2000)
+    with pytest.raises(T.TraitError):
+        Foo(name="Sarah", year=2000)
 
 
 def test_AnyOfObject():
+
     class Foo(jst.JSONHasTraits):
         intval = T.Integer()
         flag = T.Bool()
@@ -150,13 +155,13 @@ def test_AnyOfObject():
     FooBar(intval=5, flag=True)
 
     with pytest.raises(T.TraitError):
-        h = FooBar(strval=666, flag=False)
+        FooBar(strval=666, flag=False)
     with pytest.raises(T.TraitError):
-        h = FooBar(strval='hello', flag='bad arg')
+        FooBar(strval='hello', flag='bad arg')
     with pytest.raises(T.TraitError):
-        h = FooBar(intval='bad arg', flag=False)
+        FooBar(intval='bad arg', flag=False)
     with pytest.raises(T.TraitError):
-        h = FooBar(intval=42, flag='bad arg')
+        FooBar(intval=42, flag='bad arg')
 
     # Test from_dict
     FooBar.from_dict({'strval': 'hello', 'flag': True})
@@ -193,6 +198,7 @@ def test_to_from_dict_with_defaults():
 
 
 def test_to_dict_explicit_null():
+
     class MyClass(jst.JSONHasTraits):
         bar = jst.JSONString(allow_none=True, allow_undefined=True)
 
@@ -202,31 +208,38 @@ def test_to_dict_explicit_null():
 
 
 def test_defaults():
+
     class Foo(jst.JSONHasTraits):
         arr = jst.JSONArray(jst.JSONString())
         val = jst.JSONInstance(dict)
+
     assert Foo().to_dict() == {}
 
 
 def test_skip():
+
     class Foo(jst.JSONHasTraits):
         _skip_on_export = ['baz']
         bar = jst.JSONNumber()
         baz = jst.JSONNumber()
+
     f = Foo(bar=1, baz=2)
     assert f.to_dict() == {'bar': 1}
 
 
 def test_finalize():
+
     class Foo(jst.JSONHasTraits):
         bar = jst.JSONNumber()
         bar_times_2 = jst.JSONNumber()
         L = jst.JSONArray(jst.JSONString())
+
         def _finalize(self):
             self.bar_times_2 = 2 * self.bar
             super(Foo, self)._finalize()
+
     f = Foo(bar=4, L=['a', 'b', 'c'])
-    assert f.to_dict() == {'bar': 4, 'bar_times_2': 8, 'L':['a', 'b', 'c']}
+    assert f.to_dict() == {'bar': 4, 'bar_times_2': 8, 'L': ['a', 'b', 'c']}
 
 
 def test_contains():
@@ -252,12 +265,12 @@ def test_to_python():
         e = jst.JSONArray(jst.JSONInstance(Foo))
 
     D = {'c': [1, 2, 3], 'd': {'a': 5, 'b': 'blah'},
-         'e':[{'a': 3, 'b': 'foo'}, {'a': 4, 'b': 'bar'}]}
+         'e': [{'a': 3, 'b': 'foo'}, {'a': 4, 'b': 'bar'}]}
     obj = Bar.from_dict(D)
     obj2 = eval(obj.to_python())
     assert obj2.to_dict() == obj.to_dict() == D
 
     # Make sure there is an error if required traits are missing
     foo = Foo(a=4)
-    with pytest.raises(T.TraitError) as err:
+    with pytest.raises(T.TraitError):
         foo.to_python()

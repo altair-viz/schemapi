@@ -36,6 +36,7 @@ class UndefinedType(object):
     def __repr__(self):
         return "undefined"
 
+
 undefined = UndefinedType()
 
 

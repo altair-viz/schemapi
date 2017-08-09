@@ -211,8 +211,7 @@ class RefObject(Extractor):
     def object_code(self):
         ref = self.schema.wrapped_ref()
         template = jinja2.Template(ANYOF_TEMPLATE)
-        return template.render(cls=self.schema,
-                               options=[self.schema.wrapped_ref().full_classname])
+        return template.render(cls=self.schema, options=[ref.full_classname])
 
     def trait_imports(self):
         ref = self.schema.wrapped_ref()
@@ -354,6 +353,7 @@ class Enum(Extractor):
     def trait_description(self, **kwargs):
         return '{{0}}'.format('|'.join(repr(val)
                                        for val in self.schema['enum']))
+
     def trait_code(self, **kwargs):
         return construct_function_call('jst.JSONEnum',
                                        self.schema["enum"],

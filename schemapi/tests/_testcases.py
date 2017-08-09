@@ -200,7 +200,7 @@ simple_references = {
         },
         'definitions': {
             'StringOrInt': {
-                'type' : ['string', 'integer']
+                'type': ['string', 'integer']
             },
             'CompoundObject': {
                 'type': 'object',
@@ -316,7 +316,7 @@ simple_not = {
 
 passthrough_ref = {
     'schema': {
-        '$ref' : '#/definitions/TopLevel',
+        '$ref': '#/definitions/TopLevel',
         'definitions': {
             'TopLevel': {
                 'properties': {
@@ -377,7 +377,7 @@ circular_reference = {
     'valid': [
         {'repeat': 'foo'},
         {'repeat': {'repeat': 'foo'}},
-        #{'repeat': {'repeat': {'repeat': 'foo'}}},
+        {'repeat': {'repeat': {'repeat': 'foo'}}},
     ],
     'invalid': []
 }
@@ -435,7 +435,7 @@ anyofobject_test = {
             },
             'Foo2': {
                 'properties': {
-                    'val': {'type':'string'}
+                    'val': {'type': 'string'}
                 }
             }
         }
@@ -463,7 +463,7 @@ oneofobject_test = {
             },
             'Foo2': {
                 'properties': {
-                    'val': {'type':'string'}
+                    'val': {'type': 'string'}
                 }
             }
         }
@@ -492,7 +492,7 @@ allofobject_test = {
             },
             'Foo2': {
                 'properties': {
-                    'name': {'type':'string'}
+                    'name': {'type': 'string'}
                 }
             }
         }

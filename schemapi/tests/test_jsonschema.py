@@ -65,12 +65,7 @@ def test_required_keyword():
     js = JSONSchema(schema)
 
     js.load_module('_schema', reload_module=True)
-    from _schema import jstraitlets as jst
     from _schema import Root
-
-    # Required for the eval-based tests below
-    def _localname(name):
-        return "{0}.{1}".format(__name__, name)
 
     assert Root()._required_traits == js.required
 
