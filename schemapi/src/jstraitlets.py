@@ -60,6 +60,7 @@ class JSONHasTraits(T.HasTraits):
     _skip_on_export = []  # traits to skip when exporting to dictionary
     _required_traits = []  # traits required at export. If undefined, a traiterror will be raised
     _converter_registry = {}  # converter classes to use for to_dict, from_dict
+    _trait_name_map = {}  # mapping from trait names to schema names
 
     # Metadata is meant to hold top-level metadata keys used in JSON Schema,
     # for example '$schema' and/or '$id'
@@ -676,18 +677,19 @@ class ToDict(Visitor):
 
     def visit_JSONHasTraits(self, obj, *args, **kwargs):
         dct = {}
-        for key in obj.trait_names():
-            if key in obj._skip_on_export:
+        for traitlets_key in obj.trait_names():
+            schema_key = obj._trait_name_map.get(traitlets_key, traitlets_key)
+            if traitlets_key in obj._skip_on_export:
                 continue
-            val = getattr(obj, key, undefined)
+            val = getattr(obj, traitlets_key, undefined)
             if val is not undefined:
-                dct[key] = self.visit(val, *args, **kwargs)
-            elif key in obj._required_traits:
+                dct[schema_key] = self.visit(val, *args, **kwargs)
+            elif traitlets_key in obj._required_traits:
                 raise T.TraitError("Required trait '{0}' is undefined'"
-                                   "".format(key))
-        for key, val in obj._metadata.items():
-            if val is not undefined:
-                dct[key] = val
+                                   "".format(traitlets_key))
+        for schema_key, val in obj._metadata.items():
+            if val is not undefined and schema_key not in dct:
+                dct[schema_key] = val
         return dct
 
 
@@ -722,20 +724,19 @@ class FromDict(Visitor):
             obj = cls('')
         additional_traits = cls._get_additional_traits()
 
-        # Extract metadata, if it exists
-        obj._metadata.update({prop: dct[prop]
-                              for prop in obj._metadata
-                              if prop in dct})
-
         # Extract all other items, assigning to appropriate trait
-        for prop, val in dct.items():
-            if prop in obj._metadata:
-                continue
-            subtrait = obj.traits().get(prop, additional_traits)
-            if not subtrait:
-                raise T.TraitError("trait {0} not valid in class {1}"
-                                   "".format(prop, cls))
-            obj.set_trait(prop, self.visit(subtrait, val, *args, **kwargs))
+        reverse_name_map = {v:k for k, v in obj._trait_name_map.items()}
+        for schema_key, val in dct.items():
+            if schema_key in obj._metadata:
+                obj._metadata[schema_key] = val
+            else:
+                trait_key = reverse_name_map.get(schema_key, schema_key)
+                subtrait = obj.traits().get(trait_key, additional_traits)
+                if not subtrait:
+                    raise T.TraitError("trait {0} not valid in class {1}"
+                                       "".format(trait_key, cls))
+                obj.set_trait(trait_key,
+                              self.visit(subtrait, val, *args, **kwargs))
 
         return obj
 

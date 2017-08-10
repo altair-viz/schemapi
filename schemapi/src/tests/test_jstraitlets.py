@@ -296,3 +296,14 @@ def test_metadata():
 
     # Make sure above doesn't change Foo's internal class dict
     assert Foo._metadata == original_metadata
+
+
+def test_trait_name_map():
+    class Foo(jst.JSONHasTraits):
+        _trait_name_map = {'for_': 'for', 'schema': '$schema'}
+        for_ = jst.JSONString()
+        schema = jst.JSONString()
+
+    dct = {'for': 'abc', '$schema': 'http://www.schema.com/schema.json'}
+    f = Foo.from_dict(dct)
+    assert f.to_dict() == dct
