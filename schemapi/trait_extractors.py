@@ -45,17 +45,17 @@ class {{ cls.classname}}(jst.JSONEnum):
 
 ANYOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.AnyOfObject):
-    _classes = ({% for name in options %}{{ name }}, {%- endfor %})
+    _classes = ({% for opt in options %}{{ opt }}, {%- endfor %})
 '''
 
 ONEOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.OneOfObject):
-    _classes = ({% for name in options %}{{ name }}, {%- endfor %})
+    _classes = ({% for opt in options %}{{ opt }}, {%- endfor %})
 '''
 
 ALLOF_TEMPLATE = '''
 class {{ cls.classname }}(jst.AllOfObject):
-    _classes = ({% for name in options %}{{ name }}, {%- endfor %})
+    _classes = ({% for opt in options %}{{ opt }}, {%- endfor %})
 '''
 
 
@@ -134,9 +134,9 @@ class AnyOfObject(Extractor):
 
     def object_code(self):
         template = jinja2.Template(ANYOF_TEMPLATE)
-        return template.render(cls=self.schema,
-                               options=[self.schema.make_child(ref).full_classname
-                                        for ref in self.schema['anyOf']])
+        options = [self.schema.make_child(ref).trait_code
+                   for ref in self.schema['anyOf']]
+        return template.render(cls=self.schema, options=options)
 
 
 class OneOfObject(Extractor):
@@ -159,9 +159,9 @@ class OneOfObject(Extractor):
 
     def object_code(self):
         template = jinja2.Template(ONEOF_TEMPLATE)
-        return template.render(cls=self.schema,
-                               options=[self.schema.make_child(ref).full_classname
-                                        for ref in self.schema['oneOf']])
+        options = [self.schema.make_child(ref).trait_code
+                   for ref in self.schema['oneOf']]
+        return template.render(cls=self.schema, options=options)
 
 
 class AllOfObject(Extractor):
@@ -186,9 +186,9 @@ class AllOfObject(Extractor):
 
     def object_code(self):
         template = jinja2.Template(ALLOF_TEMPLATE)
-        return template.render(cls=self.schema,
-                               options=[self.schema.make_child(ref).full_classname
-                                        for ref in self.schema['allOf']])
+        options = [self.schema.make_child(ref).trait_code
+                   for ref in self.schema['allOf']]
+        return template.render(cls=self.schema, options=options)
 
 
 class RefObject(Extractor):
@@ -211,7 +211,7 @@ class RefObject(Extractor):
     def object_code(self):
         ref = self.schema.wrapped_ref()
         template = jinja2.Template(ANYOF_TEMPLATE)
-        return template.render(cls=self.schema, options=[ref.full_classname])
+        return template.render(cls=self.schema, options=[ref.trait_code])
 
     def trait_imports(self):
         ref = self.schema.wrapped_ref()
@@ -480,6 +480,7 @@ class Object(Extractor):
         trait_codes = {name: Variable(prop.trait_code) for (name, prop)
                        in self.schema.wrapped_properties().items()}
         trait_codes['_additional_traits'] = Variable(self.schema.additional_traits)
+        trait_codes['_required_traits'] = self.schema.required
         defn = construct_function_call("T.MetaHasTraits", 'Mapping',
                                        (Variable(self.schema.baseclass),),
                                        trait_codes)

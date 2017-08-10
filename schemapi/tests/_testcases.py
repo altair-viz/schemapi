@@ -449,6 +449,30 @@ anyofobject_test = {
     ]
 }
 
+anyofobject_anonymous_test = {
+    'schema': {
+        'anyOf': [
+            {
+                'properties': {'str': {'type': 'string'}},
+                'additionalProperties': False,
+            },
+            {
+                'properties': {'int': {'type': 'integer'}},
+                'additionalProperties': False
+            }
+        ]
+    },
+    'valid': [
+        {'str': 'hello'},
+        {'int': 42}
+    ],
+    'invalid': [
+        {'str': 'hello', 'int': 42},
+        {'str': 42},
+        {'int': 'hello'}
+    ]
+}
+
 oneofobject_test = {
     'schema': {
         'oneOf': [
@@ -474,6 +498,30 @@ oneofobject_test = {
     ],
     'invalid': [
         {'val': None}
+    ]
+}
+
+oneofobject_anonymous_test = {
+    'schema': {
+        'oneOf': [
+            {
+                'properties': {'str': {'type': 'string'}},
+                'additionalProperties': False,
+            },
+            {
+                'properties': {'int': {'type': 'integer'}},
+                'additionalProperties': False
+            }
+        ]
+    },
+    'valid': [
+        {'str': 'hello'},
+        {'int': 42}
+    ],
+    'invalid': [
+        {'str': 'hello', 'int': 42},
+        {'str': 42},
+        {'int': 'hello'}
     ]
 }
 
@@ -503,6 +551,30 @@ allofobject_test = {
     'invalid': [
         {'score': 'blah'},
         {'name': 100}
+    ]
+}
+
+allofobject_anonymous_test = {
+    'schema': {
+        'allOf': [
+            {
+                'properties': {'str': {'type': 'string'}},
+                'required': ['str']
+            },
+            {
+                'properties': {'int': {'type': 'integer'}},
+                'required': ['int']
+            }
+        ]
+    },
+    'invalid': [
+        {'str': 'hello'},
+        {'int': 42},
+        {'str': 42},
+        {'int': 'hello'}
+    ],
+    'valid': [
+        {'str': 'hello', 'int': 42},
     ]
 }
 

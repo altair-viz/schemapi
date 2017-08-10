@@ -42,7 +42,7 @@ def test_testcases_traitlets(testcase):
     traitlets_obj = JSONSchema(schema)
 
     for key, code in traitlets_obj.source_tree().items():
-        if key in ['jstraitlets.py']:
+        if key in ['jstraitlets.py', 'tests']:
             continue
         # Print code here... useful for debugging when errors happen
         print(70 * '#')
@@ -55,7 +55,8 @@ def test_testcases_traitlets(testcase):
         schema.Root.from_dict(instance)
     for instance in invalid:
         with pytest.raises(T.TraitError):
-            schema.Root.from_dict(instance)
+            r = schema.Root.from_dict(instance)
+            r.to_dict()  # catches unfilled requirements
 
 
 @pytest.mark.parametrize('testcase', testcases.keys())
@@ -69,7 +70,7 @@ def test_dict_round_trip(testcase):
     traitlets_obj = JSONSchema(schema)
 
     for key, code in traitlets_obj.source_tree().items():
-        if key in ['jstraitlets.py']:
+        if key in ['jstraitlets.py', 'tests']:
             continue
         # Print code here... useful for debugging when errors happen
         print(70 * '#')

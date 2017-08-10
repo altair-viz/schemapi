@@ -167,10 +167,18 @@ class AnyOfObject(JSONHasTraits):
     """A HasTraits class which selects any among a set of specified types"""
     _classes = []
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    def _class_defs(self):
         for cls in self._classes:
+            if isinstance(cls, JSONInstance):
+                cls = cls.klass
             if isinstance(cls, six.string_types):
                 cls = import_item(cls)
+            yield cls
+
+
+    def __init__(self, *args, **kwargs):
+        for cls in self._class_defs():
             # TODO: add a second pass where we allow additional properties?
             if all(key in cls.class_traits() for key in kwargs):
                 try:
@@ -202,12 +210,22 @@ class AllOfObject(JSONHasTraits):
     # for each? This is required for full parity with JSONSchema
     _classes = []
 
-    def __init__(self, *args, **kwargs):
-        all_traits = {}
+    @classmethod
+    def _class_defs(self):
         for cls in self._classes:
+            if isinstance(cls, JSONInstance):
+                cls = cls.klass
             if isinstance(cls, six.string_types):
                 cls = import_item(cls)
+            yield cls
+
+    def __init__(self, *args, **kwargs):
+        # TODO: handle _additional_traits
+        all_traits = {}
+        self._required_traits = []
+        for cls in self._class_defs():
             all_traits.update(cls.class_traits())
+            self._required_traits.extend(cls._required_traits)
         self.add_traits(**{name: copy.copy(trait) for name, trait
                            in all_traits.items()})
         super(AllOfObject, self).__init__(*args, **kwargs)
@@ -747,9 +765,7 @@ class FromDict(Visitor):
 
     def clsvisit_AnyOfObject(self, trait, dct, *args, **kwargs):
         # TODO: match additional_traits as well?
-        for subcls in trait._classes:
-            if isinstance(subcls, six.string_types):
-                subcls = import_item(subcls)
+        for subcls in trait._class_defs():
             if all(key in subcls.class_traits() for key in dct):
                 try:
                     obj = self.clsvisit(subcls, dct)
