@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from .. import hash_schema
+from .. import hash_schema, regularize_name, trait_name_map
 
 
 def generate_schemas():
@@ -46,3 +46,27 @@ def test_hash_schema(schema):
     """Test that schemas compile correctly, even when order is changed"""
     hsh = hash_schema(schema)
     assert all(hash_schema(scramble(schema)) == hsh for i in range(10))
+
+
+def test_regularize_name():
+    assert regularize_name('for') == 'for_'
+    assert regularize_name('__foo') == '__foo'
+    assert regularize_name('as') == 'as_'
+    assert regularize_name('_lambda') == '_lambda'
+    assert regularize_name('$schema') == 'schema'
+    assert regularize_name('__7abc') == '__7abc'
+    assert regularize_name('Foo<(string)>') == 'Foo_string'
+
+    duplicates = ['for_', 'for_1']
+    assert regularize_name('for', duplicates) == 'for_2'
+    assert regularize_name('for_', duplicates) == 'for_2'
+    assert regularize_name('for_1', duplicates) == 'for_2'
+
+
+def test_trait_name_map():
+    names = ['for', 'for_', '$for', '$schema', '$$FOO', 'bar', '_abc1']
+    mapping = {'for_1': 'for',
+               'for_2': '$for',
+               'schema': '$schema',
+               'FOO': '$$FOO'}
+    assert trait_name_map(names) == mapping

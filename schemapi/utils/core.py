@@ -23,8 +23,11 @@ def hash_schema(schema, hashfunc=hash):
     return hashfunc(make_hashable(schema))
 
 
-def regularize_name(name):
+def regularize_name(name, duplicates=[]):
     """Regaularize a string to be a valid Python identifier
+
+    Optionally, ``duplicates`` can be provided and the resulting name will
+    be assured to avoid dublicates
 
     Examples
     --------
@@ -35,17 +38,48 @@ def regularize_name(name):
     >>> regularize_name("9abc")
     '_9abc'
     """
-    if name == '$schema':
-        return 'schema'
-    elif name == '$id':
-        return 'id'
-    name, subs = re.subn('[^_a-zA-Z0-9]+', '_', name)
-    name = name.strip('_')
-    if name[0].isdigit():
-        name = '_' + name
-    if keyword.iskeyword(name):
-        name = name + '_'
+
+    is_identifier = lambda s: (re.match("^[_A-Za-z][_a-zA-Z0-9]*$", s)
+                               and not keyword.iskeyword(s))
+
+    if not is_identifier(name):
+        # replace all non alphanumeric characters with an underscore
+        name, subs = re.subn('[^_a-zA-Z0-9]+', '_', name)
+
+        # strip leading and trailing underscores
+        name = name.strip('_')
+
+        # if the first character is a digit, use a leading underscore
+        if name[0].isdigit():
+            name = '_{0}'.format(name)
+
+        # if the result is a reserved Python keyword, add a trailing underscore
+        if keyword.iskeyword(name):
+            name = '{0}_'.format(name)
+
+    # if the result is among duplicates, add an integer at the end
+    base_count = re.compile('^([_A-Za-z0-9]+?)([0-9]*)$')
+    if name in duplicates:
+        base, count = base_count.match(name).groups()
+        count = int(count) if count else 0
+        while name in duplicates:
+            count += 1
+            name = "{0}{1}".format(base, count)
     return name
+
+
+def trait_name_map(names):
+    """Build a mapping of regularized names to input names
+
+    Names which require no modification are excluded from the mapping
+    """
+    mapping = {}
+    for name in names:
+        duplicates = (set(names) - {name}) | set(mapping.keys())
+        reg_name = regularize_name(name, duplicates)
+        if name != reg_name:
+            mapping[reg_name] = name
+    return mapping
 
 
 def format_description(content, width=70, indent=8, indent_first=False):
