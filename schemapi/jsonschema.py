@@ -273,6 +273,10 @@ class JSONSchema(object):
             return "[{0}]".format(trait.trait_code)
 
     @property
+    def trait_map(self):
+        return utils.trait_name_map(sorted(self.properties.keys()))
+
+    @property
     def import_statement(self):
         return self.trait_extractor.import_statement()
 
@@ -284,7 +288,8 @@ class JSONSchema(object):
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
-        return OrderedDict((utils.regularize_name(name), self.make_child(val))
+        reverse_map = {v:k for k, v in self.trait_map.items()}
+        return OrderedDict((reverse_map.get(name, name), self.make_child(val))
                            for name, val in sorted(self.properties.items()))
 
     def wrapped_ref(self):

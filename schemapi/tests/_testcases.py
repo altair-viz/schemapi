@@ -632,3 +632,19 @@ explicit_null = {
     },
     'valid': [{'a': 42, 'b': None}, {'a': None, 'b': 42}],
 }
+
+
+nonstandard_property_names = {
+    'schema': {
+        'properties': {
+            'for': {'type': 'integer'},
+            '$for': {'type': 'string'},
+            'lambda': {'type': 'string'},
+            '123': {'type': 'string'}
+        },
+        'additionalProperties': False
+    },
+    'valid': [
+        {'$for': 'abc', 'lambda': 'def', 'for': 42, '123': 'ghi'}
+    ]
+}
