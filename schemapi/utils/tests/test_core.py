@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from .. import hash_schema, regularize_name, trait_name_map
+from .. import hash_schema, regularize_name, trait_name_map, sorted_repr
 
 
 def generate_schemas():
@@ -70,3 +70,20 @@ def test_trait_name_map():
                'schema': '$schema',
                'FOO': '$$FOO'}
     assert trait_name_map(names) == mapping
+
+
+def test_sorted_repr():
+    D = {'A': 4, 'B': 5}
+    reprD = sorted_repr(D)
+    assert reprD == "{'A': 4, 'B': 5}"
+    assert eval(reprD) == D
+
+    D = {'1': 4, 2: 5}
+    reprD = sorted_repr(D)
+    assert reprD in ["{'1': 4, 2: 5}", "{2: 5, '1': 4}"]
+    assert eval(reprD) == D
+
+    D = {'B': {'y': 4, 'x':3}, 'A': 5}
+    reprD = sorted_repr(D)
+    assert reprD == "{'A': 5, 'B': {'x': 3, 'y': 4}}"
+    assert eval(reprD) == D

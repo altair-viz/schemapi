@@ -3,6 +3,19 @@ import keyword
 import textwrap
 
 
+def sorted_repr(obj):
+    """return repr(obj), but if obj is a dict then ensure keys are sorted"""
+    if isinstance(obj, dict):
+        try:
+            items = sorted(obj.items())
+        except TypeError: # items cannot be sorted
+            items = obj.items()
+        return '{{{0}}}'.format(', '.join(repr(key) + ': ' + sorted_repr(val)
+                                          for key, val in items))
+    else:
+        return repr(obj)
+
+
 def hash_schema(schema, hashfunc=hash):
     """Compute a unique hash for a (nested) schema
 

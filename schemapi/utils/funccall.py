@@ -1,4 +1,5 @@
 """Utilities for constructing function calls"""
+from .core import sorted_repr
 
 
 class Variable(object):
@@ -23,10 +24,10 @@ def construct_function_call(funcname, *args, **kwargs):
     >>> construct_function_call("foo", Variable('bar'), default=True)
     'foo(bar, default=True)'
     """
-    args = ', '.join(repr(arg) for arg in args)
+    args = ', '.join(sorted_repr(arg) for arg in args)
     if args and kwargs:
         args += ', '
-    kwargs = ', '.join(key + '=' + repr(val)
+    kwargs = ', '.join(key + '=' + sorted_repr(val)
                        for key, val in sorted(kwargs.items()))
     return "{funcname}({args}{kwargs})".format(funcname=funcname,
                                                args=args,
