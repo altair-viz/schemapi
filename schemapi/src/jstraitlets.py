@@ -685,8 +685,8 @@ class ToDict(Visitor):
             if val is not undefined:
                 dct[schema_key] = self.visit(val, *args, **kwargs)
             elif traitlets_key in obj._required_traits:
-                raise T.TraitError("Required trait '{0}' is undefined'"
-                                   "".format(traitlets_key))
+                raise T.TraitError("Required trait '{0}' is undefined "
+                                   "in {1}".format(traitlets_key, obj))
         for schema_key, val in obj._metadata.items():
             if val is not undefined and schema_key not in dct:
                 dct[schema_key] = val
@@ -800,7 +800,8 @@ class ToPython(Visitor):
 
         missing = set(obj._required_traits) - set(kwds)
         if missing:
-            raise T.TraitError("Required traits {0} missing".format(missing))
+            raise T.TraitError("Required traits {0} missing "
+                               "in {1}".format(missing, obj))
         arglist = '\n'.join('{0}={1},'.format(*item)
                             for item in sorted(kwds.items())).rstrip(',')
         return "{0}(\n{1}\n)".format(obj.__class__.__name__,
