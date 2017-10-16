@@ -9,6 +9,24 @@ def test_undefined_singleton():
     assert jst.UndefinedType() is undefined
 
 
+def test_undefined_trait_error():
+    class X(jst.JSONHasTraits):
+        _required_traits = ['foo']
+        foo = jst.JSONString()
+        bar = jst.JSONString()
+
+    # No error if foo is defined
+    X(foo='hello').to_dict()
+    X(foo='hello').to_python()
+
+    # Error if foo is undefined
+    with pytest.raises(jst.UndefinedTraitError):
+        X(bar='hello').to_dict()
+
+    with pytest.raises(jst.UndefinedTraitError):
+        X(bar='hello').to_python()
+
+
 def generate_test_cases():
     """yield tuples of (trait, failcases, passcases)"""
     # Anys
