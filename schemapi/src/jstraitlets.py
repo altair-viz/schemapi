@@ -178,6 +178,7 @@ class JSONHasTraits(T.HasTraits):
                 obj._finalize(*args, **kwargs)
             elif isinstance(obj, list):
                 for item in obj:
+                    # Note: *args, **kwargs are passed through the closure
                     finalize_obj(item)
 
         for name in self.traits():
