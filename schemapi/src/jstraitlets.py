@@ -61,7 +61,7 @@ class JSONHasTraits(T.HasTraits):
     >>> sorted(f.trait_names())
     ['name', 'score', 'value']
     """
-    _additional_traits = True  # boolean, or list of
+    _additional_traits = True  # boolean, or length-1 list of trait type allowed
     _skip_on_export = []  # traits to skip when exporting to dictionary
     _required_traits = []  # traits required at export. If undefined, a traiterror will be raised
     _converter_registry = {}  # converter classes to use for to_dict, from_dict
@@ -96,6 +96,22 @@ class JSONHasTraits(T.HasTraits):
     def __contains__(self, key):
         return (key in self.traits() and
                 getattr(self, key, undefined) is not undefined)
+
+    def clone(self):
+        """
+        Return a clone of this object, recursively cloning each trait
+        """
+        def _clone(obj):
+            if isinstance(obj, JSONHasTraits):
+                return obj.clone()
+            elif isinstance(obj, list):
+                return [_clone(item) for item in obj]
+            else:
+                return obj
+
+        kwds = {name: _clone(getattr(self, name))
+                for name in self.trait_names()}
+        return self.__class__(**kwds)
 
     @classmethod
     def _get_additional_traits(cls):
@@ -634,6 +650,7 @@ class JSONNot(T.TraitType):
             return value
         else:
             self.error(obj, value)
+
 
 
 ##########################################################################

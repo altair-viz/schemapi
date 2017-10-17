@@ -325,3 +325,29 @@ def test_trait_name_map():
     dct = {'for': 'abc', '$schema': 'http://www.schema.com/schema.json'}
     f = Foo.from_dict(dct)
     assert f.to_dict() == dct
+
+
+def test_clone():
+    class Name(jst.JSONHasTraits):
+        first = jst.JSONString()
+        last = jst.JSONString()
+
+    class NameCollection(jst.JSONHasTraits):
+        score = jst.JSONNumber()
+        names = jst.JSONArray(jst.JSONInstance(Name))
+
+    obj1 = NameCollection(score=42, names=[Name(first='sideshow', last='bob'),
+                                           Name(first='bart', last='simpson')])
+    D = obj1.to_dict()
+
+    # Make sure dicts match after clone
+    obj2 = obj1.clone()
+    assert obj2.to_dict() == D  # clone actually copies correctly
+
+    # Modify first object and make sure clone actually created a copy
+    obj1.score = 56
+    obj1.names[0].first = 'sponge'
+    obj1.names[1].last = 'train'
+
+    assert obj1.to_dict() != D  # original object is modified
+    assert obj2.to_dict() == D  # clone is not modified
