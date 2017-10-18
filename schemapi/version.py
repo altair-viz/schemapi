@@ -15,10 +15,10 @@ See more information in the README_.
 .. _traitlets: https://traitlets.readthedocs.io
 .. _schemapi: https://github.com/altair-viz/schemapi
 """
-short_version = '0.3.0'
-version = '0.3.0'
-full_version = '0.3.0'
-git_revision = '4e42d96a5654f9cfc53674be4cbe4134086b7985'
-release = True
+short_version = '0.4.0'
+version = '0.4.0'
+full_version = '0.4.0.dev0+dcfbb71'
+git_revision = 'dcfbb715af085eed4d55f1414a1040a07a85a400'
+release = False
 if not release:
     version = full_version
