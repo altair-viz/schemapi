@@ -3,6 +3,7 @@ language: python
 sudo: false
 
 python:
+  - 2.7
   - 3.5
   - 3.6
 
@@ -19,5 +20,11 @@ install:
 
 script:
 - mkdir for_test
-- cd for_test
-- py.test --pyargs schemapi --doctest-module --cov-report term-missing --cov=schemapi
+- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then
+    cp -r schemapi/src/ for_test/src;
+    cd for_test;
+    py.test src --doctest-module --cov-report term-missing --cov=src;
+  else
+    cd for_test;
+    py.test --pyargs schemapi --doctest-module --cov-report term-missing --cov=schemapi;
+  fi;

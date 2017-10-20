@@ -367,9 +367,9 @@ def test_cloned_finalization():
 
     remove_whitespace = lambda s: ''.join(s.split())
 
-    # derived packages may override ToPython; to play well with them
-    # we allow for trailing commas
-    results = ["Foo(message='finalized')",
-               "Foo(message='finalized',)"]
+    # derived packages may use Py27 and may override ToPython;
+    # to play well with them we allow for the following:
+    results = ["Foo(message='finalized')", "Foo(message=u'finalized')",
+               "Foo(message='finalized',)", "Foo(message=u'finalized',)"]
     assert remove_whitespace(f.to_python()) in results
     assert f.message == 'hello'
