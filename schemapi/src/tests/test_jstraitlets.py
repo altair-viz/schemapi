@@ -351,3 +351,20 @@ def test_clone():
 
     assert obj1.to_dict() != D  # original object is modified
     assert obj2.to_dict() == D  # clone is not modified
+
+
+def test_cloned_finalization():
+    class Foo(jst.JSONHasTraits):
+        message = jst.JSONString()
+
+        def _finalize(self):
+            self.message = "finalized"
+            return super(Foo, self)._finalize()
+
+    f = Foo(message='hello')
+    assert f.to_dict() == {'message': 'finalized'}
+    assert f.message == 'hello'
+
+    remove_whitespace = lambda s: ''.join(s.split())
+    assert remove_whitespace(f.to_python()) == "Foo(message='finalized')"
+    assert f.message == 'hello'

@@ -111,7 +111,9 @@ class JSONHasTraits(T.HasTraits):
 
         kwds = {name: _clone(getattr(self, name))
                 for name in self.trait_names()}
-        return self.__class__(**kwds)
+        obj =  self.__class__(**kwds)
+        obj._metadata = self._metadata.copy()
+        return obj
 
     @classmethod
     def _get_additional_traits(cls):
@@ -145,9 +147,10 @@ class JSONHasTraits(T.HasTraits):
 
     def to_dict(self, **kwargs):
         """Output a (nested) dict encoding the contents of this instance"""
-        self._finalize(**kwargs)
+        obj = self.clone()
+        obj._finalize(**kwargs)
         Visitor = self._converter_registry.get('to_dict', ToDict)
-        return Visitor().visit(self, **kwargs)
+        return Visitor().visit(obj, **kwargs)
 
     @classmethod
     def from_json(cls, json_string, json_kwds=None, **kwargs):
@@ -161,10 +164,12 @@ class JSONHasTraits(T.HasTraits):
         return json.dumps(dct, **(json_kwds or {}))
 
     def to_python(self, **kwargs):
+        obj = self.clone()
+        obj._finalize(**kwargs)
         Visitor = self._converter_registry.get('to_python', ToPython)
         # Explicitly convert to str() for the sake of derived classes
-        # which return a more complicated code representation object.
-        return str(Visitor().visit(self, **kwargs))
+        # which may return a custom code representation object.
+        return str(Visitor().visit(obj, **kwargs))
 
     def __dir__(self):
         """Customize tab completed attributes."""
