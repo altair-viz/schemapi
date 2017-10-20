@@ -14,7 +14,6 @@ instances can be instantiated from and serialized to dictionaries of values.
 """
 import copy
 import json
-import textwrap
 
 import six
 import traitlets as T
@@ -22,6 +21,27 @@ from traitlets.traitlets import class_of
 from traitlets.utils.importstring import import_item
 
 __jsonschema_draft__ = 4
+
+
+def textwrap_indent(text, prefix, predicate=None):
+    """Adds 'prefix' to the beginning of selected lines in 'text'.
+
+    If 'predicate' is provided, 'prefix' will only be added to the lines
+    where 'predicate(line)' is True. If 'predicate' is not provided,
+    it will default to adding 'prefix' to all non-empty lines that do not
+    consist solely of whitespace characters.
+
+    Note: this function is built-in to Python 3.3+ as textwrap.indent().
+    We define it here for Python 2.X compatibility
+    """
+    if predicate is None:
+        def predicate(line):
+            return line.strip()
+
+    def prefixed_lines():
+        for line in text.splitlines(True):
+            yield (prefix + line if predicate(line) else line)
+    return ''.join(prefixed_lines())
 
 
 class UndefinedTraitError(T.TraitError):
@@ -817,7 +837,7 @@ class ToPython(Visitor):
     def visit_list(self, obj, *args, **kwargs):
         # TODO: make more compact for simple args?
         arglist = ',\n'.join(self.visit(item) for item in obj)
-        return "[\n{0}\n]".format(textwrap.indent(arglist, 4 * ' '))
+        return "[\n{0}\n]".format(textwrap_indent(arglist, 4 * ' '))
 
     def visit_JSONHasTraits(self, obj, *args, **kwargs):
         # TODO: make more compact for simple args?
@@ -833,4 +853,4 @@ class ToPython(Visitor):
         arglist = '\n'.join('{0}={1},'.format(*item)
                             for item in sorted(kwds.items())).rstrip(',')
         return "{0}(\n{1}\n)".format(obj.__class__.__name__,
-                                     textwrap.indent(arglist, 4 * " "))
+                                     textwrap_indent(arglist, 4 * " "))
