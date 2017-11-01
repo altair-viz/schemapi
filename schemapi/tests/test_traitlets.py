@@ -25,7 +25,7 @@ from .. import JSONSchema
                           ({'oneOf': [{'type': 'integer'}, {'type': 'string'}]},
                            "jst.JSONOneOf([jst.JSONInteger(), jst.JSONString()])")])
 def test_trait_code(spec, output):
-    assert JSONSchema(spec).trait_code == output
+    assert JSONSchema(spec).traitlets.trait_code == output
 
 
 def test_required_keyword():
@@ -62,7 +62,7 @@ def test_required_keyword():
                      'bool1', 'null1', 'enum1', 'array1',
                      'traitref1', 'objref1', 'typelist1']
     }
-    js = JSONSchema(schema)
+    js = JSONSchema(schema).traitlets
 
     js.load_module('_schema', reload_module=True)
     from _schema import Root
@@ -87,22 +87,10 @@ def test_get_reference():
         }
     }
 
-    js = JSONSchema(schema)
+    js = JSONSchema(schema).traitlets
     for name, definition in schema['definitions'].items():
         definition_code = '#/definitions/{name}'.format(name=name)
 
         obj1 = js.get_reference(definition_code)
-        obj2 = JSONSchema(definition)
+        obj2 = JSONSchema(definition).traitlets
         assert obj1.trait_code == obj2.trait_code
-
-
-def test_copy():
-    schema = {'properties': {'i': {'type': 'integer'}}}
-
-    js = JSONSchema(schema, root_name='RootInstance',
-                    definition_tags=('defs',))
-    js2 = js.copy()
-
-    assert js.schema == js2.schema
-    assert js.root_name == js2.root_name
-    assert js.definition_tags == js2.definition_tags
