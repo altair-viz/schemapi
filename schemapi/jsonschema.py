@@ -3,6 +3,8 @@ import json
 
 from . import utils
 from .traitlets import JSONSchemaTraitlets
+from .validators import ValidatorList
+
 
 class JSONSchema(object):
     """Wrapper for a JSON schema
@@ -48,7 +50,7 @@ class JSONSchema(object):
                              ''.format(unrecognized_args))
         self.schema = schema
         self.root = kwds.get('root', self)
-        # self.validators = ValidatorList(self)
+        self.validators = ValidatorList(self)
         self.parents = set()
 
         # remove these?
