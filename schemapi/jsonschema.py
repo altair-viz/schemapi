@@ -8,7 +8,7 @@ from .traitlets import JSONSchemaTraitlets
 class JSONSchema(object):
     def __init__(self, schema, root_name='Root',
                  definition_tags=('definitions',),
-                 context=None, parent=None, name=None):
+                 root=None, parent=None, name=None):
         if not isinstance(schema, dict):
             raise ValueError("schema should be supplied as a dict")
 
@@ -18,9 +18,8 @@ class JSONSchema(object):
         self.root_name = root_name
         self.plugins = []
 
-        # if context is not given, then assume this is a root instance that
-        # defines its own context
-        self.context = context or self
+        # if root is not given, then assume this is a root instance
+        self.root = root or self
         self.definition_tags = definition_tags
         self._trait_extractor = None
 
@@ -34,9 +33,9 @@ class JSONSchema(object):
 
     def make_child(self, schema, name=None):
         """
-        Make a child instance, appropriately defining the parent and context
+        Make a child instance, appropriately defining the parent and root
         """
-        return self.__class__(schema, context=self.context, parent=self,
+        return self.__class__(schema, root=self.root, parent=self,
                               name=name)
 
     @property

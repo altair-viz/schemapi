@@ -103,7 +103,7 @@ class JSONSchemaTraitlets(object):
 
     def make_child(self, schema, name=None):
         """
-        Make a child instance, appropriately defining the parent and context
+        Make a child instance, appropriately defining the parent and root
         """
         return self.__class__(self.schemaobj.make_child(schema, name=name))
 
@@ -124,7 +124,7 @@ class JSONSchemaTraitlets(object):
 
     @property
     def is_root(self):
-        return self.schemaobj.context is self.schemaobj
+        return self.schemaobj.root is self.schemaobj
 
     @property
     def is_trait(self):
@@ -202,8 +202,8 @@ class JSONSchemaTraitlets(object):
         return self.schemaobj.root_name
 
     @property
-    def context(self):
-        return self.schemaobj.context
+    def root(self):
+        return self.schemaobj.root
 
     @property
     def full_classname(self):
@@ -270,9 +270,9 @@ class JSONSchemaTraitlets(object):
         if path[0] != '#':
             raise ValueError("Unrecognized $ref format: '{0}'".format(ref))
         elif len(path) == 1 or path[1] == '':
-            return self.__class__(self.context)
+            return self.__class__(self.root)
         try:
-            schema = self.context.schema
+            schema = self.root.schema
             for key in path[1:]:
                 schema = schema[key]
         except KeyError:
