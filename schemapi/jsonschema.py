@@ -37,7 +37,7 @@ class JSONSchema(object):
             schema = json.load(f)
         return cls(schema, **kwargs)
 
-    def make_child(self, schema, name=None):
+    def initialize_child(self, schema, name=None):
         """
         Make a child instance, appropriately defining the root
         """

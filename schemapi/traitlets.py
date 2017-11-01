@@ -98,11 +98,11 @@ class JSONSchemaTraitlets(object):
         return utils.format_description(self.description,
                                         indent=4 * indent_level)
 
-    def make_child(self, schema, name=None):
+    def initialize_child(self, schema, name=None):
         """
         Make a child instance, appropriately defining the parent and root
         """
-        return self.__class__(self.schemaobj.make_child(schema, name=name))
+        return self.__class__(self.schemaobj.initialize_child(schema, name=name))
 
     def __getitem__(self, key):
         return self.schema[key]
@@ -134,13 +134,13 @@ class JSONSchemaTraitlets(object):
         elif '$ref' in self:
             return self.wrapped_ref().is_trait
         elif 'anyOf' in self:
-            return any(self.make_child(spec).is_trait
+            return any(self.initialize_child(spec).is_trait
                        for spec in self['anyOf'])
         elif 'allOf' in self:
-            return any(self.make_child(spec).is_trait
+            return any(self.initialize_child(spec).is_trait
                        for spec in self['allOf'])
         elif 'oneOf' in self:
-            return any(self.make_child(spec).is_trait
+            return any(self.initialize_child(spec).is_trait
                        for spec in self['oneOf'])
         else:
             return False
@@ -152,13 +152,13 @@ class JSONSchemaTraitlets(object):
         elif '$ref' in self:
             return self.wrapped_ref().is_object
         elif 'anyOf' in self:
-            return all(self.make_child(spec).is_object
+            return all(self.initialize_child(spec).is_object
                        for spec in self['anyOf'])
         elif 'allOf' in self:
-            return all(self.make_child(spec).is_object
+            return all(self.initialize_child(spec).is_object
                        for spec in self['allOf'])
         elif 'oneOf' in self:
-            return all(self.make_child(spec).is_object
+            return all(self.initialize_child(spec).is_object
                        for spec in self['oneOf'])
         else:
             return False
@@ -227,7 +227,7 @@ class JSONSchemaTraitlets(object):
         if self.additionalProperties in [True, False]:
             return repr(self.additionalProperties)
         else:
-            trait = self.make_child(self.additionalProperties)
+            trait = self.initialize_child(self.additionalProperties)
             return "[{0}]".format(trait.trait_code)
 
     @property
@@ -240,14 +240,14 @@ class JSONSchemaTraitlets(object):
 
     def wrapped_definitions(self):
         """Return definition dictionary wrapped as JSONSchema objects"""
-        return OrderedDict((name.lower(), self.make_child(schema, name=name))
+        return OrderedDict((name.lower(), self.initialize_child(schema, name=name))
                            for name, schema in
                            sorted(self.all_definitions.items()))
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
         reverse_map = {v:k for k, v in self.trait_map.items()}
-        return OrderedDict((reverse_map.get(name, name), self.make_child(val))
+        return OrderedDict((reverse_map.get(name, name), self.initialize_child(val))
                            for name, val in sorted(self.properties.items()))
 
     def wrapped_ref(self):
@@ -275,7 +275,7 @@ class JSONSchemaTraitlets(object):
         except KeyError:
             raise ValueError("$ref='{0}' not present in the schema".format(ref))
 
-        return self.make_child(schema, name=name)
+        return self.initialize_child(schema, name=name)
 
     @property
     def trait_code(self):
@@ -321,7 +321,7 @@ class JSONSchemaTraitlets(object):
         """Return the list of imports required in the object_code definition"""
         imports = list(self.basic_imports)
         if isinstance(self.additionalProperties, dict):
-            default = self.make_child(self.additionalProperties)
+            default = self.initialize_child(self.additionalProperties)
             imports.extend(default.trait_imports)
         if self.is_reference:
             imports.append(self.wrapped_ref().import_statement)
