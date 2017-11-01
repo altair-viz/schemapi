@@ -19,12 +19,11 @@ class JSONSchema(object):
         # if root is not given, then assume this is a root instance
         self.root = root or self
         self._definition_tags = definition_tags
-        self._trait_extractor = None
 
     @property
     def definitions(self):
         """dictionary of definition name to raw schemas they point to"""
-        definitions = {}#self.root_name: self.schema}
+        definitions = {}
         for tag in self._definition_tags:
             definitions.update(self.schema.get(tag, {}))
         return definitions
