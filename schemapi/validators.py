@@ -163,7 +163,7 @@ class NumberTypeValidator(Validator):
 
 
 class IntegerTypeValidator(Validator):
-    recognized_keys = {'type', 'mimimum', 'maximum', 'default',
+    recognized_keys = {'type', 'minimum', 'maximum', 'default',
                        'exclusiveMinimum', 'exclusiveMaximum'}
     @classmethod
     def _matches(cls, schema):
