@@ -78,10 +78,7 @@ class JSONSchemaTraitlets(object):
 
     @property
     def all_definitions(self):
-        defs = {}
-        for tag in self.schemaobj.definition_tags:
-            defs.update(self.schema.get(tag, {}))
-        return OrderedDict(sorted(defs.items()))
+        return OrderedDict(sorted(self.schemaobj.definitions.items()))
 
     @property
     def trait_extractor(self):
