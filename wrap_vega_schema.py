@@ -11,7 +11,7 @@ module = '_vega_schema'
 if os.path.exists(module):
     raise ValueError("{module} already exists.".format(module=module))
 
-schema = JSONSchema.from_json_file(schemafile, module=module,
+schema = JSONSchema.from_file(schemafile, module=module,
                                    definition_tags=['refs', 'defs'])
 source_tree = schema.source_tree()
 print("writing to {module}".format(module=module))

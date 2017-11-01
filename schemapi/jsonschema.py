@@ -30,7 +30,7 @@ class JSONSchema(object):
         return definitions
 
     @classmethod
-    def from_json_file(cls, filename, **kwargs):
+    def from_file(cls, filename, **kwargs):
         """Instantiate a JSONSchema object from a JSON file"""
         import json
         with open(filename) as f:
