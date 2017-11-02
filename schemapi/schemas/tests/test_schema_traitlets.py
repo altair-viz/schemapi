@@ -23,5 +23,5 @@ def test_parse_schema(name, schema):
     if name == 'vega-v3.0.7.json':
         pytest.xfail("vega schema has unsupported elements")
     modulename = '_schema'
-    obj = JSONSchema(schema, definition_tags=['refs', 'defs', 'definitions'])
+    obj = JSONSchema(schema)
     obj.load_module(modulename, reload_module=True)

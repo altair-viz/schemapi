@@ -42,7 +42,6 @@ class JSONSchema(object):
     """
     def __init__(self, schema, warn_on_unused=True,
                  root_name='Root',
-                 definition_tags=('definitions',),
                  name=None, **kwds):
         unrecognized_args = kwds.keys() - {'root'}
         if unrecognized_args:
@@ -57,7 +56,6 @@ class JSONSchema(object):
         self.warn_on_unused = warn_on_unused
         self._name = name
         self.root_name = root_name
-        self._definition_tags = definition_tags
 
         # Because of the use of the registry, we need to finish object creation
         # before instantiating children. For that reason, we recursively
@@ -160,10 +158,13 @@ class JSONSchema(object):
     @property
     def definitions(self):
         """dictionary of definition name to raw schemas they point to"""
-        definitions = {}
-        for tag in self._definition_tags:
-            definitions.update(self.schema.get(tag, {}))
-        return definitions
+        def get_name(defname):
+            if defname == '#':
+                return self.root_name
+            else:
+                return defname.split('/')[-1]
+        return {get_name(name): schema
+                for name, schema in self._definitions.items()}
 
     def validate(self, obj):
         self.validators.validate(obj)
