@@ -41,8 +41,7 @@ class JSONSchema(object):
     can be used to validate input with the validate() method.
     """
     def __init__(self, schema, warn_on_unused=True,
-                 root_name='Root',
-                 name=None, **kwds):
+                 root_name='Root', **kwds):
         unrecognized_args = kwds.keys() - {'root'}
         if unrecognized_args:
             raise ValueError('Unrecognized arguments to JSONSchema: {0}'
@@ -54,7 +53,6 @@ class JSONSchema(object):
 
         # remove these?
         self.warn_on_unused = warn_on_unused
-        self._name = name
         self.root_name = root_name
 
         # Because of the use of the registry, we need to finish object creation
@@ -93,8 +91,6 @@ class JSONSchema(object):
         """Return the object name if present, otherwise return None"""
         if self is self.root and self.root_name:
             return self.root_name
-        elif self._name:
-            return self._name
         elif self.ref:
             return self.ref.split('/')[-1]
         else:
@@ -112,11 +108,11 @@ class JSONSchema(object):
                 seen.add(hsh)
                 child._recursively_create_children(seen)
 
-    def initialize_child(self, schema, name=None):
+    def initialize_child(self, schema):
         """Return a JSONSchema object wrapping a child schema"""
         key = utils.hash_schema(schema)
         if key not in self.registry:
-            self.registry[key] = JSONSchema(schema, root=self.root, name=name)
+            self.registry[key] = JSONSchema(schema, root=self.root)
         obj = self.registry[key]
         if self not in obj.parents:
             obj.parents.add(self)

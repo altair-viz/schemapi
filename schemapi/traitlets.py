@@ -97,11 +97,11 @@ class JSONSchemaTraitlets(object):
         return utils.format_description(self.description,
                                         indent=4 * indent_level)
 
-    def initialize_child(self, schema, name=None):
+    def initialize_child(self, schema):
         """
         Make a child instance, appropriately defining the parent and root
         """
-        return self.__class__(self.schemaobj.initialize_child(schema, name=name))
+        return self.__class__(self.schemaobj.initialize_child(schema))
 
     def __getitem__(self, key):
         return self.schema[key]
@@ -239,7 +239,7 @@ class JSONSchemaTraitlets(object):
 
     def wrapped_definitions(self):
         """Return definition dictionary wrapped as JSONSchema objects"""
-        return OrderedDict((name.lower(), self.initialize_child(schema, name=name))
+        return OrderedDict((name.lower(), self.initialize_child(schema))
                            for name, schema in
                            sorted(self.all_definitions.items()))
 
@@ -274,7 +274,7 @@ class JSONSchemaTraitlets(object):
         except KeyError:
             raise ValueError("$ref='{0}' not present in the schema".format(ref))
 
-        return self.initialize_child(schema, name=name)
+        return self.initialize_child(schema)
 
     @property
     def trait_code(self):
