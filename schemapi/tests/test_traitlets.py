@@ -2,7 +2,7 @@ import pytest
 
 import traitlets as T
 
-from .. import JSONSchema
+from .. import JSONSchema, JSONSchemaPlugin
 
 
 @pytest.mark.parametrize('spec,output',
@@ -94,3 +94,38 @@ def test_get_reference():
         obj1 = js.get_reference(definition_code)
         obj2 = JSONSchema(definition).traitlets
         assert obj1.trait_code == obj2.trait_code
+
+
+def test_plugin():
+    schema = {
+        'properties': {
+            'a': {'$ref': '#/definitions/MyString'},
+            'b': {'$ref': '#/definitions/IntOrNone'}
+        },
+        'definitions': {
+            'MyString': {
+                'type': 'string'
+            },
+            'IntOrNone': {
+                'type': ['integer', 'null']
+            }
+        }
+    }
+
+    class MyPlugin(JSONSchemaPlugin):
+        foo_code = 'def donothing(x):\n    return x'
+        foo_imports = ['import itertools', 'import collections']
+
+        def module_imports(self, schema):
+            return self.foo_imports
+
+        def code_files(self, schema):
+            return {'foo.py': self.foo_code}
+
+    obj = JSONSchema(schema).traitlets
+    obj.add_plugins(MyPlugin())
+    tree = obj.source_tree()
+    assert 'foo.py' in tree
+    assert tree['foo.py'] == MyPlugin.foo_code
+    for imp in MyPlugin.foo_imports:
+        assert imp in tree['__init__.py']

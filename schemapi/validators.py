@@ -5,6 +5,7 @@ import re
 
 from .utils import isnumeric
 
+
 class SchemaValidationError(Exception):
     pass
 
@@ -27,7 +28,8 @@ class ValidatorList(list):
         validator_classes = [cls for cls in Validator.__subclasses__()
                              if cls._matches(obj.schema)]
 
-        used_keys = {'definitions', 'description', 'title', '$schema'}
+        used_keys = {'definitions', 'description', 'default', 'id',
+                     'title', '$schema'}
         for cls in validator_classes:
             cls_schema = {key:val for key, val in obj.schema.items()
                           if key in cls.recognized_keys}
@@ -80,15 +82,20 @@ class Validator(object):
 
 class ObjectValidator(Validator):
     recognized_keys = {'type', 'properties', 'additionalProperties',
-                       'patternProperties', 'required'}
+                       'patternProperties', 'required', 'dependencies'}
     # TODO: handle pattern properties
     @classmethod
     def _matches(cls, schema):
         return (schema.get('type', None) == 'object'
                  or 'properties' in schema
-                 or 'additionalProperties' in schema)
+                 or 'additionalProperties' in schema
+                 or 'patternProperties' in schema
+                 or 'required' in schema
+                 or 'dependencies' in schema)
 
     def validate(self, obj):
+        if 'dependenceis' in self.schema:
+            warnings.warn("dependencies constraint not implemented in ObjectValidator")
         required = self.schema.get('required', [])
         if not isinstance(obj, dict):
             if self.schema.get('type', None) == 'object':
@@ -117,7 +124,7 @@ class ObjectValidator(Validator):
 
 
 class ArrayValidator(Validator):
-    recognized_keys = {'type', 'items', 'minItems', 'maxItems', 'numItems'}
+    recognized_keys = {'type', 'items', 'minItems', 'maxItems', 'uniqueItems'}
     @classmethod
     def _matches(cls, schema):
         return schema.get('type', None) == 'array' or 'items' in schema
@@ -129,12 +136,23 @@ class ArrayValidator(Validator):
             raise SchemaValidationError()
         if 'maxItems' in self.schema and len(obj) > self.schema['maxItems']:
             raise SchemaValidationError()
-        if 'numItems' in self.schema and len(obj) != self.schema['numItems']:
-            raise SchemaValidationError()
         if 'items' in self.schema:
             itemtype = self._init_child(self.schema['items'])
             for val in obj:
                 itemtype.validate(val)
+        if self.schema.get('uniqueItems', False):
+            try:
+                unique = set(obj)
+            except TypeError:
+                # contains non-hashable objects
+                # TODO: do this more efficiently?
+                unique = []
+                for item in obj:
+                    if item not in unique:
+                        unique.append(item)
+            if len(unique) != len(obj):
+                raise SchemaValidationError("{0} does not contain uniqueItems"
+                                            "".format(obj))
 
 
 class NumberTypeValidator(Validator):
@@ -297,12 +315,14 @@ class RefValidator(Validator):
 
 
 class AnyOfValidator(Validator):
-    recognized_keys = {'anyOf'}
+    recognized_keys = {'anyOf', 'minimum', 'maximum'}
     @classmethod
     def _matches(cls, schema):
         return 'anyOf' in schema
 
     def validate(self, obj):
+        if 'minimum' in self.schema or 'maximum' in self.schema:
+            warnings.warn('minimum and maximum not implemented in AnyOfValidator')
         for child in self.schema['anyOf']:
             print(child, obj)
             try:
@@ -315,12 +335,14 @@ class AnyOfValidator(Validator):
 
 
 class OneOfValidator(Validator):
-    recognized_keys = {'oneOf'}
+    recognized_keys = {'oneOf', 'minimum', 'maximum'}
     @classmethod
     def _matches(cls, schema):
         return 'oneOf' in schema
 
     def validate(self, obj):
+        if 'minimum' in self.schema or 'maximum' in self.schema:
+            warnings.warn('minimum and maximum not implemented in OneOfValidator')
         count = 0
         for child in self.schema['oneOf']:
             try:
@@ -334,12 +356,14 @@ class OneOfValidator(Validator):
 
 
 class AllOfValidator(Validator):
-    recognized_keys = {'allOf'}
+    recognized_keys = {'allOf', 'minimum', 'maximum'}
     @classmethod
     def _matches(cls, schema):
         return 'allOf' in schema
 
     def validate(self, obj):
+        if 'minimum' in self.schema or 'maximum' in self.schema:
+            warnings.warn('minimum and maximum not implemented in AllOfValidator')
         for child in self.schema['allOf']:
             self._init_child(child).validate(obj)
 

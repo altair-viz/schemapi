@@ -4,15 +4,17 @@ from ... import JSONSchema
 from .. import iter_schemas_with_names, load_schema
 
 
+@pytest.mark.filterwarnings('ignore:format constraint')
 @pytest.mark.parametrize('name,schema', iter_schemas_with_names())
 def test_metaschema_validation(name, schema):
     root = JSONSchema(load_schema('jsonschema-draft04.json'))
     root.validate(schema)
 
 
-@pytest.mark.filterwarnings('ignore:Unused')
+#@pytest.mark.filterwarnings('ignore:Unused')
+@pytest.mark.filterwarnings('ignore:format constraint')
 def test_schema_validation():
-    schema = JSONSchema(load_schema('vega-lite-v2.0.json'))
+    schema = JSONSchema(load_schema('vega-lite-v2.0.0.json'))
 
     vega_lite_bar = {
       "$schema": "https://vega.github.io/schema/vega-lite/v2.json",

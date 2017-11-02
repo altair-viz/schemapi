@@ -66,6 +66,9 @@ def schemas_for_validation():
            [[1,'hello'], [None, True]], [1, 'hello'])
     yield ({"type": "array", 'items': {'type': 'number'}},
            [[1,2], [0.1, 2.5]], [[2.0, 'hello'], [1, None]])
+    yield ({"type": "array", 'uniqueItems': True},
+           [[1,2], [1, None, 'abc'], [{'a': 4}, {'a': 6}]],
+           [[2, 2, 4], [None, None, 2], ['a', 3, 'a'], [{'a': 4}, {'a': 4}]])
     yield ({"enum": [5, "hello", None, False]},
            [5, "hello", None, False], [2, 'blah', True])
     yield ({"type": "string", "enum": ['a', 'b', 'c']},
