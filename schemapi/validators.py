@@ -262,7 +262,6 @@ class EnumValidator(Validator):
         return 'enum' in schema
 
     def validate(self, obj):
-        print(obj, self.schema['enum'], obj in self.schema['enum'])
         if obj not in self.schema['enum']:
             raise SchemaValidationError()
 
@@ -324,7 +323,6 @@ class AnyOfValidator(Validator):
         if 'minimum' in self.schema or 'maximum' in self.schema:
             warnings.warn('minimum and maximum not implemented in AnyOfValidator')
         for child in self.schema['anyOf']:
-            print(child, obj)
             try:
                 self._init_child(child).validate(obj)
             except SchemaValidationError:

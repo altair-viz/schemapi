@@ -1,7 +1,6 @@
 import jinja2
 import os
 import textwrap
-import copy
 from datetime import datetime
 from collections import OrderedDict
 
