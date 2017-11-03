@@ -75,9 +75,6 @@ class JSONSchemaTraitlets(object):
     def add_plugins(self, *plugins):
         self.plugins.extend(list(plugins))
 
-    @property
-    def all_definitions(self):
-        return OrderedDict(sorted(self.schemaobj.definitions.items()))
 
     @property
     def trait_extractor(self):
@@ -240,8 +237,7 @@ class JSONSchemaTraitlets(object):
     def wrapped_definitions(self):
         """Return definition dictionary wrapped as JSONSchema objects"""
         return OrderedDict((name.lower(), self.initialize_child(schema))
-                           for name, schema in
-                           sorted(self.all_definitions.items()))
+                           for name, schema in sorted(self.schemaobj.definitions.items()))
 
     def wrapped_properties(self):
         """Return property dictionary wrapped as JSONSchema objects"""
