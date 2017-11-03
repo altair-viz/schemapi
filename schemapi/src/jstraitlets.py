@@ -212,7 +212,15 @@ class JSONHasTraits(T.HasTraits):
 
 
 class AnyOfObject(JSONHasTraits):
-    """A HasTraits class which selects any among a set of specified types"""
+    """A HasTraits class which selects any among a set of specified types
+
+    The _classes attribute can be either a list of classes, a list of fully-
+    resolved class names (such as "__main__.Foo"), or None. If None, then
+    _classes will be dynamically populated with cls.__subclasses__().
+
+    On instantiation, the class will be transformed into the first class in
+    _classes that matches the provided args and kwargs.
+    """
     _classes = None
 
     @classmethod
@@ -240,15 +248,10 @@ class AnyOfObject(JSONHasTraits):
                 except (T.TraitError, ValueError):
                     pass
                 else:
-                    if issubclass(cls, self.__class__):
-                        self.__class__ = cls
-                        return super(JSONHasTraits, self).__init__(*args,
-                                                                   **kwargs)
-                    else:
-                        self.add_traits(**{key: copy.copy(val) for key, val
-                                           in cls.class_traits().items()})
-                        return super(AnyOfObject, self).__init__(*args,
-                                                                 **kwargs)
+                    assert issubclass(cls, JSONHasTraits)
+                    self.__class__ = cls
+                    return super(JSONHasTraits, self).__init__(*args, **kwargs)
+
         raise T.TraitError("{cls}: initialization arguments not "
                            "valid in any wrapped classes"
                            "".format(cls=self.__class__.__name__))
