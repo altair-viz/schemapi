@@ -213,19 +213,25 @@ class JSONHasTraits(T.HasTraits):
 
 class AnyOfObject(JSONHasTraits):
     """A HasTraits class which selects any among a set of specified types"""
-    _classes = []
+    _classes = None
 
     @classmethod
-    def _class_defs(self):
-        for cls in self._classes:
-            if isinstance(cls, JSONInstance):
-                cls = cls.klass
-            if isinstance(cls, six.string_types):
-                cls = import_item(cls)
-            yield cls
-
+    def _class_defs(cls):
+        if cls._classes is None:
+            classes = cls.__subclasses__()
+        else:
+            classes = cls._classes
+        for subcls in classes:
+            if isinstance(subcls, JSONInstance):
+                subcls = subcls.klass
+            if isinstance(subcls, six.string_types):
+                subcls = import_item(subcls)
+            yield subcls
 
     def __init__(self, *args, **kwargs):
+        classes = list(self._class_defs())
+        if len(classes) == 0 or self.__class__ in self._class_defs():
+            return super(AnyOfObject, self).__init__(*args, **kwargs)
         for cls in self._class_defs():
             # TODO: add a second pass where we allow additional properties?
             if all(key in cls.class_traits() for key in kwargs):
@@ -234,14 +240,18 @@ class AnyOfObject(JSONHasTraits):
                 except (T.TraitError, ValueError):
                     pass
                 else:
-                    self.add_traits(**{key: copy.copy(val) for key, val
-                                       in cls.class_traits().items()})
-                    break
-        else:
-            raise T.TraitError("{cls}: initialization arguments not "
-                               "valid in any wrapped classes"
-                               "".format(cls=self.__class__.__name__))
-        super(AnyOfObject, self).__init__(*args, **kwargs)
+                    if issubclass(cls, self.__class__):
+                        self.__class__ = cls
+                        return super(JSONHasTraits, self).__init__(*args,
+                                                                   **kwargs)
+                    else:
+                        self.add_traits(**{key: copy.copy(val) for key, val
+                                           in cls.class_traits().items()})
+                        return super(AnyOfObject, self).__init__(*args,
+                                                                 **kwargs)
+        raise T.TraitError("{cls}: initialization arguments not "
+                           "valid in any wrapped classes"
+                           "".format(cls=self.__class__.__name__))
 
 
 class OneOfObject(AnyOfObject):
