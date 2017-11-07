@@ -75,7 +75,6 @@ class JSONSchemaTraitlets(object):
     def add_plugins(self, *plugins):
         self.plugins.extend(list(plugins))
 
-
     @property
     def trait_extractor(self):
         if self._trait_extractor is None:

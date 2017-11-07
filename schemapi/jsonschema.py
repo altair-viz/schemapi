@@ -83,7 +83,8 @@ class JSONSchema(object):
         return self.root._registry
 
     @property
-    def ref(self):
+    def refname(self):
+        """Retern the reference name if present"""
         return self.root._schema_to_name.get(self._schema_hash(), None)
 
     @property
@@ -91,8 +92,8 @@ class JSONSchema(object):
         """Return the object name if present, otherwise return None"""
         if self is self.root and self.root_name:
             return self.root_name
-        elif self.ref:
-            return self.ref.split('/')[-1]
+        elif self.refname:
+            return self.refname.split('/')[-1]
         else:
             return None
 
@@ -129,7 +130,12 @@ class JSONSchema(object):
             for key in keys[1:]:
                 refschema = refschema[key]
             self.root._definitions[ref] = refschema
-            self.root._schema_to_name[utils.hash_schema(refschema)] = ref
+            refhash = utils.hash_schema(refschema)
+            if refhash in self.root._schema_to_name:
+                warnings.warn('{0} and {1} point to identical schemas. '
+                              ''.format(ref, self.root._schema_to_name[refhash]))
+            else:
+                self.root._schema_to_name[refhash] = ref
         return self.root._definitions[ref]
 
     @property
