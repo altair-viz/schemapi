@@ -133,7 +133,7 @@ def setup_package():
         author="Jake VanderPlas",
         author_email="jakevdp@uw.edu",
         platforms="OS Independent",
-        package_data={'schemapi': [os.path.join('schemas', '*.json')]},
+        package_data={'schemapi': [os.path.join('schemas', 'json', '*.json')]},
         requires=["jsonschema", "traitlets", "jinja2"],
     )
 

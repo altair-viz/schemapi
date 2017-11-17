@@ -167,7 +167,6 @@ def test_AnyOfObject():
 
     class FooBar(jst.AnyOfObject):
         _classes = [Foo, Bar]
-        pass
 
     FooBar(strval='hello', flag=True)
     FooBar(intval=5, flag=True)
@@ -185,6 +184,25 @@ def test_AnyOfObject():
     FooBar.from_dict({'strval': 'hello', 'flag': True})
     FooBar.from_dict({'intval': 42, 'flag': False})
 
+def test_AnyOfObject_subclasses():
+    class FooBar(jst.AnyOfObject):
+        pass
+
+    class Foo(FooBar):
+        bar = jst.JSONString()
+
+    class Bar(FooBar):
+        bar = jst.JSONNumber()
+
+    with pytest.raises(T.TraitError):
+        FooBar(bar=None)
+    with pytest.raises(T.TraitError):
+        FooBar(num=16)
+
+    assert FooBar(bar='hello').__class__ == Foo
+    assert FooBar(bar='blah').bar == 'blah'
+    assert FooBar(bar=14).__class__ == Bar
+    assert FooBar(bar=42).bar == 42
 
 class Bar(jst.JSONHasTraits):
     _additional_traits = [T.Unicode()]

@@ -125,7 +125,7 @@ class AnyOfObject(Extractor):
 
     def check(self):
         return (self.schema.is_named_object and 'anyOf' in self.schema and
-                all(self.schema.make_child(schema).is_object
+                all(self.schema.initialize_child(schema).is_object
                     for schema in self.schema['anyOf']))
 
     def trait_code(self, **kwargs):
@@ -135,7 +135,7 @@ class AnyOfObject(Extractor):
 
     def object_code(self):
         template = jinja2.Template(ANYOF_TEMPLATE)
-        options = [self.schema.make_child(ref).trait_code
+        options = [self.schema.initialize_child(ref).trait_code
                    for ref in self.schema['anyOf']]
         return template.render(cls=self.schema, options=options)
 
@@ -150,7 +150,7 @@ class OneOfObject(Extractor):
 
     def check(self):
         return (self.schema.is_named_object and 'oneOf' in self.schema and
-                all(self.schema.make_child(schema).is_object
+                all(self.schema.initialize_child(schema).is_object
                     for schema in self.schema['oneOf']))
 
     def trait_code(self, **kwargs):
@@ -160,7 +160,7 @@ class OneOfObject(Extractor):
 
     def object_code(self):
         template = jinja2.Template(ONEOF_TEMPLATE)
-        options = [self.schema.make_child(ref).trait_code
+        options = [self.schema.initialize_child(ref).trait_code
                    for ref in self.schema['oneOf']]
         return template.render(cls=self.schema, options=options)
 
@@ -175,7 +175,7 @@ class AllOfObject(Extractor):
 
     def check(self):
         if (self.schema.is_root or self.schema.name) and 'allOf' in self.schema:
-            return all(self.schema.make_child(schema).is_object
+            return all(self.schema.initialize_child(schema).is_object
                        for schema in self.schema['allOf'])
         else:
             return False
@@ -187,7 +187,7 @@ class AllOfObject(Extractor):
 
     def object_code(self):
         template = jinja2.Template(ALLOF_TEMPLATE)
-        options = [self.schema.make_child(ref).trait_code
+        options = [self.schema.initialize_child(ref).trait_code
                    for ref in self.schema['allOf']]
         return template.render(cls=self.schema, options=options)
 
@@ -245,16 +245,16 @@ class Not(Extractor):
         return 'not' in self.schema
 
     def type_description(self, **kwargs):
-        not_this = self.schema.make_child(self.schema['not']).type_description
+        not_this = self.schema.initialize_child(self.schema['not']).type_description
         return "Not({0})".format(not_this)
 
     def trait_code(self, **kwargs):
-        not_this = self.schema.make_child(self.schema['not']).trait_code
+        not_this = self.schema.initialize_child(self.schema['not']).trait_code
         return construct_function_call('jst.JSONNot', Variable(not_this),
                                        **kwargs)
 
     def trait_imports(self):
-        return self.schema.make_child(self.schema['not']).trait_imports
+        return self.schema.initialize_child(self.schema['not']).trait_imports
 
 
 class AnyOf(Extractor):
@@ -264,19 +264,19 @@ class AnyOf(Extractor):
         return 'anyOf' in self.schema
 
     def type_description(self, **kwargs):
-        children = [Variable(self.schema.make_child(
+        children = [Variable(self.schema.initialize_child(
                                         sub_schema).type_description)
                     for sub_schema in self.schema['anyOf']]
         return "AnyOf({0})".format(children)
 
     def trait_code(self, **kwargs):
-        children = [Variable(self.schema.make_child(sub_schema).trait_code)
+        children = [Variable(self.schema.initialize_child(sub_schema).trait_code)
                     for sub_schema in self.schema['anyOf']]
         return construct_function_call('jst.JSONAnyOf', Variable(children),
                                        **kwargs)
 
     def trait_imports(self):
-        return sum((self.schema.make_child(sub_schema).trait_imports
+        return sum((self.schema.initialize_child(sub_schema).trait_imports
                     for sub_schema in self.schema['anyOf']), [])
 
 
@@ -287,19 +287,19 @@ class AllOf(Extractor):
         return 'allOf' in self.schema
 
     def type_description(self, **kwargs):
-        children = [Variable(self.schema.make_child(
+        children = [Variable(self.schema.initialize_child(
                                         sub_schema).type_description)
                     for sub_schema in self.schema['allOf']]
         return "AnyOf({0})".format(children)
 
     def trait_code(self, **kwargs):
-        children = [Variable(self.schema.make_child(sub_schema).trait_code)
+        children = [Variable(self.schema.initialize_child(sub_schema).trait_code)
                     for sub_schema in self.schema['allOf']]
         return construct_function_call('jst.JSONAllOf', Variable(children),
                                        **kwargs)
 
     def trait_imports(self):
-        return sum((self.schema.make_child(sub_schema).trait_imports
+        return sum((self.schema.initialize_child(sub_schema).trait_imports
                     for sub_schema in self.schema['allOf']), [])
 
 
@@ -310,19 +310,19 @@ class OneOf(Extractor):
         return 'oneOf' in self.schema
 
     def type_description(self, **kwargs):
-        children = [Variable(self.schema.make_child(
+        children = [Variable(self.schema.initialize_child(
                                         sub_schema).type_description)
                     for sub_schema in self.schema['oneOf']]
         return "AnyOf({0})".format(children)
 
     def trait_code(self, **kwargs):
-        children = [Variable(self.schema.make_child(sub_schema).trait_code)
+        children = [Variable(self.schema.initialize_child(sub_schema).trait_code)
                     for sub_schema in self.schema['oneOf']]
         return construct_function_call('jst.JSONOneOf', Variable(children),
                                        **kwargs)
 
     def trait_imports(self):
-        return sum((self.schema.make_child(sub_schema).trait_imports
+        return sum((self.schema.initialize_child(sub_schema).trait_imports
                     for sub_schema in self.schema['oneOf']), [])
 
 
@@ -425,7 +425,7 @@ class Array(Extractor):
         elif isinstance(items, list):
             raise NotImplementedError("'items' keyword as list")
         else:
-            itemtype = self.schema.make_child(items).type_description
+            itemtype = self.schema.initialize_child(items).type_description
         return "Array({0})".format(itemtype)
 
     def trait_code(self, **kwargs):
@@ -444,7 +444,7 @@ class Array(Extractor):
         elif isinstance(items, list):
             raise NotImplementedError("'items' keyword as list")
         else:
-            itemtype = self.schema.make_child(items).trait_code
+            itemtype = self.schema.initialize_child(items).trait_code
         return construct_function_call('jst.JSONArray', Variable(itemtype),
                                        **kwargs)
 
@@ -453,7 +453,7 @@ class Array(Extractor):
         if isinstance(items, list):
             raise NotImplementedError("'items' keyword as list")
         else:
-            return self.schema.make_child(items).trait_imports
+            return self.schema.initialize_child(items).trait_imports
 
 
 class EmptySchema(Extractor):
