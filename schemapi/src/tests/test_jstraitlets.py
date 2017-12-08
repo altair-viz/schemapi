@@ -213,10 +213,11 @@ class Foo(jst.JSONHasTraits):
     _additional_traits = False
     x = T.Integer()
     y = T.Instance(Bar)
+    z = jst.JSONAny()
 
 
 def test_to_from_dict():
-    dct = {'x': 4, 'y': {'val': 'hello'}}
+    dct = {'x': 4, 'y': {'val': 'hello'}, 'z': {'a': {'b': 'c'}}}
     obj = Foo.from_dict(dct)
     dct2 = obj.to_dict()
     assert dct == dct2
@@ -228,7 +229,7 @@ def test_to_from_dict_with_defaults():
     dct2 = obj.to_dict()
     assert dct == dct2
 
-    dct = {'x': 4, 'z': 'blah', 'y': {'val': 'hello'}}
+    dct = {'x': 4, 'zz': 'blah', 'y': {'val': 'hello'}}
     with pytest.raises(T.TraitError):
         Foo.from_dict(dct)
 

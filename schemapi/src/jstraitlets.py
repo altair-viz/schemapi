@@ -767,6 +767,9 @@ class FromDict(Visitor):
     def clsvisit_Any(self, cls, dct, *args, **kwargs):
         return dct
 
+    def visit_Any(self, trait, dct, *args, **kwargs):
+        return dct
+
     def clsvisit_HasTraits(self, cls, dct, *args, **kwargs):
         try:
             obj = cls()
