@@ -1,5 +1,7 @@
 # schemapi
 
+**Warning: this repository contains an old version of the package, with rather limited support for more complicated schemas. As part of the [altair](http://altair-viz.github.io) project, we have a better approach, and plan to make it available here in the future. Please open an issue if you have any questions.**
+
 Auto-generate Python APIs from JSON schema specifications
 
 [![build status](http://img.shields.io/travis/altair-viz/schemapi/master.svg?style=flat)](https://travis-ci.org/altair-viz/schemapi)
