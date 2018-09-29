@@ -127,12 +127,14 @@ def setup_package():
         maintainer_email="jakevdp@uw.edu",
         url="http://github.com/altair-viz/schemapi",
         download_url="",
+        include_package_data=True,
         license="BSD",
         author="Jake VanderPlas",
         author_email="jakevdp@uw.edu",
         platforms="OS Independent",
         package_data={'schemapi': [os.path.join('schemas', 'json', '*.json')]},
-        requires=["jsonschema", "traitlets", "jinja2"],
+        requires=["jsonschema"],
+        test_requires=["pytest"],
     )
 
     metadata['version'] = get_version_info()[0]
