@@ -75,7 +75,7 @@ this schema:
 ```python
 >>> import schemapi
 
->>> schemapi.write_module('myschema.py', root_name='Person)
+>>> schemapi.write_module('myschema.py', root_name='Person')
 '/Users/jakevdp/myschema.py'
 ```
 
