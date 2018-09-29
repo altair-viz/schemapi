@@ -1,5 +1,17 @@
-from .version import version as __version__
-from .version import long_description as __doc__
-from .jsonschema import JSONSchema
-from .validators import SchemaValidationError
-from .traitlets import JSONSchemaTraitlets, JSONSchemaPlugin
+"""
+schemapi: tools for generating Python APIs from JSON schemas
+"""
+from .schemapi import SchemaBase, Undefined
+from .decorator import schemaclass
+from .utils import SchemaInfo
+from .codegen import module_code, write_module
+
+
+__all__ = (
+    "SchemaBase",
+    "Undefined",
+    "schemaclass",
+    "SchemaInfo",
+    "module_code",
+    "write_module"
+)

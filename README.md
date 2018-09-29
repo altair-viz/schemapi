@@ -1,7 +1,5 @@
 # schemapi
 
-**Warning: this repository contains an old version of the package, with rather limited support for more complicated schemas. As part of the [altair](http://altair-viz.github.io) project, we have a better approach, and plan to make it available here in the future. Please open an issue if you have any questions.**
-
 Auto-generate Python APIs from JSON schema specifications
 
 [![build status](http://img.shields.io/travis/altair-viz/schemapi/master.svg?style=flat)](https://travis-ci.org/altair-viz/schemapi)
@@ -13,10 +11,6 @@ annotate and validate JSON documents.
 
 ``schemapi`` is a package that lets you auto-generate simple Python object-based
 APIs given a valid JSON schema specification.
-The generated code is essentially a 
-[traitlets](http://traitlets.readthedocs.io/)-based
-Python object hierarchy designed to allow validated JSON documents to be
-created with Python code.
 
 The motivating case for this package was the [Altair](http://altair-viz.github.io)
 visualization library: Altair is a Python API built on the
@@ -81,55 +75,51 @@ this schema:
 ```python
 >>> import schemapi
 
->>> api = schemapi.JSONSchema(schema)
-
->>> api.write_module('myschema')
-saving to myschema at /Users/jakevdp/github/altair-viz/schemapi
+>>> schemapi.write_module('myschema.py', root_name='Person)
+'/Users/jakevdp/myschema.py'
 ```
 
-The result of this is that a new Python module named ``myschema`` is written
-to disk in the local directory; we can import the root object (an object of
-type derived from [traitlets.HasTraits](http://traitlets.readthedocs.io/en/stable/using_traitlets.html)),
-and use it to construct some data:
+The result of this is that a new Python module named ``myschema.py`` is written
+to disk in the local directory; we can import the root object and use it to construct
+some data:
 
 ```python
->>> from myschema import Root
+>>> from myschema import Person
 
->>> data = Root(name='suzie', age=32)
+>>> person = Person(name='suzie', age=32)
 ```
 
 This data can be output in the form of a JSON dict:
 
 ```python
->>> data.to_dict()
+>>> person.to_dict()
 {'age': 32, 'name': 'suzie'}
 ```
 
 The object can also be instantiated from a dict:
 
 ```python
-data = Root.from_dict({'age': 32, 'name': 'suzie'})
+person = Person.from_dict({'age': 32, 'name': 'suzie'})
 ```
 
 The object allows data to be modified in-place using attribute access:
 
 ```python
->>> data.name = 'frank'
+>>> person.name = 'frank'
 
->>> data.to_dict()
+>>> person.to_dict()
 {'age': 32, 'name': 'frank'}
 ```
 
-And any time the data is set, it is validated to make sure it is compatible with
-the schema definition, raising a ``traitlets.TraitError`` if the value is not
-compatible:
+When the object is created, its entries are validated using JSONSchema to ensure that they have the correct type:
 
 ```python
->>> data.age = 'old'
-TraitError: The 'age' trait of a Root instance must be a JSON integer, but a value of 'old' <class 'str'> was specified.
+>>> Person(name='Bob', age='old')
+SchemaValidationError: Invalid specification
 
->>> Root(name='suzie', age='old')
-TraitError: The 'age' trait of a Root instance must be a JSON integer, but a value of 'old' <class 'str'> was specified.
+        myschema.Person->age, validating 'type'
+
+        'old' is not of type 'integer'
 ```
 
 By utilizing JSONSchema

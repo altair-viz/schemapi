@@ -24,20 +24,18 @@ CLASSIFIERS = ["Development Status :: 3 - Alpha",
 
 # Description should be a one-liner:
 DESCRIPTION = "schemapi: generate Python APIs from JSONSchema specifications"
+
 # Long description will go up on the pypi page
 LONG_DESCRIPTION = """
 JSONSchema API Generator
 ========================
 The schemapi_ package provides tools for auto-generation of Python
-APIs rom JSONSchema_ specifications. It makes use of the traitlets_ package
-to generate object hierarchies that are equivalent to a given JSONSchema
-specification.
+APIs from JSONSchema_ specifications.
 
 See more information in the README_.
 
 .. _README: https://github.com/altair-viz/schemapi/blob/master/README.md
 .. _JSONSchema: http://json-schema.org/
-.. _traitlets: https://traitlets.readthedocs.io
 .. _schemapi: https://github.com/altair-viz/schemapi
 """
 
