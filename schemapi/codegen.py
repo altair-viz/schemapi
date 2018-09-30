@@ -1,9 +1,11 @@
 """Code generation utilities"""
+import imp
 import json
 import os
 import pkgutil
 import pprint
 import re
+import sys
 import textwrap
 
 import jsonschema
@@ -268,3 +270,25 @@ class SchemaModuleGenerator(object):
         with open(modulename, 'w') as f:
             f.write(code)
         return os.path.abspath(modulename)
+
+    def import_as(self, modulename, add_to_sys_modules=True):
+        """Import wrapper as a dynamically-generated module.
+
+        Parameters
+        ----------
+        modulename : string
+            a valid Python module name.
+        add_to_sys_modules : boolean
+            if True (default) then add the modulename to sys.modules to allow
+            accessing the module contents via standard import statements.
+
+        Returns
+        -------
+        module :
+            the dynamically-created module.
+        """
+        module = imp.new_module(modulename)
+        if add_to_sys_modules:
+            sys.modules[modulename] = module
+        exec(self.module_code(), module.__dict__)
+        return module

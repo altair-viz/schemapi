@@ -41,3 +41,20 @@ def test_module_code(schema):
     assert dct == {'people': [{'name': 'Alice', 'age': 25}, {'name': 'Bob', 'age': 26}]}
     family2 = Family.from_dict(dct)
     assert family2.to_dict() == dct
+
+
+def test_dynamic_module(schema):
+    gen = SchemaModuleGenerator(schema, root_name='Family')
+    testmod = gen.import_as('testmod')
+    assert issubclass(testmod.Family, SchemaBase)
+    assert issubclass(testmod.Person, SchemaBase)
+
+    from testmod import Family, Person
+    assert issubclass(Family, SchemaBase)
+    assert issubclass(Person, SchemaBase)
+
+    family = Family(people=[Person(name='Alice', age=25), Person(name='Bob', age=26)])
+    dct = family.to_dict()
+    assert dct == {'people': [{'name': 'Alice', 'age': 25}, {'name': 'Bob', 'age': 26}]}
+    family2 = Family.from_dict(dct)
+    assert family2.to_dict() == dct
