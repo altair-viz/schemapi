@@ -19,10 +19,11 @@ env:
 
 before_install:
   - pip install pip --upgrade;
+  - pip install $TEST_DEPS;
 
 install:
   - pip install -e .;
 
 script:
-  - mkdir -p $TEST_DIR
+  - mkdir -p $TEST_DIR;
   - cd $TEST_DIR && python -m pytest --pyargs --doctest-modules schemapi --cov-report term-missing --cov=schemapi;
