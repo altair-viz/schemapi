@@ -132,7 +132,7 @@ def setup_package():
         author_email="jakevdp@gmail.com",
         platforms="OS Independent",
         package_data={'schemapi': [os.path.join('schemas', 'json', '*.json')]},
-        requires=["jsonschema"],
+        install_requires=["jsonschema"],
         python_requires='>3.6',
         tests_require=["pytest"],
     )
