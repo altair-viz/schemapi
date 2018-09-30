@@ -13,8 +13,8 @@ EXCLUDE_KEYS = ('definitions', 'title', 'description', '$schema', 'id')
 
 
 def load_metaschema():
-    schema = pkgutil.get_data('schemapi', 'jsonschema-draft04.json')
-    schema = schema.decode()
+    schema = pkgutil.get_data(__name__, 'jsonschema-draft04.json')
+    schema = schema.decode('utf-8')
     return json.loads(schema)
 
 

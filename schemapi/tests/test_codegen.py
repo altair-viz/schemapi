@@ -1,5 +1,5 @@
 import pytest
-from schemapi import SchemaBase, module_code
+from schemapi import SchemaBase, SchemaModuleGenerator
 
 
 @pytest.fixture
@@ -24,7 +24,8 @@ def schema():
 
 
 def test_module_code(schema):
-    code = module_code(schema, root_name='Family')
+    gen = SchemaModuleGenerator(schema, root_name='Family')
+    code = gen.module_code()
 
     namespace = {}
     exec(code, namespace)

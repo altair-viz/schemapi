@@ -14,8 +14,8 @@ See more information in the README_.
 """
 short_version = '0.4.0'
 version = '0.4.0'
-full_version = '0.4.0.dev0+8d60841'
-git_revision = '8d60841a1599e7767876fb08df2c3d28eaa6978a'
+full_version = '0.4.0.dev0+5faef62'
+git_revision = '5faef6208aa120cac0015171b135e7e9cdc9e013'
 release = False
 if not release:
     version = full_version

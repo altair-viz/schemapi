@@ -18,21 +18,21 @@ def schemaclass(*args, init_func=True, docstring=True, property_map=True):
 
         @schemaclass
         class MySchema(SchemaBase):
-            __schema = {...}
+            _schema = {...}
 
     Optionally, you can invoke schemaclass with arguments to turn off
     some of the added behaviors:
 
         @schemaclass(init_func=True, docstring=False)
         class MySchema(SchemaBase):
-            __schema = {...}
+            _schema = {...}
     """
     def _decorator(cls, init_func=init_func, docstring=docstring):
         if not (isinstance(cls, type) and issubclass(cls, SchemaBase)):
             warnings.warn("class is not an instance of SchemaBase.")
 
         name = cls.__name__
-        gen = codegen.SchemaGenerator(name, schema=cls._schema,
+        gen = codegen.SchemaClassGenerator(name, schema=cls._schema,
                                       rootschema=cls._rootschema)
 
         if init_func and '__init__' not in cls.__dict__:
