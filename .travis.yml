@@ -13,16 +13,16 @@ matrix:
 
 env:
   global:
-    - PIP_DEPS="jsonschema pytest pytest-cov"
+    - TEST_DEPS="pytest pytest-cov"
+    - TEST_DIR=/tmp/_schemapi/
+
 
 before_install:
-- pip install pip --upgrade
-- pip install $PIP_DEPS
+  - pip install pip --upgrade;
 
 install:
-- python setup.py install
+  - pip install -e .;
 
 script:
-- mkdir for_test
-- cd for_test;
-- py.test --pyargs schemapi --doctest-module --cov-report term-missing --cov=schemapi;
+  - mkdir -p $TEST_DIR
+  - cd $TEST_DIR && python -m pytest --pyargs --doctest-modules schemapi --cov-report term-missing --cov=schemapi;
