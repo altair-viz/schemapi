@@ -24,11 +24,5 @@ install:
 
 script:
 - mkdir for_test
-- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then
-    cp -r schemapi/src/ for_test/src;
-    cd for_test;
-    py.test src --doctest-module --cov-report term-missing --cov=src;
-  else
-    cd for_test;
-    py.test --pyargs schemapi --doctest-module --cov-report term-missing --cov=schemapi;
-  fi;
+- cd for_test;
+- py.test --pyargs schemapi --doctest-module --cov-report term-missing --cov=schemapi;
