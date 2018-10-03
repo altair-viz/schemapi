@@ -75,7 +75,8 @@ this schema:
 ```python
 >>> import schemapi
 
->>> schemapi.write_module('myschema.py', root_name='Person')
+>>> api = schemapi.SchemaModuleGenerator(schema, root_name='Person')
+>>> api.write_module('myschema.py')
 '/Users/jakevdp/myschema.py'
 ```
 
@@ -128,6 +129,21 @@ are possible, and the generated classes can be subclassed in order to create
 domain-specific APIs for specifying data that can be serialized to and from
 JSON. For an example of a much more complicated schema in action, see the 
 [Altair](http://altair-viz.github.io) project.
+
+## Dynamic Modules
+
+If you do not wish to write a module to disk before importing it, you can construct the
+module dynamically:
+
+```python
+>>> import schemapi
+>>> api = schemapi.SchemaModuleGenerator(schema, root_name='Person')
+>>> dynamic_module = api.import_as('dynamic_module')
+>>> from dynamic_module import Person
+>>> person = Person(name='suzie', age=32)
+>>> person.to_dict()
+{'age': 32, 'name': 'suzie'}
+```
 
 ## Installation
 
