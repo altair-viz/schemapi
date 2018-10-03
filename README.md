@@ -139,11 +139,20 @@ module dynamically:
 >>> import schemapi
 >>> api = schemapi.SchemaModuleGenerator(schema, root_name='Person')
 >>> dynamic_module = api.import_as('dynamic_module')
+```
+
+The module returned by this method can be used directly, or you can import from it as
+with any Python module.
+
+```python
 >>> from dynamic_module import Person
 >>> person = Person(name='suzie', age=32)
 >>> person.to_dict()
 {'age': 32, 'name': 'suzie'}
 ```
+
+Note, however, that the module lives only in memory, so it will
+only be available in the Python session in which it is defined.
 
 ## Installation
 
