@@ -102,7 +102,7 @@ class SchemaProperties(object):
         try:
             return self[attr]
         except KeyError:
-            return super(SchemaProperties, self).__getattr__(attr)
+            return super().__getattr__(attr)
 
     def __getitem__(self, attr):
         dct = self._properties[attr]
