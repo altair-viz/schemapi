@@ -222,7 +222,7 @@ class SchemaModuleGenerator(object):
 
     def _validate(self):
         metaschema = load_metaschema()
-        jsonschema.validate(metaschema, self.schema)
+        jsonschema.validate(self.schema, metaschema)
 
     def module_code(self):
         """Generate a Python module implementing the schema"""
