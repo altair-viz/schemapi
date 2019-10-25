@@ -151,9 +151,10 @@ class SchemaClassGenerator(object):
                     '----------',
                     '']
             for prop in sorted(required) + sorted(kwds) + sorted(invalid_kwds):
-                propinfo = info.properties[prop]
-                doc += ["{} : {}".format(prop, propinfo.short_description),
-                        "    {}".format(self._process_description(propinfo.description))]
+                    if prop in info.properties:
+                        propinfo = info.properties[prop]
+                        doc += ["{} : {}".format(prop, propinfo.short_description),
+                                "    {}".format(self._process_description(propinfo.description))]
         if len(doc) > 1:
             doc += ['']
         return indent_docstring(doc, indent_level=indent, width=100, lstrip=True)
